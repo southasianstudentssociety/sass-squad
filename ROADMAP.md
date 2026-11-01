@@ -21,9 +21,9 @@ A subcommittee member submits a claim (event, amount, description, receipt photo
 ## Phase 4: Inventory (built, not yet stocked)
 Items the society owns (decorations, equipment, leftover stock): quantity, location, condition, who has it, and when it was checked out or returned, with history.
 
-## Phase 5: Department task tracker
+## Phase 5: Department task tracker (built, not yet used)
 Tasks per department and event, with owner, due date and status.
-**Open question:** Notion, Trello or a shared Sheet may already do this better for free. Only build it if the team will actually move off their current tool.
+**Decision (1 Nov 2026):** built because the team committed to moving off their current tool. If it isn't in regular use by the end of December, remove it from the nav rather than keep two places for tasks.
 
 ## Not started
 - Gallery (embeds and Supabase Storage)
