@@ -12,7 +12,7 @@ export function OnboardingForm(props: { next: string; email: string; fullName: s
       <input type="hidden" name="next" value={props.next} />
       <div>
         <label className="label">Email</label>
-        <input className="input bg-page text-muted" value={props.email} disabled />
+        <input className="input" value={props.email} disabled />
         <p className="hint">This is the email you log in with. To use a different one, log out and log in with it.</p>
       </div>
       <div>

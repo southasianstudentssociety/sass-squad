@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatPrice } from "@/lib/format";
 import { CLAIM_STATUS } from "@/lib/claims";
 import type { Claim, ClaimRevision } from "@/lib/types";
+import { EmptyState } from "@/components/illustrations";
 
 export const metadata = { title: "My claims" };
 
@@ -34,7 +35,13 @@ export default async function ClaimsPage() {
       {!session.access.isTeam && claims.length === 0 && (
         <p className="card text-sm text-muted">Only current team members can submit claims. Ask an ExCo to add you on the Team page.</p>
       )}
-      {session.access.isTeam && claims.length === 0 && <p className="card text-sm text-muted">No claims yet.</p>}
+      {session.access.isTeam && claims.length === 0 && (
+        <div className="card">
+          <EmptyState illustration="receipt" title="No claims yet" action={<Link href="/claims/new" className="btn-primary">New claim</Link>}>
+            Paid for something for SASS? Snap the receipt and claim it back here.
+          </EmptyState>
+        </div>
+      )}
 
       {claims.length > 0 && (
         <ul className="space-y-3">
@@ -43,7 +50,7 @@ export default async function ClaimsPage() {
             const st = CLAIM_STATUS[c.status];
             return (
               <li key={c.id}>
-                <Link href={`/claims/${c.id}`} className="card flex items-center justify-between gap-3 hover:shadow-md">
+                <Link href={`/claims/${c.id}`} className="card-link flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{rev?.description ?? c.reference}</p>
                     <p className="text-xs text-muted">{c.reference} · {formatDate(c.created_at)}</p>

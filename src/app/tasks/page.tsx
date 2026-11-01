@@ -9,6 +9,7 @@ import type { Department, Task, TaskStatus } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { createTask, setTaskStatus } from "./actions";
+import { EmptyState } from "@/components/illustrations";
 
 export const metadata = { title: "Tasks" };
 
@@ -89,6 +90,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <button className="btn-ghost">Filter</button>
       </form>
 
+      {all.length === 0 ? (
+        <div className="card">
+          <EmptyState illustration="tasks" title="No tasks yet">Add the first one below. Everyone on the team sees every department&apos;s tasks.</EmptyState>
+        </div>
+      ) : (
       <div className="grid gap-4 lg:grid-cols-3">
         {statuses.map((status) => {
           const column = tasks.filter((t) => t.status === status);
@@ -98,11 +104,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 <span className={`badge ${TASK_STATUS[status].cls}`}>{TASK_STATUS[status].label}</span>
                 <span className="text-sm font-normal text-muted">{column.length}</span>
               </h2>
-              {column.length === 0 && <p className="text-sm text-muted">Nothing here.</p>}
+              {column.length === 0 && <p className="rounded-xl border border-dashed border-line px-3 py-6 text-center text-sm text-muted">Nothing here</p>}
               {column.map((t) => {
                 const overdue = t.due_on && t.due_on < today && OPEN_STATUSES.includes(t.status);
                 return (
-                  <article key={t.id} className="card space-y-2 p-3">
+                  <article key={t.id} className="card animate-fade-up space-y-2 p-3.5">
                     <Link href={`/tasks/${t.id}`} className="block font-semibold underline">{t.title}</Link>
                     <p className="text-xs text-muted">
                       {deptName.get(t.department_id)}
@@ -127,6 +133,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           );
         })}
       </div>
+      )}
 
       <details className="card" open={all.length === 0}>
         <summary className="cursor-pointer font-bold">Add a task</summary>

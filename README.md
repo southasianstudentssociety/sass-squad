@@ -100,3 +100,10 @@ Import the repo in Vercel and set the three env vars from `.env.example` (`NEXT_
 - The scanner needs a connection. If the venue has no signal, use the printed list.
 - Brand palette and Berkshire Swash are in `src/app/globals.css`. Amoresa Aged and Maragsa (from the marketing doc) are paid fonts and aren't included. The logo image isn't added yet.
 - Gallery (Phase 3) is not built yet.
+
+## Design
+Minimal: warm off-white page, white surfaces, hairline borders, SASS red for actions only, the full palette as a thin signature stripe. Type is Geist (`geist` package); the Berkshire Swash script face is used only for the SASS wordmark.
+- **Components:** shadcn-style source components on [Base UI](https://base-ui.com) (the header's Team and account menus), styled with Tailwind v4. Shared classes (`btn-primary`, `card`, `card-link`, `input`, `badge`, `table`, `eyebrow`, `skeleton`) live in `src/app/globals.css`.
+- **Motion:** [`motion`](https://motion.dev) for page transitions, staggered lists and the sliding nav highlight; CSS keyframes for small effects. Everything respects the phone's *reduce motion* setting. The door scanner has no decorative motion, only a quick pop on each result.
+- **Illustrations:** [unDraw](https://undraw.co) by Katerina Limpitsouni (free, no attribution required; not to be redistributed as a pack), taken from the `undraw-svg` npm package and stored in `src/components/illustrations/data.ts`. Their accent colour follows `currentColor`, so they pick up SASS red. They're rendered on the server only, so they never add to the JavaScript bundle.
+

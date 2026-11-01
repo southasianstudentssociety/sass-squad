@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
 import { hoursAgoIso, scanWindow } from "@/lib/events";
+import { EmptyState } from "@/components/illustrations";
 
 export const metadata = { title: "Scan" };
 
@@ -23,7 +24,7 @@ export default async function ScanIndex() {
       <ul className="space-y-3">
         {(data ?? []).map((e) => (
           <li key={e.id}>
-            <Link href={`/scan/${e.id}`} className="card block hover:shadow-md">
+            <Link href={`/scan/${e.id}`} className="card-link block">
               <p className="font-bold">{e.title} {!e.is_published && <span className="badge bg-warn/10 text-warn">Draft</span>}</p>
               <p className="text-sm text-muted">{formatDateTime(e.starts_at)}{e.venue && ` · ${e.venue}`}</p>
               {!isAdmin && !scanWindow(e).open && (
@@ -34,7 +35,9 @@ export default async function ScanIndex() {
             </Link>
           </li>
         ))}
-        {(data ?? []).length === 0 && <p className="text-muted">No upcoming events.</p>}
+        {(data ?? []).length === 0 && (
+          <li className="card"><EmptyState illustration="scan" title="No upcoming events">Events show here from 48 hours before they start.</EmptyState></li>
+        )}
       </ul>
     </div>
   );

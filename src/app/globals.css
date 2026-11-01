@@ -4,17 +4,18 @@
  * SASS brand tokens, from the "SASS marketing" doc palette:
  *   red #ae4547 · teal #1d585e · peach #f3b774 · yellow #fff075
  *   blue #0041a3 · pink #fcb8bd · turquoise #3bb8bd · purple #5314a0
- * Rules: white text only on red/teal/blue/purple; peach/yellow/pink/turquoise
- * are backgrounds with dark text. ok/bad stay pure green/red so door staff
- * never confuse a "rejected" screen with brand colour.
+ * Design direction: minimal and quiet. Warm off-white page, white surfaces,
+ * hairline borders, one strong colour (SASS red) for actions. The full palette
+ * appears only as a thin signature stripe. ok/bad stay pure green/red so door
+ * staff never confuse a "rejected" screen with brand colour.
  */
 :root {
-  --brand: #ae4547;        /* primary: header, buttons (white text 5.6:1) */
-  --brand-deep: #9c2835;   /* logo red: ticket header, hover */
+  --brand: #ae4547;        /* primary actions (white text 5.6:1) */
+  --brand-deep: #962f37;   /* hover / pressed */
   --brand-ink: #ffffff;
-  --brand-soft: #fdeced;   /* pale pink tint */
-  --teal: #1d585e;         /* headings, links (8:1 on white) */
-  --accent: #f3b774;       /* peach: highlights, member badge */
+  --brand-soft: #fbf0f0;   /* faint tint for highlights */
+  --teal: #1d585e;
+  --accent: #f3b774;       /* peach: member badge */
   --accent-ink: #2a1a05;
   --sass-yellow: #fff075;
   --sass-blue: #0041a3;
@@ -22,13 +23,14 @@
   --sass-turquoise: #3bb8bd;
   --sass-purple: #5314a0;
   --surface: #ffffff;
-  --page: #fbf7f1;
-  --ink: #1f1a17;
-  --muted: #6b625c;
-  --line: #ece3da;
+  --page: #faf9f7;
+  --ink: #1c1917;
+  --muted: #6f6862;        /* 5.2:1 on white */
+  --line: #ebe7e2;
   --ok: #15803d;
   --warn: #b45309;
   --bad: #dc2626;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -52,60 +54,182 @@
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-bad: var(--bad);
-  --font-display: "Berkshire Swash", Georgia, serif;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Headings use Geist (set on <html> by next/font); the script face is only for the wordmark. */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Berkshire Swash", Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease-soft: var(--ease-out-soft);
+  --animate-fade-up: fade-up 420ms var(--ease-out-soft) both;
+  --animate-fade-in: fade-in 300ms ease-out both;
+  --animate-scale-in: scale-in 260ms var(--ease-out-soft) both;
+  --animate-pop: pop 160ms var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --shadow-soft: 0 1px 2px rgb(28 25 23 / 0.04), 0 1px 1px rgb(28 25 23 / 0.02);
+  --shadow-lift: 0 1px 2px rgb(28 25 23 / 0.04), 0 8px 24px -8px rgb(28 25 23 / 0.12);
+  --shadow-float: 0 2px 4px rgb(28 25 23 / 0.04), 0 16px 40px -12px rgb(28 25 23 / 0.18);
 }
 
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  from { transform: scale(0.97); }
+  to { transform: none; }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
 body {
   background: var(--page);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+}
+::selection {
+  background: color-mix(in oklab, var(--brand) 18%, transparent);
+}
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--brand) 55%, transparent);
+  outline-offset: 2px;
+}
+/* Large display headings: light weight, tight tracking. */
+h1.font-display,
+h2.font-display {
+  letter-spacing: -0.025em;
+  font-weight: 450;
 }
 
-/* Multicolour band using the full palette, e.g. under the header. */
+/* Respect "reduce motion": keep state changes, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Multicolour signature band using the full palette. */
 @utility sass-stripe {
   background: linear-gradient(90deg, var(--brand) 0 12.5%, var(--teal) 0 25%, var(--accent) 0 37.5%, var(--sass-yellow) 0 50%, var(--sass-blue) 0 62.5%, var(--sass-pink) 0 75%, var(--sass-turquoise) 0 87.5%, var(--sass-purple) 0);
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-50;
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium whitespace-nowrap select-none;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 120ms var(--ease-out-soft), opacity 160ms ease;
+  &:active:not(:disabled) { transform: scale(0.97); }
+  &:disabled { pointer-events: none; opacity: 0.5; }
 }
 @utility btn-primary {
   @apply btn bg-brand text-brand-ink hover:bg-brand-deep;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(150 47 55 / 0.25);
 }
 @utility btn-accent {
-  @apply btn bg-accent text-accent-ink hover:opacity-90;
+  @apply btn bg-accent text-accent-ink hover:brightness-95;
 }
 @utility btn-ghost {
-  @apply btn border border-line bg-surface text-ink hover:bg-brand-soft;
+  @apply btn border border-line bg-surface text-ink hover:border-ink/15 hover:bg-page;
+  box-shadow: var(--shadow-soft);
 }
 @utility btn-danger {
-  @apply btn border border-bad/30 bg-surface text-bad hover:bg-bad/5;
+  @apply btn border border-bad/25 bg-surface text-bad hover:bg-bad/5;
 }
 @utility card {
-  @apply rounded-2xl border border-line bg-surface p-5 shadow-sm;
+  @apply rounded-2xl border border-line bg-surface p-5;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 220ms var(--ease-out-soft), transform 220ms var(--ease-out-soft), border-color 220ms ease;
+}
+/* For cards that are links: lift on hover. */
+@utility card-link {
+  @apply card;
+  &:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); border-color: color-mix(in oklab, var(--ink) 12%, var(--line)); }
+  &:active { transform: translateY(0) scale(0.995); }
 }
 @utility input {
-  @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base outline-none focus:border-teal focus:ring-2 focus:ring-teal/20;
+  @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base text-ink outline-none placeholder:text-muted/60;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  &:hover:not(:disabled) { border-color: color-mix(in oklab, var(--ink) 16%, var(--line)); }
+  &:focus { border-color: color-mix(in oklab, var(--brand) 55%, var(--line)); box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 12%, transparent); }
+  &:disabled { background: var(--page); color: var(--muted); }
 }
 @utility label {
-  @apply mb-1 block text-sm font-medium text-ink;
+  @apply mb-1.5 block text-[13px] font-medium text-ink/80;
 }
 @utility hint {
-  @apply mt-1 text-xs text-muted;
+  @apply mt-1.5 text-xs leading-relaxed text-muted;
 }
 @utility badge {
-  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap;
+}
+@utility eyebrow {
+  @apply text-[11px] font-medium tracking-[0.14em] text-muted uppercase;
+}
+@utility skeleton {
+  @apply rounded-xl;
+  background: linear-gradient(90deg, var(--line) 25%, color-mix(in oklab, var(--line) 40%, white) 50%, var(--line) 75%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
 }
 
 @layer components {
+  /* Native selects keep the phone's own picker, with a quiet chevron. */
+  select.input {
+    appearance: none;
+    padding-right: 2.25rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%236f6862' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+  }
+  textarea.input {
+    resize: vertical;
+  }
+  input[type="checkbox"] {
+    accent-color: var(--brand);
+    width: 1rem;
+    height: 1rem;
+  }
   .table {
     @apply w-full text-left text-sm;
   }
   .table th {
-    @apply border-b border-line px-3 py-2 font-semibold whitespace-nowrap text-muted;
+    @apply border-b border-line px-4 py-2.5 text-[11px] font-medium tracking-wide whitespace-nowrap text-muted uppercase;
   }
   .table td {
-    @apply border-b border-line px-3 py-2 align-top;
+    @apply border-b border-line px-4 py-3 align-top;
+  }
+  .table tbody tr {
+    transition: background-color 120ms ease;
+  }
+  .table tbody tr:hover {
+    background: color-mix(in oklab, var(--page) 70%, transparent);
+  }
+  .table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  /* unDraw illustrations: accent follows currentColor. */
+  .illustration svg {
+    width: 100%;
+    height: auto;
+    display: block;
   }
 }

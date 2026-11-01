@@ -5,7 +5,7 @@ import { sendCode, verifyCode, type LoginState } from "./actions";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 
-export function LoginForm({ next, initialError }: { next: string; initialError?: string }) {
+export function LoginForm({ next, initialError, codeArt }: { next: string; initialError?: string; codeArt?: React.ReactNode }) {
   const [sendState, sendAction] = useActionState<LoginState, FormData>(sendCode, {
     step: "email",
     error: initialError,
@@ -26,7 +26,6 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
             id="email" name="email" type="email" required autoComplete="email" inputMode="email"
             defaultValue={email} placeholder="your uni email or Gmail" className="input"
           />
-          <p className="hint">Use the email your membership is under, so we can recognise you as a member.</p>
         </div>
         <FormMessage error={sendState.error} />
         <SubmitButton className="btn-primary w-full" pendingText="Sending…">Email me a login code</SubmitButton>
@@ -35,8 +34,11 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
   }
 
   return (
-    <div className="space-y-4">
-      <FormMessage success={sendState.info} />
+    <div className="animate-fade-up space-y-5">
+      <div className="text-center">
+        {codeArt}
+        <p className="mt-4 text-sm text-ink">{sendState.info}</p>
+      </div>
       <form action={verifyAction} className="space-y-4">
         <input type="hidden" name="next" value={next} />
         <input type="hidden" name="email" value={email} />
@@ -44,14 +46,14 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
           <label className="label" htmlFor="code">Login code</label>
           <input
             id="code" name="code" required autoFocus autoComplete="one-time-code" inputMode="numeric"
-            pattern="[0-9 ]{6,12}" placeholder="12345678" className="input text-center text-2xl tracking-[0.3em]"
+            pattern="[0-9 ]{6,12}" placeholder="12345678" className="input py-3.5 text-center font-mono text-2xl tracking-[0.35em] tabular-nums"
           />
           <p className="hint">It can take a minute. If it hasn&apos;t arrived, check Junk or Spam.</p>
         </div>
         <FormMessage error={verifyState.error} />
         <SubmitButton className="btn-primary w-full" pendingText="Checking…">Log in</SubmitButton>
       </form>
-      <button type="button" onClick={() => setEditing(true)} className="text-sm text-muted underline">
+      <button type="button" onClick={() => setEditing(true)} className="mx-auto block text-sm text-muted underline-offset-4 transition-colors hover:text-ink hover:underline">
         Use a different email / resend
       </button>
     </div>

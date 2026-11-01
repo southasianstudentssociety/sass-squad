@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDateTime, formatPrice, formatTime } from "@/lib/format";
 import type { SassEvent, Ticket } from "@/lib/types";
 import { StatusBadge } from "@/components/status-badge";
+import { CopyButton } from "@/components/copy-button";
+import { Illustration } from "@/components/illustrations";
 
 export const metadata = { title: "Ticket" };
 
@@ -29,42 +31,48 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     : null;
 
   return (
-    <div className="mx-auto max-w-sm space-y-4">
-      <Link href="/tickets" className="text-sm text-muted underline">← All tickets</Link>
+    <div className="mx-auto max-w-sm space-y-5">
+      <Link href="/tickets" className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-ink">← All tickets</Link>
 
-      <div className="overflow-hidden rounded-3xl border border-line bg-surface shadow-lg">
-        <div className="bg-brand-deep px-5 pb-5 pt-6 text-brand-ink">
-          <p className="text-xs font-semibold uppercase tracking-widest opacity-80">SASS presents</p>
-          <h1 className="mt-1 font-display text-3xl font-normal leading-tight">{t.event.title}</h1>
-          <p className="mt-2 text-sm opacity-90">
+      <div className="animate-scale-in overflow-hidden rounded-[28px] border border-line bg-surface shadow-[var(--shadow-float)]">
+        <div className="bg-brand-deep px-6 pb-6 pt-7 text-brand-ink">
+          <p className="font-brand text-lg opacity-90">SASS</p>
+          <h1 className="mt-2 font-display text-[1.75rem] leading-tight">{t.event.title}</h1>
+          <p className="mt-3 text-sm opacity-90">
             {formatDateTime(t.event.starts_at)}{t.event.ends_at && ` – ${formatTime(t.event.ends_at)}`}
           </p>
-          {t.event.venue && <p className="text-sm opacity-90">{t.event.venue}</p>}
+          {t.event.venue && <p className="text-sm opacity-80">{t.event.venue}</p>}
         </div>
-        <div className="sass-stripe h-2" aria-hidden />
+        <div className="sass-stripe h-1" aria-hidden />
 
-        <div className="relative border-t-2 border-dashed border-line px-5 py-6">
+        {/* Perforation with notches, like a paper ticket */}
+        <div className="relative h-0">
+          <span className="absolute -left-3 -top-3 size-6 rounded-full border border-line bg-page" aria-hidden />
+          <span className="absolute -right-3 -top-3 size-6 rounded-full border border-line bg-page" aria-hidden />
+        </div>
+
+        <div className="px-6 pb-6 pt-7">
           {showQr && !t.checked_in_at && qrSvg ? (
-            <div className="mx-auto w-full max-w-[260px]" aria-label="Ticket QR code" dangerouslySetInnerHTML={{ __html: qrSvg }} />
+            <div className="mx-auto w-full max-w-[250px] animate-scale-in rounded-2xl bg-white p-2 [animation-delay:120ms]" aria-label="Ticket QR code" role="img" dangerouslySetInnerHTML={{ __html: qrSvg }} />
           ) : t.checked_in_at ? (
-            <div className="py-10 text-center">
-              <p className="text-4xl">✅</p>
-              <p className="mt-2 font-bold">Checked in at {formatTime(t.checked_in_at)}</p>
-              <p className="text-sm text-muted">Enjoy the event!</p>
+            <div className="py-4 text-center">
+              <Illustration name="checkedIn" className="mx-auto w-32 animate-scale-in text-ok" />
+              <p className="mt-4 font-medium">Checked in at {formatTime(t.checked_in_at)}</p>
+              <p className="text-sm text-muted">Enjoy the night!</p>
             </div>
           ) : t.status === "cancelled" ? (
-            <p className="py-10 text-center font-semibold text-bad">This ticket was cancelled.</p>
+            <p className="py-10 text-center font-medium text-bad">This ticket was cancelled.</p>
           ) : (
             <PaymentPanel ticket={t} />
           )}
 
-          <dl className="mt-5 grid grid-cols-2 gap-y-3 text-sm">
+          <dl className="mt-6 grid grid-cols-2 gap-y-3 border-t border-dashed border-line pt-5 text-sm">
             <dt className="text-muted">Name</dt>
-            <dd className="text-right font-semibold">{t.holder_name}</dd>
+            <dd className="text-right font-medium">{t.holder_name}</dd>
             <dt className="text-muted">Ticket</dt>
             <dd className="text-right">{t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}</dd>
             <dt className="text-muted">Reference</dt>
-            <dd className="text-right font-mono">{t.payment_reference}</dd>
+            <dd className="text-right font-mono text-[13px]">{t.payment_reference}</dd>
             <dt className="text-muted">Status</dt>
             <dd className="text-right"><StatusBadge status={t.status} checkedIn={!!t.checked_in_at} /></dd>
           </dl>
@@ -72,7 +80,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       </div>
 
       {showQr && !t.checked_in_at && (
-        <p className="text-center text-xs text-muted">
+        <p className="px-4 text-center text-xs leading-relaxed text-muted">
           Turn your screen brightness up at the door. This QR works once. Sharing a screenshot means whoever scans first gets in.
         </p>
       )}
@@ -82,18 +90,24 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
 function PaymentPanel({ ticket }: { ticket: Row }) {
   return (
-    <div className="space-y-3 text-sm">
-      <p className="text-base font-bold text-warn">Payment needed</p>
-      <p>
+    <div className="space-y-4 text-sm">
+      <div className="flex items-center gap-2">
+        <span className="size-2 animate-pulse rounded-full bg-warn" aria-hidden />
+        <p className="font-medium text-warn">Payment needed</p>
+      </div>
+      <p className="leading-relaxed">
         Send <strong>{formatPrice(ticket.price_cents)}</strong> by FPS and put this exact reference in the remarks:
       </p>
-      <p className="rounded-xl bg-brand-soft py-3 text-center font-mono text-2xl font-bold tracking-wider">{ticket.payment_reference}</p>
+      <div className="flex items-center justify-between gap-3 rounded-2xl bg-brand-soft px-4 py-3">
+        <p className="font-mono text-xl font-semibold tracking-wider">{ticket.payment_reference}</p>
+        <CopyButton value={ticket.payment_reference} />
+      </div>
       {ticket.event.payment_instructions ? (
-        <div className="whitespace-pre-line rounded-xl border border-line p-3">{ticket.event.payment_instructions}</div>
+        <div className="whitespace-pre-line rounded-2xl border border-line p-4 leading-relaxed">{ticket.event.payment_instructions}</div>
       ) : (
         <p className="text-muted">Bank details will be shared by the committee.</p>
       )}
-      <p className="text-muted">
+      <p className="leading-relaxed text-muted">
         Your QR code appears here once our Finance team confirms your payment. This is done by hand, so it can take a while. Check back later.
       </p>
     </div>
