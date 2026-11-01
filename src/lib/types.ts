@@ -89,6 +89,7 @@ export type Ticket = {
 };
 
 export type ScanResult =
+  | "valid"
   | "ok"
   | "already_used"
   | "unpaid"
@@ -192,6 +193,7 @@ export type InventoryLogEntry = {
 };
 
 export type TaskStatus = "todo" | "doing" | "blocked" | "done" | "cancelled";
+export type TaskKind = "task" | "upload" | "errand";
 
 export type Task = {
   id: string;
@@ -201,6 +203,8 @@ export type Task = {
   description: string | null;
   owner_id: string | null;
   due_on: string | null;
+  due_time: string | null;
+  kind: TaskKind;
   status: TaskStatus;
   created_by: string | null;
   created_at: string;

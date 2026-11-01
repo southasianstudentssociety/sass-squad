@@ -7,10 +7,14 @@ import { createClient } from "@/lib/supabase/server";
 
 const STATUSES = ["todo", "doing", "blocked", "done", "cancelled"];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^\d{2}:\d{2}$/;
+const KINDS = ["task", "upload", "errand"];
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const optional = (f: FormData, k: string) => str(f, k) || null;
 const date = (f: FormData, k: string) => (DATE_RE.test(str(f, k)) ? str(f, k) : null);
+const time = (f: FormData, k: string) => (TIME_RE.test(str(f, k)) ? str(f, k) : null);
+const kind = (f: FormData) => (KINDS.includes(str(f, "kind")) ? str(f, "kind") : "task");
 
 function rpcError(e: { code?: string; message: string } | null, fallback: string) {
   return e?.code === "P0001" ? e.message : fallback;
@@ -19,7 +23,7 @@ function rpcError(e: { code?: string; message: string } | null, fallback: string
 /** Back to the page the form was on (kept in a hidden "return_to" field), with a message. */
 function back(formData: FormData, fallback: string, params: Record<string, string>): never {
   const target = str(formData, "return_to");
-  const path = target.startsWith("/tasks") && !target.startsWith("//") ? target : fallback;
+  const path = (target.startsWith("/tasks") || target.startsWith("/calendar")) && !target.startsWith("//") ? target : fallback;
   const url = new URL(path, "http://x");
   url.searchParams.delete("ok");
   url.searchParams.delete("error");
@@ -37,6 +41,8 @@ export async function createTask(formData: FormData) {
     p_event_id: optional(formData, "event_id"),
     p_owner_id: optional(formData, "owner_id"),
     p_due_on: date(formData, "due_on"),
+    p_kind: kind(formData),
+    p_due_time: time(formData, "due_time"),
   });
   if (error) back(formData, "/tasks", { error: rpcError(error, "Couldn't add the task.") });
   revalidatePath("/tasks");
@@ -55,6 +61,8 @@ export async function updateTask(formData: FormData) {
     p_event_id: optional(formData, "event_id"),
     p_owner_id: optional(formData, "owner_id"),
     p_due_on: date(formData, "due_on"),
+    p_kind: kind(formData),
+    p_due_time: time(formData, "due_time"),
   });
   if (error) back(formData, `/tasks/${id}`, { error: rpcError(error, "Couldn't save the task.") });
   revalidatePath("/tasks");

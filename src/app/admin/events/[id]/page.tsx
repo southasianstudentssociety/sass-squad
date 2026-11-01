@@ -7,6 +7,7 @@ import type { SassEvent, Ticket } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
+import { CopyButton } from "@/components/copy-button";
 import { cancelTicket, confirmPayment, undoCheckIn } from "../../actions";
 
 export const metadata = { title: "Manage event" };
@@ -50,6 +51,8 @@ export default async function ManageEvent({
     return true;
   });
 
+  const countFor = (f: Filter) =>
+    f === "all" ? all.length : f === "checked_in" ? all.filter((t) => t.checked_in_at).length : all.filter((t) => t.status === f).length;
   const confirmed = all.filter((t) => t.status === "confirmed");
   const revenue = confirmed.reduce((s, t) => s + t.price_cents, 0);
   const owed = all.filter((t) => t.status === "awaiting_payment").reduce((s, t) => s + t.price_cents, 0);
@@ -77,19 +80,21 @@ export default async function ManageEvent({
 
       <FormMessage error={sp.error} success={sp.ok} />
 
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        {(Object.keys(FILTERS) as Filter[]).map((f) => (
-          <Link
-            key={f}
-            href={`/admin/events/${id}?filter=${f}`}
-            className={`rounded-full px-3 py-1 ${filter === f ? "bg-brand text-brand-ink" : "bg-surface border border-line"}`}
-          >
-            {FILTERS[f]}
-          </Link>
-        ))}
-        <form className="ml-auto flex gap-2">
+      <div className="space-y-3">
+        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 text-sm [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+          {(Object.keys(FILTERS) as Filter[]).map((f) => (
+            <Link
+              key={f}
+              href={`/admin/events/${id}?filter=${f}`}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 transition-colors ${filter === f ? "bg-ink text-white" : "border border-line bg-surface hover:border-ink/20"} ${f === "awaiting_payment" && countFor(f) > 0 && filter !== f ? "border-warn/30 text-warn" : ""}`}
+            >
+              {FILTERS[f]} <span className="tabular-nums opacity-70">{countFor(f)}</span>
+            </Link>
+          ))}
+        </div>
+        <form className="flex gap-2">
           <input type="hidden" name="filter" value={filter} />
-          <input name="q" defaultValue={sp.q} placeholder="Search name / email / ref" className="input py-1.5 text-sm" />
+          <input name="q" defaultValue={sp.q} placeholder="Search name, email or reference" className="input" />
         </form>
       </div>
 
@@ -98,7 +103,48 @@ export default async function ManageEvent({
         <Link href={`/admin/events/${id}/print`} className="underline">Printable guest list</Link>
       </div>
 
-      <div className="card overflow-x-auto p-0">
+      {/* Phones: one card per person, big actions. */}
+      <ul className="space-y-3 sm:hidden">
+        {tickets.map((t) => (
+          <li key={t.id} className="card space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{t.holder_name}</p>
+                {t.holder_email && <p className="truncate text-xs text-muted">{t.holder_email}</p>}
+              </div>
+              <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-xl bg-page px-3 py-2">
+              <span className="font-mono text-sm tracking-wide">{t.payment_reference}</span>
+              <CopyButton value={t.payment_reference} />
+            </div>
+            <p className="text-xs text-muted">
+              {t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}
+              {t.source !== "online" && ` · ${t.source === "comp" ? "Comp" : "Walk-in"}`}
+              {t.checked_in_at && ` · in at ${formatTime(t.checked_in_at)}`}
+              {" · booked "}{formatDateTime(t.created_at)}
+            </p>
+            {t.notes && <p className="text-xs text-muted">📝 {t.notes}</p>}
+            {t.status === "awaiting_payment" && (
+              <RowAction action={confirmPayment} ticketId={t.id} eventId={id} filter={filter}
+                label={`Mark ${formatPrice(t.price_cents)} paid`} className="btn-primary w-full py-3" />
+            )}
+            {(t.checked_in_at || (t.status !== "cancelled" && !t.checked_in_at)) && (
+              <div className="flex gap-2">
+                {t.checked_in_at && (
+                  <RowAction action={undoCheckIn} ticketId={t.id} eventId={id} filter={filter} label="Undo check-in" className="btn-ghost w-full" />
+                )}
+                {t.status !== "cancelled" && !t.checked_in_at && (
+                  <RowAction action={cancelTicket} ticketId={t.id} eventId={id} filter={filter} label="Cancel ticket" className="btn-danger w-full" />
+                )}
+              </div>
+            )}
+          </li>
+        ))}
+        {tickets.length === 0 && <li className="card py-8 text-center text-sm text-muted">No tickets here.</li>}
+      </ul>
+
+      <div className="card hidden overflow-x-auto p-0 sm:block">
         <table className="table">
           <thead>
             <tr><th>Name</th><th>Reference</th><th>Type</th><th>Price</th><th>Status</th><th>Booked</th><th></th></tr>
@@ -156,7 +202,7 @@ function Stat({ label, value, warn }: { label: string; value: string; warn?: boo
 
 function RowAction(props: { action: (fd: FormData) => Promise<void>; ticketId: string; eventId: string; filter: string; label: string; className: string }) {
   return (
-    <form action={props.action}>
+    <form action={props.action} className={props.className.includes("w-full") ? "w-full" : undefined}>
       <input type="hidden" name="ticket_id" value={props.ticketId} />
       <input type="hidden" name="event_id" value={props.eventId} />
       <input type="hidden" name="filter" value={props.filter} />

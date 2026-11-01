@@ -48,7 +48,25 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
       {rows.length === 0 ? (
         <div className="card"><EmptyState illustration="allDone" title={status === "submitted" ? "All caught up" : "Nothing here"}>{status === "submitted" ? "No claims are waiting for review." : "No claims in this list."}</EmptyState></div>
       ) : (
-        <div className="card overflow-x-auto p-0">
+        <>
+        <ul className="space-y-3 sm:hidden">
+          {rows.map((c) => (
+            <li key={c.id}>
+              <Link href={`/claims/${c.id}`} className="card-link block space-y-1 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="min-w-0 font-medium leading-snug">{c.current.description.slice(0, 80)}</p>
+                  <p className="shrink-0 font-semibold tabular-nums">{formatPrice(c.current.amount_cents)}</p>
+                </div>
+                <p className="text-xs text-muted">
+                  {c.claimant?.full_name ?? c.claimant?.email ?? "-"} · {c.reference} · {formatDate(c.updated_at)}
+                  {c.current_revision > 1 && ` · version ${c.current_revision}`}
+                  {c.claimant_id === session.userId && " · your own claim"}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="card hidden overflow-x-auto p-0 sm:block">
           <table className="table">
             <thead>
               <tr><th>Claim</th><th>By</th><th>Amount</th><th>Updated</th></tr>
@@ -71,6 +89,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

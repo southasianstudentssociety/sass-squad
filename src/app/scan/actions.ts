@@ -37,6 +37,22 @@ export async function checkInAction(
   return { response: data as CheckInResponse, counts: await counts(eventId) };
 }
 
+/** Step 1: look up a ticket without admitting anyone. Valid tickets come back as "valid". */
+export async function previewAction(
+  eventId: string,
+  input: { qr?: string; ticketId?: string },
+): Promise<{ response?: CheckInResponse; error?: string }> {
+  await requireStaff();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("preview_ticket", {
+    p_event_id: eventId,
+    p_qr: input.qr ?? null,
+    p_ticket_id: input.ticketId ?? null,
+  });
+  if (error) return { error: error.code === "P0001" ? error.message : "Network or server error. Try again or use the printed list." };
+  return { response: data as CheckInResponse };
+}
+
 export type SearchRow = Pick<
   Ticket,
   "id" | "holder_name" | "holder_email" | "is_member" | "status" | "checked_in_at" | "payment_reference" | "price_cents" | "source"

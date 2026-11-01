@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRef } from "react";
 import { motion } from "motion/react";
 import { Menu } from "@base-ui/react/menu";
-import { Boxes, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
+import { Boxes, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -31,6 +31,7 @@ export function NavBar({ user }: { user: User | null }) {
   const team = user?.isTeam || user?.isAdmin
     ? [
         ...(user.isTeam ? [
+          { href: "/calendar", label: "Calendar", icon: CalendarDays },
           { href: "/tasks", label: "Tasks", icon: ClipboardList },
           { href: "/claims", label: "Claims", icon: Receipt },
           { href: "/inventory", label: "Inventory", icon: Boxes },

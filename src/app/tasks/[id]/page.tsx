@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { claimableEvents } from "@/lib/claim-data";
 import { teamNames } from "@/lib/inventory";
 import { formatDate, formatDateTime, todayInHongKong } from "@/lib/format";
-import { OPEN_STATUSES, TASK_STATUS } from "@/lib/tasks";
+import { OPEN_STATUSES, TASK_KIND, TASK_STATUS, formatTaskTime } from "@/lib/tasks";
 import type { Department, Task, TaskLogEntry, TaskStatus } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
@@ -14,7 +14,7 @@ import { setTaskStatus, updateTask } from "../actions";
 export const metadata = { title: "Task" };
 
 const FIELD_LABEL: Record<string, string> = {
-  department_id: "department", title: "title", description: "details", event_id: "event", owner_id: "owner", due_on: "due date",
+  department_id: "department", title: "title", description: "details", event_id: "event", owner_id: "owner", due_on: "date", due_time: "time", kind: "type",
 };
 
 export default async function TaskPage({
@@ -56,11 +56,14 @@ export default async function TaskPage({
     <div className="mx-auto max-w-2xl space-y-6">
       <Link href="/tasks" className="text-xs text-muted underline">← Tasks</Link>
       <div className="space-y-1">
-        <span className={`badge ${TASK_STATUS[task.status].cls}`}>{TASK_STATUS[task.status].label}</span>
+        <div className="flex flex-wrap gap-1.5">
+          <span className={`badge ${TASK_STATUS[task.status].cls}`}>{TASK_STATUS[task.status].label}</span>
+          <span className={`badge ${TASK_KIND[task.kind].chip}`}>{TASK_KIND[task.kind].short}</span>
+        </div>
         <h1 className="text-3xl font-display font-normal">{task.title}</h1>
         <p className="text-sm text-muted">
           {deptName.get(task.department_id)}{eventTitle && ` · ${eventTitle}`} · {task.owner_id ? name(task.owner_id) : "Unassigned"}
-          {task.due_on && <span className={overdue ? "font-semibold text-bad" : undefined}> · due {formatDate(task.due_on)}{overdue && " (overdue)"}</span>}
+          {task.due_on && <span className={overdue ? "font-semibold text-bad" : undefined}> · {task.kind === "upload" ? "goes up" : "due"} {formatDate(task.due_on)}{task.due_time && ` ${formatTaskTime(task.due_time)}`}{overdue && " (overdue)"}</span>}
         </p>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />
@@ -116,8 +119,20 @@ export default async function TaskPage({
               </select>
             </div>
             <div>
-              <label className="label text-xs" htmlFor="et-due">Due</label>
-              <input id="et-due" name="due_on" type="date" defaultValue={task.due_on ?? ""} className="input" />
+              <label className="label text-xs" htmlFor="et-kind">Type</label>
+              <select id="et-kind" name="kind" defaultValue={task.kind} className="input">
+                {Object.entries(TASK_KIND).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <div>
+                <label className="label text-xs" htmlFor="et-due">Date</label>
+                <input id="et-due" name="due_on" type="date" defaultValue={task.due_on ?? ""} className="input" />
+              </div>
+              <div>
+                <label className="label text-xs" htmlFor="et-time">Time</label>
+                <input id="et-time" name="due_time" type="time" defaultValue={task.due_time?.slice(0, 5) ?? ""} className="input w-28" />
+              </div>
             </div>
             <div className="sm:col-span-2">
               <label className="label text-xs" htmlFor="et-desc">Details</label>
