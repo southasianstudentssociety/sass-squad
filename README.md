@@ -15,6 +15,7 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | Non-members | Get tickets at the non-member price. Paid tickets stay **Awaiting payment** until Finance marks them paid |
 | Subcommittee and door volunteers | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count. Only from 24h before an event until 12h after it ends; they can't see other people's profiles or other events' attendees |
 | Team members (ExCo and subcommittee) | Submit reimbursement claims with a receipt photo, see their status, fix and resubmit if rejected |
+| Team members (inventory) | See what the society owns, where it is and who has it; check items out to a team member and record returns |
 | Finance (ExCo in a department marked *handles finance*) | See every claim and receipt, approve or reject, mark paid, download all claims as CSV. Can't review or pay their own claim |
 | ExCo | Create and edit events, confirm FPS payments, cancel tickets, undo check-ins, import and manage members, CSV and printable guest lists, manage the team |
 
@@ -25,6 +26,7 @@ All the ticket rules live in Postgres functions (`supabase/migrations/`), so the
 - `check_in`: one atomic update, so two scanners can't both accept the same ticket. Returns *ok / already used / unpaid / cancelled / wrong event / invalid*
 - `create_door_ticket`, `confirm_payment`, `cancel_ticket`, `undo_check_in`
 - `submit_claim`, `revise_claim`, `withdraw_claim`, `review_claim`, `mark_claim_paid`: reimbursements. Claims are never edited: a change is a new revision, every status change is logged with who, when and which revision, and approval is tied to the revision Finance actually saw. Receipts live in the private `receipts` Storage bucket (uploaded straight from the phone, readable only by the claimant and Finance, can't be overwritten or deleted)
+- `create_inventory_item`, `update_inventory_item`, `adjust_inventory`, `check_out_item`, `return_item`, `retire_inventory_item`: inventory. Team members check out and return; ExCo adds, edits, recounts and retires. Partial loans are supported, items not returned are logged as lost and taken off the count, and every change goes to `inventory_log`
 - `add_team_member`, `end_team_membership`, `set_door_staff`, `remove_door_staff`, `my_access`: team and access. RLS uses `private.is_admin()` (active ExCo) and `private.is_staff()` (active team member or door volunteer)
 
 ## Setup

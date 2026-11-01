@@ -76,6 +76,12 @@ export async function requireAdmin(next?: string): Promise<Session> {
   return session;
 }
 
+export async function requireTeam(next?: string): Promise<Session> {
+  const session = await requireUser(next);
+  if (!session.access.isTeam) redirect("/");
+  return session;
+}
+
 export async function requireFinance(next?: string): Promise<Session> {
   const session = await requireUser(next);
   if (!session.access.isFinance) redirect("/");

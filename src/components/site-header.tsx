@@ -17,6 +17,7 @@ export async function SiteHeader() {
           {session && <NavLink href="/tickets">My tickets</NavLink>}
           {access?.isStaff && <NavLink href="/scan">Scan</NavLink>}
           {access?.isTeam && <NavLink href="/claims">Claims</NavLink>}
+          {access?.isTeam && <NavLink href="/inventory">Inventory</NavLink>}
           {access?.isFinance && <NavLink href="/finance">Finance</NavLink>}
           {access?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
         </nav>
