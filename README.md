@@ -13,7 +13,7 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | Anyone | Browse events, log in with an emailed one-time code (uni or Gmail), set their name |
 | Members (email is on the member list and not expired) | Member price, early access, members-only events, one free ticket per event |
 | Non-members | Get tickets at the non-member price. Paid tickets stay **Awaiting payment** until Finance marks them paid |
-| Staff | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count |
+| Staff | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count. Only from 24h before an event until 12h after it ends; they can't see other people's profiles or other events' attendees |
 | Admins | Create and edit events, confirm FPS payments, cancel tickets, undo check-ins, import and manage members, CSV and printable guest lists, assign roles |
 
 All the ticket rules live in Postgres functions (`supabase/migrations/`), so they can't be bypassed from the browser:

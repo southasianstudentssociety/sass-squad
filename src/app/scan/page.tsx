@@ -2,16 +2,17 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
-import { hoursAgoIso } from "@/lib/events";
+import { hoursAgoIso, scanWindow } from "@/lib/events";
 
 export const metadata = { title: "Scan" };
 
 export default async function ScanIndex() {
-  await requireStaff("/scan");
+  const session = await requireStaff("/scan");
+  const isAdmin = session.profile.role === "admin";
   const supabase = await createClient();
   const { data } = await supabase
     .from("events")
-    .select("id, title, starts_at, venue, is_published")
+    .select("id, title, starts_at, ends_at, venue, is_published")
     .gte("starts_at", hoursAgoIso(48))
     .order("starts_at")
     .limit(20);
@@ -25,6 +26,11 @@ export default async function ScanIndex() {
             <Link href={`/scan/${e.id}`} className="card block hover:shadow-md">
               <p className="font-bold">{e.title} {!e.is_published && <span className="badge bg-warn/10 text-warn">Draft</span>}</p>
               <p className="text-sm text-muted">{formatDateTime(e.starts_at)}{e.venue && ` · ${e.venue}`}</p>
+              {!isAdmin && !scanWindow(e).open && (
+                <p className="mt-1 text-xs text-muted">
+                  {scanWindow(e).upcoming ? `Scanning opens ${formatDateTime(scanWindow(e).opensAt)}` : "Scanning closed"}
+                </p>
+              )}
             </Link>
           </li>
         ))}

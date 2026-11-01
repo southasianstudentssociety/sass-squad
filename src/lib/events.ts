@@ -31,3 +31,15 @@ export function eventIsOver(event: SassEvent, now = new Date()): boolean {
 export function hoursAgoIso(hours: number): string {
   return new Date(Date.now() - hours * 3600_000).toISOString();
 }
+
+/**
+ * Door-staff access window. Mirrors private.event_in_scan_window() in the DB:
+ * from 24h before start until 12h after end (end defaults to start + 12h).
+ */
+export function scanWindow(event: Pick<SassEvent, "starts_at" | "ends_at">, now = new Date()) {
+  const start = new Date(event.starts_at).getTime();
+  const end = event.ends_at ? new Date(event.ends_at).getTime() : start + 12 * 3600_000;
+  const opensAt = new Date(start - 24 * 3600_000);
+  const closesAt = new Date(end + 12 * 3600_000);
+  return { open: now >= opensAt && now <= closesAt, opensAt: opensAt.toISOString(), closesAt: closesAt.toISOString(), upcoming: now < opensAt };
+}
