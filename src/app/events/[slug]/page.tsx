@@ -8,6 +8,7 @@ import type { SassEvent } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { claimTicket } from "./actions";
+import { AddToCalendar } from "@/components/add-to-calendar";
 
 export default async function EventPage({
   params,
@@ -54,6 +55,7 @@ export default async function EventPage({
         </p>
         <h1 className="mt-3 font-display text-4xl leading-[1.1] sm:text-5xl">{event.title}</h1>
         {event.venue && <p className="mt-3 text-muted">{event.venue}</p>}
+        {!over && <AddToCalendar event={event} className="mt-5" />}
         {event.description && <div className="mt-8 max-w-prose whitespace-pre-line text-[15px] leading-relaxed text-ink/85">{event.description}</div>}
       </div>
 
