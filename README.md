@@ -32,7 +32,7 @@ Remaining dashboard steps:
 
 3. **Authentication → Sign In / Providers → Email:** enabled. "Confirm email" can stay on.
 4. **Authentication → URL Configuration:** set Site URL to your deployed URL, and add `http://localhost:3000/**` and `https://YOUR-DOMAIN/**` to Redirect URLs.
-5. **Authentication → Email Templates → Magic Link**, replace the body with:
+5. **Authentication → Email Templates:** update **both** "Confirm signup" (sent the first time someone logs in) and "Magic Link" (every login after that). Replace each body with the template below and click **Save** on each:
    ```html
    <h2>Your SASS login code</h2>
    <p style="font-size:28px;letter-spacing:6px"><strong>{{ .Token }}</strong></p>
