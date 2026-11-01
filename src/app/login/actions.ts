@@ -44,7 +44,7 @@ export async function sendCode(_prev: LoginState, formData: FormData): Promise<L
         : "Couldn't send the email. Check the address and try again.",
     };
   }
-  return { step: "code", email, info: `We sent a code and a login link to ${email}.` };
+  return { step: "code", email, info: `We sent a login code to ${email}.` };
 }
 
 export async function verifyCode(_prev: LoginState, formData: FormData): Promise<LoginState> {
