@@ -147,3 +147,46 @@ export type ClaimEvent = {
   note: string | null;
   created_at: string;
 };
+
+export type ItemCondition = "new" | "good" | "worn" | "damaged";
+export type InventoryAction = "created" | "edited" | "adjusted" | "checked_out" | "returned" | "lost" | "retired";
+
+export type InventoryItem = {
+  id: string;
+  name: string;
+  category: string | null;
+  location: string | null;
+  condition: ItemCondition;
+  quantity: number;
+  notes: string | null;
+  retired_at: string | null;
+  updated_at: string;
+  on_loan: number;
+  available: number;
+};
+
+export type InventoryLoan = {
+  id: string;
+  item_id: string;
+  borrower_id: string;
+  quantity: number;
+  event_id: string | null;
+  due_on: string | null;
+  note: string | null;
+  checked_out_at: string;
+  checked_out_by: string | null;
+  returned_at: string | null;
+  returned_quantity: number | null;
+};
+
+export type InventoryLogEntry = {
+  id: number;
+  item_id: string;
+  loan_id: string | null;
+  action: InventoryAction;
+  quantity_delta: number;
+  actor_id: string | null;
+  note: string | null;
+  details: Record<string, unknown> | null;
+  created_at: string;
+};

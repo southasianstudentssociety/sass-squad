@@ -18,7 +18,7 @@ A subcommittee member submits a claim (event, amount, description, receipt photo
 - Claims can't be edited after submission; changes are a new revision. Every status change records who made it and when.
 - Export for the treasurer's records and audits.
 
-## Phase 4: Inventory
+## Phase 4: Inventory (built, not yet stocked)
 Items the society owns (decorations, equipment, leftover stock): quantity, location, condition, who has it, and when it was checked out or returned, with history.
 
 ## Phase 5: Department task tracker
