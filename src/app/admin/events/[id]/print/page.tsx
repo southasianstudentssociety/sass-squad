@@ -36,7 +36,7 @@ export default async function PrintList({ params }: { params: Promise<{ id: stri
             <tr key={t.id} className="border-b border-gray-300">
               <td className="py-1.5"><span className="inline-block h-4 w-4 border border-black text-center leading-3">{t.checked_in_at ? "✓" : ""}</span></td>
               <td className="font-semibold">{t.holder_name}</td>
-              <td>{t.is_member ? "Member" : "Non-member"} {formatPrice(t.price_pence)}</td>
+              <td>{t.is_member ? "Member" : "Non-member"} {formatPrice(t.price_cents)}</td>
               <td>{t.status === "awaiting_payment" ? "UNPAID" : "OK"}</td>
               <td className="font-mono text-xs">{t.payment_reference}</td>
             </tr>

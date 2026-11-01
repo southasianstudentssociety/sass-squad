@@ -62,7 +62,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
             <dt className="text-muted">Name</dt>
             <dd className="text-right font-semibold">{t.holder_name}</dd>
             <dt className="text-muted">Ticket</dt>
-            <dd className="text-right">{t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_pence)}</dd>
+            <dd className="text-right">{t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}</dd>
             <dt className="text-muted">Reference</dt>
             <dd className="text-right font-mono">{t.payment_reference}</dd>
             <dt className="text-muted">Status</dt>
@@ -85,7 +85,7 @@ function PaymentPanel({ ticket }: { ticket: Row }) {
     <div className="space-y-3 text-sm">
       <p className="text-base font-bold text-warn">Payment needed</p>
       <p>
-        Send <strong>{formatPrice(ticket.price_pence)}</strong> by bank transfer and use this exact reference:
+        Send <strong>{formatPrice(ticket.price_cents)}</strong> by FPS and put this exact reference in the remarks:
       </p>
       <p className="rounded-xl bg-brand-soft py-3 text-center font-mono text-2xl font-bold tracking-wider">{ticket.payment_reference}</p>
       {ticket.event.payment_instructions ? (

@@ -51,8 +51,8 @@ export default async function ManageEvent({
   });
 
   const confirmed = all.filter((t) => t.status === "confirmed");
-  const revenue = confirmed.reduce((s, t) => s + t.price_pence, 0);
-  const owed = all.filter((t) => t.status === "awaiting_payment").reduce((s, t) => s + t.price_pence, 0);
+  const revenue = confirmed.reduce((s, t) => s + t.price_cents, 0);
+  const owed = all.filter((t) => t.status === "awaiting_payment").reduce((s, t) => s + t.price_cents, 0);
 
   return (
     <div className="space-y-5">
@@ -71,8 +71,8 @@ export default async function ManageEvent({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Confirmed" value={`${confirmed.length}${event.capacity ? ` / ${event.capacity}` : ""}`} />
         <Stat label="Checked in" value={String(all.filter((t) => t.checked_in_at).length)} />
-        <Stat label="Confirmed revenue" value={formatPrice(revenue).replace("Free", "£0.00")} />
-        <Stat label="Awaiting payment" value={formatPrice(owed).replace("Free", "£0.00")} warn={owed > 0} />
+        <Stat label="Confirmed revenue" value={formatPrice(revenue).replace("Free", "HK$0.00")} />
+        <Stat label="Awaiting payment" value={formatPrice(owed).replace("Free", "HK$0.00")} warn={owed > 0} />
       </div>
 
       <FormMessage error={sp.error} success={sp.ok} />
@@ -116,7 +116,7 @@ export default async function ManageEvent({
                   {t.is_member ? "Member" : "Non-member"}
                   {t.source !== "online" && <><br />{t.source === "comp" ? "Comp" : "Walk-in"}</>}
                 </td>
-                <td>{formatPrice(t.price_pence)}</td>
+                <td>{formatPrice(t.price_cents)}</td>
                 <td className="whitespace-nowrap">
                   <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />
                   {t.checked_in_at && <p className="text-xs text-muted">{formatTime(t.checked_in_at)}</p>}

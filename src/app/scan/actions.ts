@@ -39,7 +39,7 @@ export async function checkInAction(
 
 export type SearchRow = Pick<
   Ticket,
-  "id" | "holder_name" | "holder_email" | "is_member" | "status" | "checked_in_at" | "payment_reference" | "price_pence" | "source"
+  "id" | "holder_name" | "holder_email" | "is_member" | "status" | "checked_in_at" | "payment_reference" | "price_cents" | "source"
 >;
 
 export async function searchTickets(eventId: string, q: string): Promise<SearchRow[]> {
@@ -49,7 +49,7 @@ export async function searchTickets(eventId: string, q: string): Promise<SearchR
   const supabase = await createClient();
   const { data } = await supabase
     .from("tickets")
-    .select("id, holder_name, holder_email, is_member, status, checked_in_at, payment_reference, price_pence, source")
+    .select("id, holder_name, holder_email, is_member, status, checked_in_at, payment_reference, price_cents, source")
     .eq("event_id", eventId)
     .neq("status", "cancelled")
     .or(`holder_name.ilike.%${term}%,holder_email.ilike.%${term}%,payment_reference.ilike.%${term}%`)
@@ -60,18 +60,18 @@ export async function searchTickets(eventId: string, q: string): Promise<SearchR
 
 export async function createDoorTicketAction(
   eventId: string,
-  form: { name: string; email: string; pounds: string; source: TicketSource; checkIn: boolean; notes: string },
+  form: { name: string; email: string; dollars: string; source: TicketSource; checkIn: boolean; notes: string },
 ): Promise<{ ok?: string; error?: string; counts?: Counts }> {
   await requireStaff();
-  const pence = Math.round(Number(form.pounds.replace(/[£,\s]/g, "") || "0") * 100);
-  if (!Number.isFinite(pence) || pence < 0) return { error: "Enter a valid amount." };
+  const cents = Math.round(Number(form.dollars.replace(/[HK$,\s]/g, "") || "0") * 100);
+  if (!Number.isFinite(cents) || cents < 0) return { error: "Enter a valid amount." };
   const supabase = await createClient();
   const { data, error } = await supabase
     .rpc("create_door_ticket", {
       p_event_id: eventId,
       p_name: form.name,
       p_email: form.email,
-      p_price_pence: pence,
+      p_price_cents: cents,
       p_source: form.source,
       p_check_in: form.checkIn,
       p_notes: form.notes || null,

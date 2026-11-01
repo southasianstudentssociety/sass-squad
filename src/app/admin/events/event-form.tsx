@@ -1,9 +1,9 @@
 import { saveEvent, deleteEvent } from "../actions";
-import { isoToLondonLocal } from "@/lib/format";
+import { isoToLocal } from "@/lib/format";
 import type { SassEvent } from "@/lib/types";
 import { SubmitButton } from "@/components/submit-button";
 
-const pounds = (p?: number) => (p == null ? "0" : (p / 100).toFixed(2));
+const dollars = (p?: number) => (p == null ? "0" : (p / 100).toFixed(2));
 
 export function EventForm({ event }: { event?: SassEvent }) {
   return (
@@ -19,11 +19,11 @@ export function EventForm({ event }: { event?: SassEvent }) {
         <Field label="Venue">
           <input name="venue" defaultValue={event?.venue ?? ""} className="input" />
         </Field>
-        <Field label="Starts (UK time)">
-          <input name="starts_at" type="datetime-local" required defaultValue={isoToLondonLocal(event?.starts_at)} className="input" />
+        <Field label="Starts (HK time)">
+          <input name="starts_at" type="datetime-local" required defaultValue={isoToLocal(event?.starts_at)} className="input" />
         </Field>
-        <Field label="Ends (UK time, optional)">
-          <input name="ends_at" type="datetime-local" defaultValue={isoToLondonLocal(event?.ends_at)} className="input" />
+        <Field label="Ends (HK time, optional)">
+          <input name="ends_at" type="datetime-local" defaultValue={isoToLocal(event?.ends_at)} className="input" />
         </Field>
         <Field label="Description" className="sm:col-span-2">
           <textarea name="description" rows={5} defaultValue={event?.description ?? ""} className="input" />
@@ -42,22 +42,22 @@ export function EventForm({ event }: { event?: SassEvent }) {
         <Field label="Capacity (optional)" hint="Online tickets stop at this number. Door tickets can still be added.">
           <input name="capacity" type="number" min={1} defaultValue={event?.capacity ?? ""} className="input" />
         </Field>
-        <Field label="Member price (£)" hint="0 = free member ticket">
-          <input name="member_price" inputMode="decimal" defaultValue={pounds(event?.member_price_pence)} className="input" />
+        <Field label="Member price (HK$)" hint="0 = free member ticket">
+          <input name="member_price" inputMode="decimal" defaultValue={dollars(event?.member_price_cents)} className="input" />
         </Field>
-        <Field label="Non-member price (£)">
-          <input name="public_price" inputMode="decimal" defaultValue={pounds(event?.public_price_pence)} className="input" />
+        <Field label="Non-member price (HK$)">
+          <input name="public_price" inputMode="decimal" defaultValue={dollars(event?.public_price_cents)} className="input" />
         </Field>
         <Field label="Member sales open (optional)" hint="Blank = same as general sales">
-          <input name="member_sales_open_at" type="datetime-local" defaultValue={isoToLondonLocal(event?.member_sales_open_at)} className="input" />
+          <input name="member_sales_open_at" type="datetime-local" defaultValue={isoToLocal(event?.member_sales_open_at)} className="input" />
         </Field>
         <Field label="General sales open (optional)" hint="Blank = open as soon as published">
-          <input name="public_sales_open_at" type="datetime-local" defaultValue={isoToLondonLocal(event?.public_sales_open_at)} className="input" />
+          <input name="public_sales_open_at" type="datetime-local" defaultValue={isoToLocal(event?.public_sales_open_at)} className="input" />
         </Field>
         <Field label="Sales close (optional)">
-          <input name="sales_close_at" type="datetime-local" defaultValue={isoToLondonLocal(event?.sales_close_at)} className="input" />
+          <input name="sales_close_at" type="datetime-local" defaultValue={isoToLocal(event?.sales_close_at)} className="input" />
         </Field>
-        <Field label="Bank transfer instructions" className="sm:col-span-2" hint="Shown to people with unpaid tickets: account name, sort code, account number.">
+        <Field label="FPS payment instructions" className="sm:col-span-2" hint="Shown to people with unpaid tickets: FPS ID or phone number, account name, and to put the reference in the remarks.">
           <textarea name="payment_instructions" rows={3} defaultValue={event?.payment_instructions ?? ""} className="input font-mono text-sm" />
         </Field>
 

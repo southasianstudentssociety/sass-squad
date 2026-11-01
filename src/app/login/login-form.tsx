@@ -24,7 +24,7 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
           <label className="label" htmlFor="email">Email</label>
           <input
             id="email" name="email" type="email" required autoComplete="email" inputMode="email"
-            defaultValue={email} placeholder="you@uni.ac.uk or you@gmail.com" className="input"
+            defaultValue={email} placeholder="your uni email or Gmail" className="input"
           />
           <p className="hint">Use the email your membership is under, so we can recognise you as a member.</p>
         </div>

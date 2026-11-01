@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { londonLocalToIso, poundsToPence, slugify } from "@/lib/format";
-import { parseCsv, parseUkDate } from "@/lib/csv";
+import { localToIso, dollarsToCents, slugify } from "@/lib/format";
+import { parseCsv, parseDayFirstDate } from "@/lib/csv";
 
 function back(path: string, params: Record<string, string>): never {
   const qs = new URLSearchParams(params).toString();
@@ -22,7 +22,7 @@ export async function saveEvent(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const slug = slugify(String(formData.get("slug") ?? "") || title);
-  const startsAt = londonLocalToIso(String(formData.get("starts_at") ?? ""));
+  const startsAt = localToIso(String(formData.get("starts_at") ?? ""));
   const returnTo = id ? `/admin/events/${id}/edit` : "/admin/events/new";
 
   if (!title) back(returnTo, { error: "Title is required." });
@@ -36,16 +36,16 @@ export async function saveEvent(formData: FormData) {
     description: String(formData.get("description") ?? "").trim() || null,
     venue: String(formData.get("venue") ?? "").trim() || null,
     starts_at: startsAt,
-    ends_at: londonLocalToIso(String(formData.get("ends_at") ?? "")),
+    ends_at: localToIso(String(formData.get("ends_at") ?? "")),
     cover_image_url: String(formData.get("cover_image_url") ?? "").trim() || null,
     is_published: formData.get("is_published") === "on",
     access: formData.get("access") === "members_only" ? "members_only" : "everyone",
-    member_price_pence: poundsToPence(formData.get("member_price")),
-    public_price_pence: poundsToPence(formData.get("public_price")),
+    member_price_cents: dollarsToCents(formData.get("member_price")),
+    public_price_cents: dollarsToCents(formData.get("public_price")),
     capacity: capacityRaw ? Math.max(1, parseInt(capacityRaw, 10) || 1) : null,
-    member_sales_open_at: londonLocalToIso(String(formData.get("member_sales_open_at") ?? "")),
-    public_sales_open_at: londonLocalToIso(String(formData.get("public_sales_open_at") ?? "")),
-    sales_close_at: londonLocalToIso(String(formData.get("sales_close_at") ?? "")),
+    member_sales_open_at: localToIso(String(formData.get("member_sales_open_at") ?? "")),
+    public_sales_open_at: localToIso(String(formData.get("public_sales_open_at") ?? "")),
+    sales_close_at: localToIso(String(formData.get("sales_close_at") ?? "")),
     payment_instructions: String(formData.get("payment_instructions") ?? "").trim() || null,
   };
 
@@ -101,13 +101,13 @@ export async function saveMember(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const validUntil = parseUkDate(String(formData.get("valid_until") ?? ""));
+  const validUntil = parseDayFirstDate(String(formData.get("valid_until") ?? ""));
   const row = {
     full_name: String(formData.get("full_name") ?? "").trim(),
     email,
     alt_email: String(formData.get("alt_email") ?? "").trim().toLowerCase() || null,
     student_id: String(formData.get("student_id") ?? "").trim() || null,
-    purchased_at: parseUkDate(String(formData.get("purchased_at") ?? "")),
+    purchased_at: parseDayFirstDate(String(formData.get("purchased_at") ?? "")),
     valid_until: validUntil,
     notes: String(formData.get("notes") ?? "").trim() || null,
     updated_at: new Date().toISOString(),
@@ -143,7 +143,7 @@ const HEADER_ALIASES: Record<string, string[]> = {
 export async function importMembers(formData: FormData) {
   await requireAdmin();
   const file = formData.get("file");
-  const defaultValid = parseUkDate(String(formData.get("default_valid_until") ?? ""));
+  const defaultValid = parseDayFirstDate(String(formData.get("default_valid_until") ?? ""));
   const text = file instanceof File && file.size > 0 ? await file.text() : String(formData.get("csv") ?? "");
   const rows = parseCsv(text);
   if (rows.length < 2) back("/admin/members", { error: "No rows found. Export the Google Sheet as CSV (File → Download → .csv) and upload it." });
@@ -160,7 +160,7 @@ export async function importMembers(formData: FormData) {
   for (const [n, r] of rows.slice(1).entries()) {
     const get = (k: string) => (idx[k] >= 0 ? (r[idx[k]] ?? "").trim() : "");
     const email = get("email").toLowerCase();
-    const validUntil = parseUkDate(get("valid_until")) ?? defaultValid;
+    const validUntil = parseDayFirstDate(get("valid_until")) ?? defaultValid;
     if (!email || !email.includes("@")) { skipped.push(`row ${n + 2}: no email`); continue; }
     if (!validUntil) { skipped.push(`row ${n + 2}: no valid-until date`); continue; }
     byEmail.set(email, {
@@ -168,7 +168,7 @@ export async function importMembers(formData: FormData) {
       email,
       alt_email: get("alt_email").toLowerCase() || null,
       student_id: get("student_id") || null,
-      purchased_at: parseUkDate(get("purchased_at")),
+      purchased_at: parseDayFirstDate(get("purchased_at")),
       valid_until: validUntil,
       updated_at: new Date().toISOString(),
     });

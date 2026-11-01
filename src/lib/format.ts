@@ -1,13 +1,13 @@
-export const TIME_ZONE = "Europe/London";
+export const TIME_ZONE = "Asia/Hong_Kong";
 
-export function formatPrice(pence: number): string {
-  if (pence === 0) return "Free";
-  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);
+export function formatPrice(cents: number): string {
+  if (cents === 0) return "Free";
+  return new Intl.NumberFormat("en-HK", { style: "currency", currency: "HKD" }).format(cents / 100);
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("en-HK", {
     timeZone: TIME_ZONE,
     weekday: "short",
     day: "numeric",
@@ -19,7 +19,7 @@ export function formatDateTime(iso: string | null | undefined): string {
 
 export function formatTime(iso: string | null | undefined): string {
   if (!iso) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("en-HK", {
     timeZone: TIME_ZONE,
     hour: "2-digit",
     minute: "2-digit",
@@ -28,7 +28,7 @@ export function formatTime(iso: string | null | undefined): string {
 
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "";
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("en-HK", {
     timeZone: TIME_ZONE,
     day: "numeric",
     month: "short",
@@ -38,7 +38,7 @@ export function formatDate(iso: string | null | undefined): string {
 
 /** Offset (ms) of TIME_ZONE from UTC at the given instant. */
 function tzOffsetMs(at: Date): number {
-  const parts = new Intl.DateTimeFormat("en-GB", {
+  const parts = new Intl.DateTimeFormat("en-HK", {
     timeZone: TIME_ZONE,
     hourCycle: "h23",
     year: "numeric",
@@ -53,8 +53,8 @@ function tzOffsetMs(at: Date): number {
   return asUtc - at.getTime();
 }
 
-/** "2026-11-08T19:00" (London wall-clock, from <input type="datetime-local">) -> ISO UTC. */
-export function londonLocalToIso(value: string | null | undefined): string | null {
+/** "2026-11-08T19:00" (Hong Kong wall-clock, from <input type="datetime-local">) -> ISO UTC. */
+export function localToIso(value: string | null | undefined): string | null {
   if (!value) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value);
   if (!m) return null;
@@ -64,16 +64,16 @@ export function londonLocalToIso(value: string | null | undefined): string | nul
   return new Date(guess).toISOString();
 }
 
-/** ISO UTC -> "YYYY-MM-DDTHH:mm" in London time, for datetime-local inputs. */
-export function isoToLondonLocal(iso: string | null | undefined): string {
+/** ISO UTC -> "YYYY-MM-DDTHH:mm" in Hong Kong time, for datetime-local inputs. */
+export function isoToLocal(iso: string | null | undefined): string {
   if (!iso) return "";
   const d = new Date(iso);
   const local = new Date(d.getTime() + tzOffsetMs(d));
   return local.toISOString().slice(0, 16);
 }
 
-export function poundsToPence(value: FormDataEntryValue | null): number {
-  const n = Number(String(value ?? "0").replace(/[£,\s]/g, ""));
+export function dollarsToCents(value: FormDataEntryValue | null): number {
+  const n = Number(String(value ?? "0").replace(/[HK$,\s]/g, ""));
   if (!Number.isFinite(n) || n < 0) return 0;
   return Math.round(n * 100);
 }

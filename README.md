@@ -2,7 +2,9 @@
 
 Members hub for the South Asian Student Society: events, member-only pricing and early access, QR tickets, and a door scanner.
 
-**Stack:** Next.js 16 (App Router) · Supabase (Postgres, Auth) · Tailwind v4 · deploy on Vercel.
+**Stack:** Next.js 16 (App Router) · Supabase (Postgres, Auth; Singapore region) · Tailwind v4 · deploy on Vercel.
+
+Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src/lib/format.ts`, plus `Asia/Hong_Kong` in the membership expiry check in the migrations).
 
 ## What's in Phase 1
 
@@ -22,9 +24,12 @@ All the ticket rules live in Postgres functions (`supabase/migrations/`), so the
 ## Setup
 
 ### 1. Supabase project
-1. Create a project at supabase.com. Use a **society-owned email** so it survives committee handover.
-2. Open the **SQL Editor**, paste in `supabase/migrations/20261101000000_init.sql` and run it.
-   (Or with the CLI: `supabase link` then `supabase db push`.)
+The project already exists: **sass-squad** in the **SASS Org** organisation, region Singapore (`ap-southeast-1`), URL `https://cvtxpnwfkowaggyzrbai.supabase.co`. Both migrations in `supabase/migrations/` have been applied. New committee members should be invited to SASS Org under their own account, not given a shared login.
+
+To set up a fresh project instead, run the files in `supabase/migrations/` in order in the SQL Editor, or use `supabase link` then `supabase db push`.
+
+Remaining dashboard steps:
+
 3. **Authentication → Sign In / Providers → Email:** enabled. "Confirm email" can stay on.
 4. **Authentication → URL Configuration:** set Site URL to your deployed URL, and add `http://localhost:3000/**` and `https://YOUR-DOMAIN/**` to Redirect URLs.
 5. **Authentication → Email Templates → Magic Link**, replace the body with:
@@ -38,7 +43,7 @@ All the ticket rules live in Postgres functions (`supabase/migrations/`), so the
 
 ### 2. Run locally
 ```bash
-cp .env.example .env.local   # fill in URL + publishable key from Supabase → Settings → API
+cp .env.example .env.local   # already points at the sass-squad project
 npm install
 npm run dev
 ```
@@ -58,8 +63,8 @@ Import the repo in Vercel and set the three env vars from `.env.example` (`NEXT_
 
 ## Running an event
 
-1. **Admin → New event.** Set prices (member £0 = free member ticket), access, capacity, sales windows, and bank details for paid tickets. Tick **Published**.
-2. Paid tickets: the attendee sees the amount and a unique reference like `SASS-7K3QX`. Finance checks the bank app and clicks **Mark paid** on the event page. Their QR code then appears.
+1. **Admin → New event.** Set prices (member HK$0 = free member ticket), access, capacity, sales windows, and FPS details for paid tickets. Tick **Published**.
+2. Paid tickets: the attendee sees the amount and a unique reference like `SASS-7K3QX`. Finance checks the FPS transfers in their banking app and clicks **Mark paid** on the event page. Their QR code then appears.
 3. **On the night:** print the guest list beforehand (**Admin → event → Printable guest list**). Staff open **Scan** on their phones.
    - Green = let in. Red **ALREADY USED** shows the time of the first scan, so check ID because it may be a shared screenshot.
    - **Find name** if someone's phone is dead. **Walk-in** for door payments and comps.

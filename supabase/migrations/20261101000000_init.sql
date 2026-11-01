@@ -3,8 +3,9 @@
 -- (membership, sales windows, capacity, single-use check-in) are enforced in
 -- the database, not just in the UI.
 
-create extension if not exists citext;
-create extension if not exists pgcrypto;
+create schema if not exists extensions;
+create extension if not exists citext with schema extensions;
+create extension if not exists pgcrypto with schema extensions;
 
 -- ---------------------------------------------------------------------------
 -- Types
@@ -31,7 +32,7 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 begin
   insert into public.profiles (id, email) values (new.id, new.email)
@@ -74,8 +75,8 @@ create table public.events (
   cover_image_url text,
   is_published boolean not null default false,
   access public.event_access not null default 'everyone',
-  member_price_pence integer not null default 0 check (member_price_pence >= 0),
-  public_price_pence integer not null default 0 check (public_price_pence >= 0),
+  member_price_cents integer not null default 0 check (member_price_cents >= 0),
+  public_price_cents integer not null default 0 check (public_price_cents >= 0),
   capacity integer check (capacity is null or capacity > 0),
   member_sales_open_at timestamptz,
   public_sales_open_at timestamptz,
@@ -94,7 +95,7 @@ create table public.tickets (
   holder_name text not null,
   holder_email citext,
   is_member boolean not null default false,
-  price_pence integer not null default 0,
+  price_cents integer not null default 0,
   status public.ticket_status not null,
   source public.ticket_source not null default 'online',
   payment_reference text not null unique,
@@ -132,38 +133,38 @@ create index scan_logs_event_idx on public.scan_logs (event_id, created_at desc)
 -- ---------------------------------------------------------------------------
 create or replace function public.current_role_name()
 returns public.user_role
-language sql stable security definer set search_path = public
+language sql stable security definer set search_path = public, extensions
 as $$ select role from public.profiles where id = auth.uid() $$;
 
 create or replace function public.is_staff()
 returns boolean
-language sql stable security definer set search_path = public
+language sql stable security definer set search_path = public, extensions
 as $$ select coalesce((select role in ('staff', 'admin') from public.profiles where id = auth.uid()), false) $$;
 
 create or replace function public.is_admin()
 returns boolean
-language sql stable security definer set search_path = public
+language sql stable security definer set search_path = public, extensions
 as $$ select coalesce((select role = 'admin' from public.profiles where id = auth.uid()), false) $$;
 
 create or replace function public.is_member_email(p_email citext)
 returns boolean
-language sql stable security definer set search_path = public
+language sql stable security definer set search_path = public, extensions
 as $$
   select p_email is not null and exists (
     select 1 from public.members m
     where (m.email = p_email or m.alt_email = p_email)
-      and m.valid_until >= (now() at time zone 'Europe/London')::date
+      and m.valid_until >= (now() at time zone 'Asia/Hong_Kong')::date
   )
 $$;
 
 create or replace function public.current_user_is_member()
 returns boolean
-language sql stable security definer set search_path = public
+language sql stable security definer set search_path = public, extensions
 as $$ select public.is_member_email((auth.jwt() ->> 'email')::citext) $$;
 
 create or replace function public.gen_payment_reference()
 returns text
-language plpgsql volatile set search_path = public
+language plpgsql volatile set search_path = public, extensions
 as $$
 declare
   alphabet constant text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; -- no 0/O/1/I/L
@@ -185,7 +186,7 @@ $$;
 -- ---------------------------------------------------------------------------
 create or replace function public.claim_ticket(p_event_id uuid)
 returns public.tickets
-language plpgsql security definer set search_path = public
+language plpgsql security definer set search_path = public, extensions
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -244,10 +245,10 @@ begin
     end if;
   end if;
 
-  v_price := case when v_member then v_event.member_price_pence else v_event.public_price_pence end;
+  v_price := case when v_member then v_event.member_price_cents else v_event.public_price_cents end;
 
   insert into public.tickets (
-    event_id, user_id, holder_name, holder_email, is_member, price_pence,
+    event_id, user_id, holder_name, holder_email, is_member, price_cents,
     status, source, payment_reference, confirmed_at
   ) values (
     p_event_id, v_uid, v_profile.full_name, v_profile.email, v_member, v_price,
@@ -272,7 +273,7 @@ create or replace function public.check_in(
   p_ticket_id uuid default null
 )
 returns jsonb
-language plpgsql security definer set search_path = public
+language plpgsql security definer set search_path = public, extensions
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -325,7 +326,7 @@ begin
       'holder_email', v_ticket.holder_email,
       'is_member', v_ticket.is_member,
       'member_now', public.is_member_email(v_ticket.holder_email),
-      'price_pence', v_ticket.price_pence,
+      'price_cents', v_ticket.price_cents,
       'status', v_ticket.status,
       'source', v_ticket.source,
       'payment_reference', v_ticket.payment_reference,
@@ -342,13 +343,13 @@ create or replace function public.create_door_ticket(
   p_event_id uuid,
   p_name text,
   p_email text,
-  p_price_pence integer,
+  p_price_cents integer,
   p_source public.ticket_source default 'walk_in',
   p_check_in boolean default true,
   p_notes text default null
 )
 returns public.tickets
-language plpgsql security definer set search_path = public
+language plpgsql security definer set search_path = public, extensions
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -370,11 +371,11 @@ begin
   end if;
 
   insert into public.tickets (
-    event_id, user_id, holder_name, holder_email, is_member, price_pence, status, source,
+    event_id, user_id, holder_name, holder_email, is_member, price_cents, status, source,
     payment_reference, confirmed_at, confirmed_by, checked_in_at, checked_in_by, notes
   ) values (
     p_event_id, null, trim(p_name), v_email, public.is_member_email(v_email),
-    greatest(coalesce(p_price_pence, 0), 0), 'confirmed', p_source,
+    greatest(coalesce(p_price_cents, 0), 0), 'confirmed', p_source,
     public.gen_payment_reference(), now(), v_uid,
     case when p_check_in then now() end, case when p_check_in then v_uid end, p_notes
   )
@@ -394,7 +395,7 @@ $$;
 -- ---------------------------------------------------------------------------
 create or replace function public.confirm_payment(p_ticket_id uuid)
 returns public.tickets
-language plpgsql security definer set search_path = public
+language plpgsql security definer set search_path = public, extensions
 as $$
 declare v_ticket public.tickets;
 begin
@@ -414,7 +415,7 @@ $$;
 
 create or replace function public.cancel_ticket(p_ticket_id uuid)
 returns public.tickets
-language plpgsql security definer set search_path = public
+language plpgsql security definer set search_path = public, extensions
 as $$
 declare v_ticket public.tickets;
 begin
@@ -433,7 +434,7 @@ $$;
 
 create or replace function public.undo_check_in(p_ticket_id uuid)
 returns public.tickets
-language plpgsql security definer set search_path = public
+language plpgsql security definer set search_path = public, extensions
 as $$
 declare v_ticket public.tickets;
 begin
@@ -452,7 +453,7 @@ $$;
 
 create or replace function public.set_user_role(p_email text, p_role public.user_role)
 returns public.profiles
-language plpgsql security definer set search_path = public
+language plpgsql security definer set search_path = public, extensions
 as $$
 declare v_profile public.profiles;
 begin

@@ -17,9 +17,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!event) return new NextResponse("Not found", { status: 404 });
 
   const csv = toCsv([
-    ["Name", "Email", "Member", "Status", "Price (£)", "Reference", "Source", "Checked in at", "Notes"],
+    ["Name", "Email", "Member", "Status", "Price (HK$)", "Reference", "Source", "Checked in at", "Notes"],
     ...(tickets ?? []).map((t) => [
-      t.holder_name, t.holder_email, t.is_member ? "yes" : "no", t.status, (t.price_pence / 100).toFixed(2),
+      t.holder_name, t.holder_email, t.is_member ? "yes" : "no", t.status, (t.price_cents / 100).toFixed(2),
       t.payment_reference, t.source, t.checked_in_at ?? "", t.notes ?? "",
     ]),
   ]);

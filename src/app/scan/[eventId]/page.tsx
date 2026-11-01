@@ -12,7 +12,7 @@ export default async function ScanEventPage({ params }: { params: Promise<{ even
   const supabase = await createClient();
   const { data: event } = await supabase
     .from("events")
-    .select("id, title, public_price_pence, member_price_pence")
+    .select("id, title, public_price_cents, member_price_cents")
     .eq("id", eventId)
     .maybeSingle();
   if (!event) notFound();
@@ -22,7 +22,7 @@ export default async function ScanEventPage({ params }: { params: Promise<{ even
     <ScanConsole
       eventId={event.id}
       title={event.title}
-      defaultWalkInPounds={(event.public_price_pence / 100).toFixed(2)}
+      defaultWalkInDollars={(event.public_price_cents / 100).toFixed(2)}
       initialCounts={counts}
       isAdmin={session.profile.role === "admin"}
     />

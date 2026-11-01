@@ -34,8 +34,8 @@ export type SassEvent = {
   cover_image_url: string | null;
   is_published: boolean;
   access: EventAccess;
-  member_price_pence: number;
-  public_price_pence: number;
+  member_price_cents: number;
+  public_price_cents: number;
   capacity: number | null;
   member_sales_open_at: string | null;
   public_sales_open_at: string | null;
@@ -50,7 +50,7 @@ export type Ticket = {
   holder_name: string;
   holder_email: string | null;
   is_member: boolean;
-  price_pence: number;
+  price_cents: number;
   status: TicketStatus;
   source: TicketSource;
   payment_reference: string;
@@ -77,7 +77,7 @@ export type CheckInResponse = {
     holder_email: string | null;
     is_member: boolean;
     member_now: boolean;
-    price_pence: number;
+    price_cents: number;
     status: TicketStatus;
     source: TicketSource;
     payment_reference: string;

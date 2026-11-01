@@ -23,7 +23,7 @@ const TONE_BG = { ok: "bg-ok", bad: "bg-bad", warn: "bg-warn" } as const;
 export function ScanConsole(props: {
   eventId: string;
   title: string;
-  defaultWalkInPounds: string;
+  defaultWalkInDollars: string;
   initialCounts: Counts;
   isAdmin: boolean;
 }) {
@@ -57,7 +57,7 @@ export function ScanConsole(props: {
 
       {tab === "scan" && <ScanTab eventId={props.eventId} onCounts={setCounts} />}
       {tab === "search" && <SearchTab eventId={props.eventId} onCounts={setCounts} />}
-      {tab === "door" && <DoorTab eventId={props.eventId} defaultPounds={props.defaultWalkInPounds} onCounts={setCounts} />}
+      {tab === "door" && <DoorTab eventId={props.eventId} defaultDollars={props.defaultWalkInDollars} onCounts={setCounts} />}
 
       {props.isAdmin && (
         <a href={`/admin/events/${props.eventId}/export`} className="block text-center text-xs text-muted underline">
@@ -88,7 +88,7 @@ function ResultCard({ res, error, onDismiss }: { res?: CheckInResponse; error?: 
         <div className="mt-3 space-y-1">
           <p className="text-2xl font-bold">{t.holder_name}</p>
           <p className="text-sm opacity-90">
-            {t.is_member ? "Member ticket" : "Non-member ticket"} · {formatPrice(t.price_pence)}
+            {t.is_member ? "Member ticket" : "Non-member ticket"} · {formatPrice(t.price_cents)}
             {t.source !== "online" && ` · ${t.source === "comp" ? "Comp" : "Door"}`}
           </p>
           {t.is_member && !t.member_now && (
@@ -232,7 +232,7 @@ function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Count
   );
 }
 
-function DoorTab({ eventId, defaultPounds, onCounts }: { eventId: string; defaultPounds: string; onCounts: (c: Counts) => void }) {
+function DoorTab({ eventId, defaultDollars, onCounts }: { eventId: string; defaultDollars: string; onCounts: (c: Counts) => void }) {
   const [msg, setMsg] = useState<{ ok?: string; error?: string }>({});
   const [pending, start] = useTransition();
   const [source, setSource] = useState<TicketSource>("walk_in");
@@ -243,7 +243,7 @@ function DoorTab({ eventId, defaultPounds, onCounts }: { eventId: string; defaul
       const out = await createDoorTicketAction(eventId, {
         name: String(fd.get("name") ?? ""),
         email: String(fd.get("email") ?? ""),
-        pounds: source === "comp" ? "0" : String(fd.get("pounds") ?? "0"),
+        dollars: source === "comp" ? "0" : String(fd.get("dollars") ?? "0"),
         source,
         checkIn: fd.get("check_in") === "on",
         notes: String(fd.get("notes") ?? ""),
@@ -273,8 +273,8 @@ function DoorTab({ eventId, defaultPounds, onCounts }: { eventId: string; defaul
       </div>
       {source === "walk_in" && (
         <div>
-          <label className="label" htmlFor="pounds">Amount paid (£)</label>
-          <input id="pounds" name="pounds" inputMode="decimal" defaultValue={defaultPounds} className="input" />
+          <label className="label" htmlFor="dollars">Amount paid (HK$)</label>
+          <input id="dollars" name="dollars" inputMode="decimal" defaultValue={defaultDollars} className="input" />
         </div>
       )}
       <div>

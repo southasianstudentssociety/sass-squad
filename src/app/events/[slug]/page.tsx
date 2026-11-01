@@ -59,9 +59,9 @@ export default async function EventPage({
 
       <aside className="card h-fit space-y-4 lg:sticky lg:top-20">
         <div className="space-y-1 text-sm">
-          <PriceRow label="Members" value={formatPrice(event.member_price_pence)} highlight={isMember} />
+          <PriceRow label="Members" value={formatPrice(event.member_price_cents)} highlight={isMember} />
           {event.access === "everyone" ? (
-            <PriceRow label="Non-members" value={formatPrice(event.public_price_pence)} highlight={!!session && !isMember} />
+            <PriceRow label="Non-members" value={formatPrice(event.public_price_cents)} highlight={!!session && !isMember} />
           ) : (
             <p className="text-muted">Members only</p>
           )}
@@ -100,7 +100,7 @@ export default async function EventPage({
               {yourPrice === 0 ? (isMember ? "Claim my free member ticket" : "Get free ticket") : `Get ticket · ${formatPrice(yourPrice)}`}
             </SubmitButton>
             {yourPrice > 0 && (
-              <p className="hint">You&apos;ll get bank transfer details and a payment reference on the next screen.</p>
+              <p className="hint">You&apos;ll get FPS payment details and a reference on the next screen.</p>
             )}
           </form>
         )}

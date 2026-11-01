@@ -21,9 +21,9 @@ export function EventCard({ event }: { event: SassEvent }) {
         <h3 className="text-lg font-bold group-hover:underline">{event.title}</h3>
         {event.venue && <p className="text-sm text-muted">{event.venue}</p>}
         <p className="mt-auto pt-2 text-sm">
-          <span className="font-semibold">Members: {formatPrice(event.member_price_pence)}</span>
+          <span className="font-semibold">Members: {formatPrice(event.member_price_cents)}</span>
           {event.access === "everyone" && (
-            <span className="text-muted"> · Non-members: {formatPrice(event.public_price_pence)}</span>
+            <span className="text-muted"> · Non-members: {formatPrice(event.public_price_cents)}</span>
           )}
         </p>
       </div>

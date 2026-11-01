@@ -57,7 +57,7 @@ function TicketList({ title, tickets, empty }: { title: string; tickets: Row[]; 
               <Link href={`/tickets/${t.id}`} className="card flex items-center justify-between gap-3 hover:shadow-md">
                 <div>
                   <p className="font-bold">{t.event.title}</p>
-                  <p className="text-sm text-muted">{formatDateTime(t.event.starts_at)} · {formatPrice(t.price_pence)}</p>
+                  <p className="text-sm text-muted">{formatDateTime(t.event.starts_at)} · {formatPrice(t.price_cents)}</p>
                 </div>
                 <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />
               </Link>

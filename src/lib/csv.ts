@@ -37,8 +37,8 @@ export function toCsv(rows: (string | number | boolean | null | undefined)[][]):
     .join("\r\n");
 }
 
-/** Accepts 2026-07-31, 31/07/2026, 31/7/26, 31-07-2026. UK day-first. Returns YYYY-MM-DD or null. */
-export function parseUkDate(v: string | undefined): string | null {
+/** Accepts 2026-07-31, 31/07/2026, 31/7/26, 31-07-2026. Day-first (DD/MM). Returns YYYY-MM-DD or null. */
+export function parseDayFirstDate(v: string | undefined): string | null {
   if (!v) return null;
   const s = v.trim();
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
