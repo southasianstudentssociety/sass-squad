@@ -26,7 +26,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const session = await getSession();
   const supabase = await createClient();
   const [{ data: departments }, { data: memberships }, { data: door }] = await Promise.all([
-    supabase.from("departments").select("id, name").order("name").returns<Department[]>(),
+    supabase.from("departments").select("id, name, handles_finance").order("name").returns<Department[]>(),
     supabase
       .from("team_memberships")
       .select("id, user_id, department_id, position, title, starts_on, ends_on, person:profiles!team_memberships_user_id_fkey(full_name, email)")
@@ -163,13 +163,20 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
 
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Departments</h2>
+        <p className="text-sm text-muted">
+          ExCo in a department that <strong>handles finance</strong> can see every reimbursement claim, receipt and payment detail, and approve and pay claims.
+          {!(departments ?? []).some((d) => d.handles_finance) && " No department handles finance yet, so nobody can approve claims."}
+        </p>
         <div className="card space-y-3">
           {(departments ?? []).map((d) => (
             <div key={d.id} className="flex flex-wrap items-center gap-2">
               <form action={saveDepartment} className="flex flex-1 gap-2">
                 <input type="hidden" name="id" value={d.id} />
                 <input name="name" defaultValue={d.name} required maxLength={60} aria-label={`Rename ${d.name}`} className="input" />
-                <SubmitButton className="btn-ghost" pendingText="Saving…">Rename</SubmitButton>
+                <label className="flex items-center gap-1.5 whitespace-nowrap text-sm">
+                  <input type="checkbox" name="handles_finance" defaultChecked={d.handles_finance} /> Handles finance
+                </label>
+                <SubmitButton className="btn-ghost" pendingText="Saving…">Save</SubmitButton>
               </form>
               <form action={deleteDepartment}>
                 <input type="hidden" name="id" value={d.id} />

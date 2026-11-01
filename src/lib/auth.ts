@@ -14,7 +14,7 @@ export type Session = {
   access: Access;
 };
 
-const NO_ACCESS: Access = { isAdmin: false, isStaff: false, termEnd: "" };
+const NO_ACCESS: Access = { isAdmin: false, isStaff: false, isTeam: false, isFinance: false, termEnd: "" };
 
 /** Current user + profile + live membership status, or null. Deduped per request. */
 export const getSession = cache(async (): Promise<Session | null> => {
@@ -35,7 +35,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
 
   const meta = user.user_metadata ?? {};
   const providerName = typeof meta.full_name === "string" ? meta.full_name : typeof meta.name === "string" ? meta.name : null;
-  const a = (access ?? {}) as { is_admin?: boolean; is_staff?: boolean; term_end?: string };
+  const a = (access ?? {}) as { is_admin?: boolean; is_staff?: boolean; is_team?: boolean; is_finance?: boolean; term_end?: string };
   return {
     userId: user.id,
     email: user.email ?? profile.email,
@@ -43,7 +43,15 @@ export const getSession = cache(async (): Promise<Session | null> => {
     profile,
     isMember: Boolean(isMember),
     // If the access check fails, fall back to no access rather than guessing.
-    access: access ? { isAdmin: a.is_admin === true, isStaff: a.is_staff === true, termEnd: a.term_end ?? "" } : NO_ACCESS,
+    access: access
+      ? {
+          isAdmin: a.is_admin === true,
+          isStaff: a.is_staff === true,
+          isTeam: a.is_team === true,
+          isFinance: a.is_finance === true,
+          termEnd: a.term_end ?? "",
+        }
+      : NO_ACCESS,
   };
 });
 
@@ -65,6 +73,12 @@ export async function requireStaff(next?: string): Promise<Session> {
 export async function requireAdmin(next?: string): Promise<Session> {
   const session = await requireUser(next);
   if (!session.access.isAdmin) redirect("/");
+  return session;
+}
+
+export async function requireFinance(next?: string): Promise<Session> {
+  const session = await requireUser(next);
+  if (!session.access.isFinance) redirect("/");
   return session;
 }
 

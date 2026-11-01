@@ -17,11 +17,15 @@ export type Access = {
   isAdmin: boolean;
   /** Active team membership or door-volunteer grant: the scanner. */
   isStaff: boolean;
+  /** Active team membership (ExCo or subcommittee): can submit reimbursement claims. */
+  isTeam: boolean;
+  /** Active ExCo in a department that handles finance: reviews and pays claims. */
+  isFinance: boolean;
   /** Default end date for new memberships (31 Aug of this academic year). */
   termEnd: string;
 };
 
-export type Department = { id: string; name: string };
+export type Department = { id: string; name: string; handles_finance: boolean };
 
 export type TeamMembership = {
   id: string;
@@ -106,4 +110,40 @@ export type CheckInResponse = {
     payment_reference: string;
     checked_in_at: string | null;
   } | null;
+};
+
+export type ClaimStatus = "submitted" | "approved" | "rejected" | "paid" | "withdrawn";
+export type PayoutMethod = "fps" | "bank_transfer" | "payme" | "cash";
+
+export type Claim = {
+  id: string;
+  reference: string;
+  claimant_id: string;
+  status: ClaimStatus;
+  current_revision: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClaimRevision = {
+  claim_id: string;
+  revision: number;
+  event_id: string | null;
+  amount_cents: number;
+  description: string;
+  payout_method: PayoutMethod;
+  payout_details: string | null;
+  receipt_path: string;
+  created_at: string;
+};
+
+export type ClaimEvent = {
+  id: number;
+  claim_id: string;
+  revision: number;
+  from_status: ClaimStatus | null;
+  to_status: ClaimStatus;
+  actor_id: string | null;
+  note: string | null;
+  created_at: string;
 };
