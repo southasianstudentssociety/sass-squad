@@ -7,6 +7,7 @@ import type { InventoryItem, InventoryLoan } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { createItem } from "./actions";
+import { EmptyState } from "@/components/illustrations";
 
 export const metadata = { title: "Inventory" };
 
@@ -94,7 +95,9 @@ export default async function InventoryPage({
         </form>
 
         {items.length === 0 ? (
-          <p className="card text-sm text-muted">{allItems.length === 0 ? "Nothing in the inventory yet." : "No items match."}</p>
+          <div className="card">{allItems.length === 0
+            ? <EmptyState illustration="boxes" title="Nothing in the inventory yet">{session.access.isAdmin ? "Add the first item below: decorations, equipment, leftover stock." : "An ExCo can add the society's things here."}</EmptyState>
+            : <p className="py-6 text-center text-sm text-muted">No items match.</p>}</div>
         ) : (
           <div className="card overflow-x-auto p-0">
             <table className="table">

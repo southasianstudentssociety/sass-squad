@@ -71,7 +71,7 @@ export function ScanConsole(props: {
 function ResultCard({ res, error, onDismiss }: { res?: CheckInResponse; error?: string; onDismiss: () => void }) {
   if (error) {
     return (
-      <button onClick={onDismiss} className="w-full rounded-2xl bg-bad p-6 text-left text-white">
+      <button onClick={onDismiss} className="w-full animate-pop rounded-2xl bg-bad p-6 text-left text-white">
         <p className="text-2xl font-extrabold">ERROR</p>
         <p className="mt-1">{error}</p>
         <p className="mt-4 text-sm opacity-80">Tap to continue</p>
@@ -82,7 +82,7 @@ function ResultCard({ res, error, onDismiss }: { res?: CheckInResponse; error?: 
   const copy = RESULT_COPY[res.result];
   const t = res.ticket;
   return (
-    <button onClick={onDismiss} className={`w-full rounded-2xl p-6 text-left text-white ${TONE_BG[copy.tone]}`}>
+    <button onClick={onDismiss} className={`w-full animate-pop rounded-2xl p-6 text-left text-white ${TONE_BG[copy.tone]}`}>
       <p className="text-3xl font-extrabold leading-tight">{copy.title}</p>
       {t && (
         <div className="mt-3 space-y-1">

@@ -3,6 +3,7 @@ import { requireFinance } from "@/lib/auth";
 import { financeClaims } from "@/lib/claim-data";
 import { formatDate, formatPrice } from "@/lib/format";
 import type { ClaimStatus } from "@/lib/types";
+import { EmptyState } from "@/components/illustrations";
 
 export const metadata = { title: "Finance" };
 
@@ -45,7 +46,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
       </nav>
 
       {rows.length === 0 ? (
-        <p className="card text-sm text-muted">Nothing here.</p>
+        <div className="card"><EmptyState illustration="allDone" title={status === "submitted" ? "All caught up" : "Nothing here"}>{status === "submitted" ? "No claims are waiting for review." : "No claims in this list."}</EmptyState></div>
       ) : (
         <div className="card overflow-x-auto p-0">
           <table className="table">
