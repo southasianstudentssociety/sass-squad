@@ -44,7 +44,7 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
           <label className="label" htmlFor="code">Login code</label>
           <input
             id="code" name="code" required autoFocus autoComplete="one-time-code" inputMode="numeric"
-            pattern="[0-9 ]{6,12}" placeholder="123456" className="input text-center text-2xl tracking-[0.4em]"
+            pattern="[0-9 ]{6,12}" placeholder="12345678" className="input text-center text-2xl tracking-[0.3em]"
           />
           <p className="hint">Or tap the link in the email on this device. Check spam if it hasn&apos;t arrived.</p>
         </div>

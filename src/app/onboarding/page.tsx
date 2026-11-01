@@ -25,7 +25,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           next={next}
           editing={editing}
           email={session.email}
-          fullName={session.profile.full_name ?? ""}
+          fullName={session.profile.full_name ?? session.providerName ?? ""}
           phone={session.profile.phone ?? ""}
         />
       </div>

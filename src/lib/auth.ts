@@ -7,6 +7,8 @@ import type { Profile } from "@/lib/types";
 export type Session = {
   userId: string;
   email: string;
+  /** Name from the identity provider (e.g. Google), used to pre-fill onboarding. */
+  providerName: string | null;
   profile: Profile;
   isMember: boolean;
 };
@@ -27,7 +29,9 @@ export const getSession = cache(async (): Promise<Session | null> => {
   ]);
   if (!profile) return null;
 
-  return { userId: user.id, email: user.email ?? profile.email, profile, isMember: Boolean(isMember) };
+  const meta = user.user_metadata ?? {};
+  const providerName = typeof meta.full_name === "string" ? meta.full_name : typeof meta.name === "string" ? meta.name : null;
+  return { userId: user.id, email: user.email ?? profile.email, providerName, profile, isMember: Boolean(isMember) };
 });
 
 export async function requireUser(next?: string): Promise<Session> {

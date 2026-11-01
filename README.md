@@ -10,7 +10,7 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 
 | Who | Can do |
 |---|---|
-| Anyone | Browse events, log in with an emailed one-time code (uni or Gmail), set their name |
+| Anyone | Browse events, log in with Google or an emailed one-time code (uni or Gmail), set their name |
 | Members (email is on the member list and not expired) | Member price, early access, members-only events, one free ticket per event |
 | Non-members | Get tickets at the non-member price. Paid tickets stay **Awaiting payment** until Finance marks them paid |
 | Staff | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count. Only from 24h before an event until 12h after it ends; they can't see other people's profiles or other events' attendees |
@@ -32,14 +32,23 @@ Remaining dashboard steps:
 
 3. **Authentication → Sign In / Providers → Email:** enabled. "Confirm email" can stay on.
 4. **Authentication → URL Configuration:** set Site URL to your deployed URL, and add `http://localhost:3000/**` and `https://YOUR-DOMAIN/**` to Redirect URLs.
-5. **Authentication → Email Templates → Magic Link**, replace the body with:
+5. **Authentication → Email Templates:** update **both** "Confirm signup" (sent the first time someone logs in) and "Magic Link" (every login after that). Replace each body with the template below and click **Save** on each:
    ```html
    <h2>Your SASS login code</h2>
    <p style="font-size:28px;letter-spacing:6px"><strong>{{ .Token }}</strong></p>
    <p>Or <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/tickets">tap here to log in</a>.</p>
    ```
    The code works on any device. The default link only works in the same browser that requested it.
-6. **Set up custom SMTP (required before launch).** Supabase's built-in email sender allows only a handful of emails per hour. 220 people logging in for Diwali **will** hit that limit. Use Resend, Brevo or Postmark (all have free tiers) under **Authentication → Emails → SMTP Settings**, then raise the rate limit under **Authentication → Rate Limits**.
+6. **Custom SMTP (required).** Supabase's built-in sender only emails members of the Supabase organisation, and email templates can't be edited until custom SMTP is on. Without a domain, send through the society Gmail:
+   - On the Gmail account: turn on 2-Step Verification, then create an App Password (Google Account → Security → App passwords).
+   - **Authentication → Emails → SMTP Settings:** host `smtp.gmail.com`, port `587`, username = the Gmail address, password = the app password, sender email = the same address, sender name `SASS`.
+   - Then edit the templates (step 5) and raise **Authentication → Rate Limits → emails per hour**.
+   - Gmail caps at about 500 emails/day. If that, or HKUST junk filtering, becomes a problem, buy a domain and switch to Resend.
+7. **Sign in with Google:**
+   - In [Google Cloud Console](https://console.cloud.google.com), signed in as the society Gmail, create a project called "SASS Hub".
+   - **APIs & Services → OAuth consent screen:** choose External, app name "SASS", support email = society Gmail. Scopes: only the defaults (email, profile, openid). Then **Publish app**. While it's in "Testing", only listed test users can sign in.
+   - **Credentials → Create credentials → OAuth client ID → Web application.** Authorised redirect URI: `https://cvtxpnwfkowaggyzrbai.supabase.co/auth/v1/callback`
+   - Copy the client ID and secret into Supabase **Authentication → Sign In / Providers → Google**, and enable it.
 
 ### 2. Run locally
 ```bash
