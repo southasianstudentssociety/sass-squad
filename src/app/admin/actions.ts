@@ -186,15 +186,86 @@ export async function importMembers(formData: FormData) {
   });
 }
 
-// ---------------------------------------------------------------- staff
-export async function setRole(formData: FormData) {
+// ---------------------------------------------------------------- team
+const TEAM = "/admin/team";
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function dateOrNull(v: FormDataEntryValue | null): string | null {
+  const s = String(v ?? "").trim();
+  return DATE_RE.test(s) ? s : null;
+}
+
+export async function saveDepartment(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name || name.length > 60) back(TEAM, { error: "Department name must be 1–60 characters." });
+  const supabase = await createClient();
+  const { error } = id
+    ? await supabase.from("departments").update({ name }).eq("id", id)
+    : await supabase.from("departments").insert({ name });
+  if (error) back(TEAM, { error: error.code === "23505" ? "There's already a department with that name." : "Couldn't save the department." });
+  revalidatePath(TEAM);
+  back(TEAM, { ok: id ? `Renamed to ${name}.` : `Added ${name}.` });
+}
+
+export async function deleteDepartment(formData: FormData) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { error } = await supabase.from("departments").delete().eq("id", String(formData.get("id")));
+  if (error) back(TEAM, { error: error.code === "23503" ? "This department has (or had) team members, so it's kept for history. Rename it instead." : "Couldn't delete the department." });
+  revalidatePath(TEAM);
+  back(TEAM, { ok: "Department deleted." });
+}
+
+export async function addTeamMember(formData: FormData) {
   await requireAdmin();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const role = String(formData.get("role"));
-  if (!["user", "staff", "admin"].includes(role)) back("/admin/staff", { error: "Invalid role." });
+  const position = String(formData.get("position"));
+  const departmentId = String(formData.get("department_id") ?? "");
+  if (!email) back(TEAM, { error: "Email is required." });
+  if (!departmentId) back(TEAM, { error: "Pick a department." });
+  if (position !== "exco" && position !== "subcommittee") back(TEAM, { error: "Pick ExCo or subcommittee." });
   const supabase = await createClient();
-  const { error } = await supabase.rpc("set_user_role", { p_email: email, p_role: role });
-  if (error) back("/admin/staff", { error: rpcError(error, "Couldn't update role.") });
-  revalidatePath("/admin/staff");
-  back("/admin/staff", { ok: `${email} is now ${role}.` });
+  const { error } = await supabase.rpc("add_team_member", {
+    p_email: email,
+    p_department_id: departmentId,
+    p_position: position,
+    p_title: String(formData.get("title") ?? "").trim() || null,
+    p_starts_on: dateOrNull(formData.get("starts_on")),
+    p_ends_on: dateOrNull(formData.get("ends_on")),
+  });
+  if (error) back(TEAM, { error: rpcError(error, "Couldn't add them to the team.") });
+  revalidatePath("/", "layout");
+  back(TEAM, { ok: `Added ${email}.` });
+}
+
+export async function endTeamMembership(formData: FormData) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("end_team_membership", { p_id: String(formData.get("id")) });
+  if (error) back(TEAM, { error: rpcError(error, "Couldn't end that membership.") });
+  revalidatePath("/", "layout");
+  back(TEAM, { ok: "Membership ended. Their access stops now." });
+}
+
+export async function setDoorStaff(formData: FormData) {
+  await requireAdmin();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const expiresOn = dateOrNull(formData.get("expires_on"));
+  if (!email || !expiresOn) back(TEAM, { error: "Email and expiry date are required." });
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_door_staff", { p_email: email, p_expires_on: expiresOn });
+  if (error) back(TEAM, { error: rpcError(error, "Couldn't give door access.") });
+  revalidatePath("/", "layout");
+  back(TEAM, { ok: `${email} can scan tickets until ${expiresOn}.` });
+}
+
+export async function removeDoorStaff(formData: FormData) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_door_staff", { p_user_id: String(formData.get("user_id")) });
+  if (error) back(TEAM, { error: rpcError(error, "Couldn't remove door access.") });
+  revalidatePath("/", "layout");
+  back(TEAM, { ok: "Door access removed." });
 }

@@ -4,7 +4,7 @@ import { SITE } from "@/lib/site";
 
 export async function SiteHeader() {
   const session = await getSession();
-  const role = session?.profile.role;
+  const access = session?.access;
 
   return (
     <header className="sticky top-0 z-20 print:hidden bg-brand text-brand-ink shadow">
@@ -15,8 +15,8 @@ export async function SiteHeader() {
         <nav className="flex flex-1 items-center gap-1 overflow-x-auto text-sm">
           <NavLink href="/events">Events</NavLink>
           {session && <NavLink href="/tickets">My tickets</NavLink>}
-          {(role === "staff" || role === "admin") && <NavLink href="/scan">Scan</NavLink>}
-          {role === "admin" && <NavLink href="/admin">Admin</NavLink>}
+          {access?.isStaff && <NavLink href="/scan">Scan</NavLink>}
+          {access?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
         </nav>
         {session ? (
           <form action="/auth/signout" method="post" className="flex items-center gap-2">

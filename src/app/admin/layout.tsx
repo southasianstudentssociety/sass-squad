@@ -8,7 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className="flex flex-wrap gap-2 text-sm print:hidden">
         <Link href="/admin" className="btn-ghost px-3 py-1.5">Events</Link>
         <Link href="/admin/members" className="btn-ghost px-3 py-1.5">Members</Link>
-        <Link href="/admin/staff" className="btn-ghost px-3 py-1.5">Staff &amp; roles</Link>
+        <Link href="/admin/team" className="btn-ghost px-3 py-1.5">Team</Link>
       </nav>
       {children}
     </div>

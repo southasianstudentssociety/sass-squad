@@ -8,7 +8,7 @@ export const metadata = { title: "Scan" };
 
 export default async function ScanIndex() {
   const session = await requireStaff("/scan");
-  const isAdmin = session.profile.role === "admin";
+  const isAdmin = session.access.isAdmin;
   const supabase = await createClient();
   const { data } = await supabase
     .from("events")

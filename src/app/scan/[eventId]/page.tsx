@@ -12,7 +12,7 @@ export const metadata = { title: "Scanning" };
 export default async function ScanEventPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
   const session = await requireStaff(`/scan/${eventId}`);
-  const isAdmin = session.profile.role === "admin";
+  const isAdmin = session.access.isAdmin;
   const supabase = await createClient();
   const { data: event } = await supabase
     .from("events")
