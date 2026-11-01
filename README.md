@@ -36,9 +36,10 @@ Remaining dashboard steps:
    ```html
    <h2>Your SASS login code</h2>
    <p style="font-size:28px;letter-spacing:6px"><strong>{{ .Token }}</strong></p>
-   <p>Or <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/tickets">tap here to log in</a>.</p>
+   <p>Type this code on the SASS login page.</p>
+   <p>If you didn't try to log in to SASS, ignore this email.</p>
    ```
-   The code works on any device. The default link only works in the same browser that requested it.
+   Set the subject of both to `Your SASS login code`. The template deliberately has **no link**: HKUST's Microsoft 365 filter sent emails containing a `*.vercel.app` link to Junk. The code also works on any device, unlike a link. If you move to a custom domain and a domain-based sender, a link can come back.
 6. **Custom SMTP (required).** Supabase's built-in sender only emails members of the Supabase organisation, and email templates can't be edited until custom SMTP is on. Without a domain, send through the society Gmail:
    - On the Gmail account: turn on 2-Step Verification, then create an App Password (Google Account → Security → App passwords).
    - **Authentication → Emails → SMTP Settings:** host `smtp.gmail.com`, port `587`, username = the Gmail address, password = the app password, sender email = the same address, sender name `SASS`.

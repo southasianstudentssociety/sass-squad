@@ -46,7 +46,7 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
             id="code" name="code" required autoFocus autoComplete="one-time-code" inputMode="numeric"
             pattern="[0-9 ]{6,12}" placeholder="12345678" className="input text-center text-2xl tracking-[0.3em]"
           />
-          <p className="hint">Or tap the link in the email on this device. Check spam if it hasn&apos;t arrived.</p>
+          <p className="hint">It can take a minute. If it hasn&apos;t arrived, check Junk or Spam.</p>
         </div>
         <FormMessage error={verifyState.error} />
         <SubmitButton className="btn-primary w-full" pendingText="Checking…">Log in</SubmitButton>
