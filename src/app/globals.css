@@ -1,30 +1,46 @@
 @import "tailwindcss";
 
 /*
- * SASS brand tokens.
- * PLACEHOLDER PALETTE: the real palette lives as an image in the
- * "SASS marketing" doc. Swap these hex values for the official ones and
- * the whole site updates.
+ * SASS brand tokens, from the "SASS marketing" doc palette:
+ *   red #ae4547 · teal #1d585e · peach #f3b774 · yellow #fff075
+ *   blue #0041a3 · pink #fcb8bd · turquoise #3bb8bd · purple #5314a0
+ * Rules: white text only on red/teal/blue/purple; peach/yellow/pink/turquoise
+ * are backgrounds with dark text. ok/bad stay pure green/red so door staff
+ * never confuse a "rejected" screen with brand colour.
  */
 :root {
-  --brand: #7a1f3d;        /* primary (buttons, header) */
-  --brand-ink: #ffffff;    /* text on primary */
-  --brand-soft: #f7e9ee;   /* tinted backgrounds */
-  --accent: #e9a23b;       /* highlights, badges */
+  --brand: #ae4547;        /* primary: header, buttons (white text 5.6:1) */
+  --brand-deep: #9c2835;   /* logo red: ticket header, hover */
+  --brand-ink: #ffffff;
+  --brand-soft: #fdeced;   /* pale pink tint */
+  --teal: #1d585e;         /* headings, links (8:1 on white) */
+  --accent: #f3b774;       /* peach: highlights, member badge */
   --accent-ink: #2a1a05;
+  --sass-yellow: #fff075;
+  --sass-blue: #0041a3;
+  --sass-pink: #fcb8bd;
+  --sass-turquoise: #3bb8bd;
+  --sass-purple: #5314a0;
   --surface: #ffffff;
-  --page: #faf7f2;
+  --page: #fbf7f1;
   --ink: #1f1a17;
   --muted: #6b625c;
-  --line: #e7e0d8;
+  --line: #ece3da;
   --ok: #15803d;
   --warn: #b45309;
-  --bad: #b91c1c;
+  --bad: #dc2626;
 }
 
 @theme inline {
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
+  --color-brand-deep: var(--brand-deep);
+  --color-teal: var(--teal);
+  --color-sass-yellow: var(--sass-yellow);
+  --color-sass-blue: var(--sass-blue);
+  --color-sass-pink: var(--sass-pink);
+  --color-sass-turquoise: var(--sass-turquoise);
+  --color-sass-purple: var(--sass-purple);
   --color-brand-soft: var(--brand-soft);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
@@ -36,6 +52,7 @@
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-bad: var(--bad);
+  --font-display: "Berkshire Swash", Georgia, serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -45,11 +62,16 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Multicolour band using the full palette, e.g. under the header. */
+@utility sass-stripe {
+  background: linear-gradient(90deg, var(--brand) 0 12.5%, var(--teal) 0 25%, var(--accent) 0 37.5%, var(--sass-yellow) 0 50%, var(--sass-blue) 0 62.5%, var(--sass-pink) 0 75%, var(--sass-turquoise) 0 87.5%, var(--sass-purple) 0);
+}
+
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-brand text-brand-ink hover:opacity-90;
+  @apply btn bg-brand text-brand-ink hover:bg-brand-deep;
 }
 @utility btn-accent {
   @apply btn bg-accent text-accent-ink hover:opacity-90;
@@ -64,7 +86,7 @@ body {
   @apply rounded-2xl border border-line bg-surface p-5 shadow-sm;
 }
 @utility input {
-  @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/20;
+  @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base outline-none focus:border-teal focus:ring-2 focus:ring-teal/20;
 }
 @utility label {
   @apply mb-1 block text-sm font-medium text-ink;

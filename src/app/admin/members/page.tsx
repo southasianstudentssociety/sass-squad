@@ -22,7 +22,7 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold">Members</h1>
+        <h1 className="text-2xl font-display font-normal">Members</h1>
         <p className="text-sm text-muted">{active} active · {members.length - active} expired{q && ` (filtered)`}</p>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />

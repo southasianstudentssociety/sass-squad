@@ -33,14 +33,15 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       <Link href="/tickets" className="text-sm text-muted underline">← All tickets</Link>
 
       <div className="overflow-hidden rounded-3xl border border-line bg-surface shadow-lg">
-        <div className="bg-brand px-5 pb-5 pt-6 text-brand-ink">
+        <div className="bg-brand-deep px-5 pb-5 pt-6 text-brand-ink">
           <p className="text-xs font-semibold uppercase tracking-widest opacity-80">SASS presents</p>
-          <h1 className="mt-1 text-2xl font-extrabold leading-tight">{t.event.title}</h1>
+          <h1 className="mt-1 font-display text-3xl font-normal leading-tight">{t.event.title}</h1>
           <p className="mt-2 text-sm opacity-90">
             {formatDateTime(t.event.starts_at)}{t.event.ends_at && ` – ${formatTime(t.event.ends_at)}`}
           </p>
           {t.event.venue && <p className="text-sm opacity-90">{t.event.venue}</p>}
         </div>
+        <div className="sass-stripe h-2" aria-hidden />
 
         <div className="relative border-t-2 border-dashed border-line px-5 py-6">
           {showQr && !t.checked_in_at && qrSvg ? (

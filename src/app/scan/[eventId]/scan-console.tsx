@@ -35,7 +35,7 @@ export function ScanConsole(props: {
       <div className="flex items-start justify-between gap-3">
         <div>
           <Link href="/scan" className="text-xs text-muted underline">← Events</Link>
-          <h1 className="text-xl font-extrabold leading-tight">{props.title}</h1>
+          <h1 className="text-xl font-display font-normal leading-tight">{props.title}</h1>
         </div>
         <div className="text-right">
           <p className="text-2xl font-extrabold tabular-nums">{counts.checkedIn}<span className="text-base text-muted">/{counts.confirmed}</span></p>

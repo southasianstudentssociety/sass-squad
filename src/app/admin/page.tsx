@@ -17,7 +17,7 @@ export default async function AdminHome() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold">Events</h1>
+        <h1 className="text-2xl font-display font-normal">Events</h1>
         <Link href="/admin/events/new" className="btn-primary">New event</Link>
       </div>
       <div className="card overflow-x-auto p-0">

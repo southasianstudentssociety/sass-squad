@@ -7,7 +7,7 @@ export default async function NewEvent({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-extrabold">New event</h1>
+      <h1 className="text-2xl font-display font-normal">New event</h1>
       <FormMessage error={sp.error} />
       <EventForm />
     </div>

@@ -16,7 +16,7 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
   return (
     <div className="space-y-4">
       <Link href={`/admin/events/${id}`} className="text-sm text-muted underline">← Back to event</Link>
-      <h1 className="text-2xl font-extrabold">Edit: {event.title}</h1>
+      <h1 className="text-2xl font-display font-normal">Edit: {event.title}</h1>
       <FormMessage error={sp.error} />
       <EventForm event={event} />
     </div>

@@ -24,8 +24,8 @@ export default async function Home() {
   return (
     <div className="space-y-12">
       <section className="overflow-hidden rounded-3xl bg-brand px-6 py-12 text-brand-ink sm:px-10 sm:py-16">
-        <p className="text-sm font-semibold uppercase tracking-widest text-accent">{SITE.fullName}</p>
-        <h1 className="mt-3 max-w-xl text-4xl font-extrabold leading-tight sm:text-5xl">
+        <p className="text-sm font-semibold uppercase tracking-widest text-sass-yellow">{SITE.fullName}</p>
+        <h1 className="mt-3 max-w-xl text-4xl font-display font-normal leading-tight sm:text-5xl">
           Events, tickets and everything SASS, in one place.
         </h1>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -40,7 +40,7 @@ export default async function Home() {
 
       <section>
         <div className="mb-4 flex items-end justify-between">
-          <h2 className="text-2xl font-extrabold">Coming up</h2>
+          <h2 className="font-display text-3xl text-teal">Coming up</h2>
           <Link href="/events" className="text-sm underline">All events</Link>
         </div>
         {events.length === 0 ? (

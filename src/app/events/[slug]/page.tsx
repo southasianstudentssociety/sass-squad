@@ -49,10 +49,10 @@ export default async function EventPage({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={event.cover_image_url} alt="" className="mb-6 aspect-[16/9] w-full rounded-2xl object-cover" />
         )}
-        <p className="text-sm font-semibold text-brand">
+        <p className="text-sm font-semibold text-teal">
           {formatDateTime(event.starts_at)}{event.ends_at && ` – ${formatTime(event.ends_at)}`}
         </p>
-        <h1 className="mb-2 text-3xl font-extrabold sm:text-4xl">{event.title}</h1>
+        <h1 className="mb-2 text-3xl font-display font-normal sm:text-4xl">{event.title}</h1>
         {event.venue && <p className="mb-6 text-muted">{event.venue}</p>}
         {event.description && <div className="whitespace-pre-line leading-relaxed">{event.description}</div>}
       </div>

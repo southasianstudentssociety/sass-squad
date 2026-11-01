@@ -19,7 +19,7 @@ export default async function EventsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-3xl font-extrabold">Upcoming events</h1>
+      <h1 className="mb-6 text-3xl font-display font-normal">Upcoming events</h1>
       {events.length === 0 ? (
         <p className="text-muted">Nothing announced yet. Watch our Instagram.</p>
       ) : (

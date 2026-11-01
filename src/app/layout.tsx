@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource/berkshire-swash/400.css";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SITE } from "@/lib/site";
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#7a1f3d",
+  themeColor: "#ae4547",
   width: "device-width",
   initialScale: 1,
 };

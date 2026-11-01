@@ -14,7 +14,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="mb-1 text-2xl font-bold">{editing ? "Your details" : "Welcome to SASS 👋"}</h1>
+      <h1 className="mb-1 text-3xl font-display font-normal">{editing ? "Your details" : "Welcome to SASS 👋"}</h1>
       <p className="mb-6 text-sm text-muted">
         {session.isMember
           ? "You're on our member list, so member pricing and early access are unlocked."

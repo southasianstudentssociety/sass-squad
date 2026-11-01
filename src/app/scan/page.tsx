@@ -18,7 +18,7 @@ export default async function ScanIndex() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="mb-4 text-2xl font-extrabold">Scan mode: choose event</h1>
+      <h1 className="mb-4 text-2xl font-display font-normal">Scan mode: choose event</h1>
       <ul className="space-y-3">
         {(data ?? []).map((e) => (
           <li key={e.id}>

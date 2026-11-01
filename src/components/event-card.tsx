@@ -10,11 +10,11 @@ export function EventCard({ event }: { event: SassEvent }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={event.cover_image_url} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center text-3xl font-extrabold text-brand/40">SASS</div>
+          <div className="flex h-full items-center justify-center font-display text-5xl text-brand/40">SASS</div>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <div className="flex items-center gap-2 text-xs font-semibold text-brand">
+        <div className="flex items-center gap-2 text-xs font-semibold text-teal">
           {formatDateTime(event.starts_at)}
           {event.access === "members_only" && <span className="badge bg-accent text-accent-ink">Members only</span>}
         </div>

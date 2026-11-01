@@ -69,5 +69,5 @@ Import the repo in Vercel and set the three env vars from `.env.example` (`NEXT_
 - Unpaid tickets count towards capacity until an admin cancels them.
 - A member who logs in with a different email from the one on the member list isn't recognised. Add it as their **Alt email**.
 - The scanner needs a connection. If the venue has no signal, use the printed list.
-- Brand colours are placeholders in `src/app/globals.css` (`:root`). Swap in the official palette.
+- Brand palette and Berkshire Swash are in `src/app/globals.css`. Amoresa Aged and Maragsa (from the marketing doc) are paid fonts and aren't included. The logo image isn't added yet.
 - Gallery (Phase 3) is not built yet.

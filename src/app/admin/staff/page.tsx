@@ -19,7 +19,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold">Staff &amp; roles</h1>
+        <h1 className="text-2xl font-display font-normal">Staff &amp; roles</h1>
         <p className="text-sm text-muted">
           <strong>Staff</strong> can open the scanner, search the guest list and add walk-ins.{" "}
           <strong>Admins</strong> can also manage events, members, confirm payments and change roles.

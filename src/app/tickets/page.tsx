@@ -29,7 +29,7 @@ export default async function TicketsPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-extrabold">My tickets</h1>
+          <h1 className="text-3xl font-display font-normal">My tickets</h1>
           <p className="text-sm text-muted">
             {session.profile.full_name} · {session.email}{" "}
             {session.isMember ? <span className="badge bg-accent text-accent-ink">Member</span> : <span className="badge bg-line text-muted">Not a member</span>}

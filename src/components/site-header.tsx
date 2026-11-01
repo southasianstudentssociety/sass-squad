@@ -9,7 +9,7 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 print:hidden bg-brand text-brand-ink shadow">
       <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
-        <Link href="/" className="text-lg font-extrabold tracking-tight">
+        <Link href="/" className="font-display text-2xl leading-none">
           {SITE.name}
         </Link>
         <nav className="flex flex-1 items-center gap-1 overflow-x-auto text-sm">
@@ -31,6 +31,7 @@ export async function SiteHeader() {
           </Link>
         )}
       </div>
+      <div className="sass-stripe h-1.5" aria-hidden />
     </header>
   );
 }
