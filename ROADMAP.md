@@ -12,7 +12,7 @@ The hub serves two groups: **members** (attendees) and the **team** (ExCos and s
 - Access expires automatically at the end of the term, so handover doesn't depend on someone remembering to remove people.
 - Door-scanning access stays separate: it's needed by volunteers who aren't on the team.
 
-## Phase 3: Reimbursements
+## Phase 3: Reimbursements (built, not yet used for a real claim)
 A subcommittee member submits a claim (event, amount, description, receipt photo, how they want to be paid). Finance approves or rejects it and marks it paid.
 - Receipts go in a **private** Supabase Storage bucket, visible only to the claimant and Finance.
 - Claims can't be edited after submission; changes are a new revision. Every status change records who made it and when.
