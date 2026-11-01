@@ -1,0 +1,88 @@
+export const TIME_ZONE = "Europe/London";
+
+export function formatPrice(pence: number): string {
+  if (pence === 0) return "Free";
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);
+}
+
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+export function formatTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+export function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(iso));
+}
+
+/** Offset (ms) of TIME_ZONE from UTC at the given instant. */
+function tzOffsetMs(at: Date): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(at);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return asUtc - at.getTime();
+}
+
+/** "2026-11-08T19:00" (London wall-clock, from <input type="datetime-local">) -> ISO UTC. */
+export function londonLocalToIso(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value);
+  if (!m) return null;
+  const naiveUtc = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+  let guess = naiveUtc - tzOffsetMs(new Date(naiveUtc));
+  guess = naiveUtc - tzOffsetMs(new Date(guess));
+  return new Date(guess).toISOString();
+}
+
+/** ISO UTC -> "YYYY-MM-DDTHH:mm" in London time, for datetime-local inputs. */
+export function isoToLondonLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const local = new Date(d.getTime() + tzOffsetMs(d));
+  return local.toISOString().slice(0, 16);
+}
+
+export function poundsToPence(value: FormDataEntryValue | null): number {
+  const n = Number(String(value ?? "0").replace(/[£,\s]/g, ""));
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.round(n * 100);
+}
+
+export function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
