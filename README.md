@@ -17,7 +17,8 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | Team members (ExCo and subcommittee) | Submit reimbursement claims with a receipt photo, see their status, fix and resubmit if rejected |
 | Team members (tasks) | See every department's tasks; add and edit tasks in their own departments (ExCo: any department); move tasks they own between To do, Doing, Blocked (with a reason) and Done |
 | Team members (inventory) | See what the society owns, where it is and who has it; check items out to a team member and record returns |
-| Finance (ExCo in a department marked *handles finance*) | See every claim and receipt, approve or reject, mark paid, download all claims as CSV. Can't review or pay their own claim |
+| Finance (ExCo in a department marked *handles finance*) | See every claim and receipt, approve or reject, mark paid, download all claims as CSV. Can't review or pay their own claim. **Event budgets**: record the society's own spending per event (venue, alcohol, food, ...), void mistakes with a reason, and see each event's income, costs and net, with a CSV for the treasurer |
+| ExCo (door live) | Per-event live dashboard: arrived vs confirmed, check-in rate, still to arrive, rejections by type, arrivals chart, latest scans by volunteer. Refreshes every 10 s |
 | ExCo | Create and edit events, confirm FPS payments, cancel tickets, undo check-ins, import and manage members, CSV and printable guest lists, manage the team |
 
 Access comes from **Admin → Team**: each person has a department, a position (ExCo or subcommittee) and a term with an end date. Access stops automatically after the last day of the term, so handover doesn't depend on anyone remembering to remove people. Door volunteers who aren't on the team get scanner-only access with its own expiry date. The app won't let you end the last active ExCo membership, and warns when every ExCo's term ends within 30 days.

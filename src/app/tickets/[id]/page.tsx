@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { CopyButton } from "@/components/copy-button";
 import { Illustration } from "@/components/illustrations";
 import { LiveTicket } from "./live-ticket";
+import { AddToCalendar } from "@/components/add-to-calendar";
 
 export const metadata = { title: "Ticket" };
 
@@ -83,6 +84,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           />
         )}
       </div>
+
+      {t.status !== "cancelled" && !t.checked_in_at && <AddToCalendar event={t.event} className="justify-center" />}
 
       {showQr && !t.checked_in_at && (
         <p className="px-4 text-center text-xs leading-relaxed text-muted">

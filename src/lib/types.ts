@@ -84,6 +84,7 @@ export type Ticket = {
   qr_token: string;
   confirmed_at: string | null;
   checked_in_at: string | null;
+  checked_in_by?: string | null;
   notes: string | null;
   created_at: string;
 };
