@@ -8,3 +8,10 @@ dist/
 build/
 .venv/
 __pycache__/
+/.next/
+/out/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+*.pem
+supabase/.temp/
