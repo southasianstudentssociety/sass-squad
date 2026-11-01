@@ -59,3 +59,18 @@ export async function verifyCode(_prev: LoginState, formData: FormData): Promise
 
   redirect(`/onboarding?next=${encodeURIComponent(next)}`);
 }
+
+export async function signInWithGoogle(formData: FormData) {
+  const next = safeNext(formData.get("next"));
+  const supabase = await createClient();
+  const origin = await siteOrigin();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/confirm?via=google&next=${encodeURIComponent(next)}`,
+      queryParams: { prompt: "select_account" },
+    },
+  });
+  if (error || !data.url) redirect(`/login?error=google&next=${encodeURIComponent(next)}`);
+  redirect(data.url);
+}
