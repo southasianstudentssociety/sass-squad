@@ -29,6 +29,20 @@ export async function saveEvent(formData: FormData) {
   if (!slug) back(returnTo, { error: "Slug is required." });
   if (!startsAt) back(returnTo, { error: "Start time is required." });
 
+  // Date/time pickers make it easy to set only the time and keep the wrong date.
+  const endsAt = localToIso(String(formData.get("ends_at") ?? ""));
+  if (endsAt && new Date(endsAt) <= new Date(startsAt)) {
+    back(returnTo, { error: "The end is before the start. If it finishes after midnight, set the end date to the next day." });
+  }
+  const closesAt = localToIso(String(formData.get("sales_close_at") ?? ""));
+  const firstOpen = [formData.get("member_sales_open_at"), formData.get("public_sales_open_at")]
+    .map((v) => localToIso(String(v ?? "")))
+    .filter(Boolean)
+    .sort()[0];
+  if (closesAt && firstOpen && new Date(closesAt) <= new Date(firstOpen)) {
+    back(returnTo, { error: "Sales close before they open. Check the sales dates." });
+  }
+
   const capacityRaw = String(formData.get("capacity") ?? "").trim();
   const row = {
     title,
@@ -36,7 +50,7 @@ export async function saveEvent(formData: FormData) {
     description: String(formData.get("description") ?? "").trim() || null,
     venue: String(formData.get("venue") ?? "").trim() || null,
     starts_at: startsAt,
-    ends_at: localToIso(String(formData.get("ends_at") ?? "")),
+    ends_at: endsAt,
     cover_image_url: String(formData.get("cover_image_url") ?? "").trim() || null,
     is_published: formData.get("is_published") === "on",
     access: formData.get("access") === "members_only" ? "members_only" : "everyone",
@@ -45,7 +59,7 @@ export async function saveEvent(formData: FormData) {
     capacity: capacityRaw ? Math.max(1, parseInt(capacityRaw, 10) || 1) : null,
     member_sales_open_at: localToIso(String(formData.get("member_sales_open_at") ?? "")),
     public_sales_open_at: localToIso(String(formData.get("public_sales_open_at") ?? "")),
-    sales_close_at: localToIso(String(formData.get("sales_close_at") ?? "")),
+    sales_close_at: closesAt,
     payment_instructions: String(formData.get("payment_instructions") ?? "").trim() || null,
   };
 

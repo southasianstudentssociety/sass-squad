@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { EVENT_COLUMNS, eventIsOver, priceFor, salesStateFor } from "@/lib/events";
-import { formatDateTime, formatPrice, formatTime } from "@/lib/format";
+import { formatDateTime, formatPrice, formatEnd } from "@/lib/format";
 import type { SassEvent } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
@@ -50,7 +50,7 @@ export default async function EventPage({
           <img src={event.cover_image_url} alt="" className="mb-8 aspect-[16/9] w-full animate-scale-in rounded-3xl object-cover shadow-[var(--shadow-lift)]" />
         )}
         <p className="eyebrow">
-          {formatDateTime(event.starts_at)}{event.ends_at && ` – ${formatTime(event.ends_at)}`}
+          {formatDateTime(event.starts_at)}{event.ends_at && ` – ${formatEnd(event.starts_at, event.ends_at)}`}
         </p>
         <h1 className="mt-3 font-display text-4xl leading-[1.1] sm:text-5xl">{event.title}</h1>
         {event.venue && <p className="mt-3 text-muted">{event.venue}</p>}
