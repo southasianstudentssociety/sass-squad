@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile } from "@/lib/types";
+import type { Access, Profile } from "@/lib/types";
 
 export type Session = {
   userId: string;
@@ -11,7 +11,10 @@ export type Session = {
   providerName: string | null;
   profile: Profile;
   isMember: boolean;
+  access: Access;
 };
+
+const NO_ACCESS: Access = { isAdmin: false, isStaff: false, termEnd: "" };
 
 /** Current user + profile + live membership status, or null. Deduped per request. */
 export const getSession = cache(async (): Promise<Session | null> => {
@@ -19,19 +22,29 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: profile }, { data: isMember }] = await Promise.all([
+  const [{ data: profile }, { data: isMember }, { data: access }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, email, full_name, phone, role, onboarded")
+      .select("id, email, full_name, phone, onboarded")
       .eq("id", user.id)
       .single<Profile>(),
     supabase.rpc("current_user_is_member"),
+    supabase.rpc("my_access"),
   ]);
   if (!profile) return null;
 
   const meta = user.user_metadata ?? {};
   const providerName = typeof meta.full_name === "string" ? meta.full_name : typeof meta.name === "string" ? meta.name : null;
-  return { userId: user.id, email: user.email ?? profile.email, providerName, profile, isMember: Boolean(isMember) };
+  const a = (access ?? {}) as { is_admin?: boolean; is_staff?: boolean; term_end?: string };
+  return {
+    userId: user.id,
+    email: user.email ?? profile.email,
+    providerName,
+    profile,
+    isMember: Boolean(isMember),
+    // If the access check fails, fall back to no access rather than guessing.
+    access: access ? { isAdmin: a.is_admin === true, isStaff: a.is_staff === true, termEnd: a.term_end ?? "" } : NO_ACCESS,
+  };
 });
 
 export async function requireUser(next?: string): Promise<Session> {
@@ -45,13 +58,13 @@ export async function requireUser(next?: string): Promise<Session> {
 
 export async function requireStaff(next?: string): Promise<Session> {
   const session = await requireUser(next);
-  if (session.profile.role !== "staff" && session.profile.role !== "admin") redirect("/");
+  if (!session.access.isStaff) redirect("/");
   return session;
 }
 
 export async function requireAdmin(next?: string): Promise<Session> {
   const session = await requireUser(next);
-  if (session.profile.role !== "admin") redirect("/");
+  if (!session.access.isAdmin) redirect("/");
   return session;
 }
 

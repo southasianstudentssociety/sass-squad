@@ -86,3 +86,15 @@ export function slugify(s: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 }
+
+/** Today's date in Hong Kong as YYYY-MM-DD (matches the database's term dates). */
+export function todayInHongKong(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+/** Add days to a YYYY-MM-DD date. */
+export function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}

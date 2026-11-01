@@ -7,7 +7,7 @@ import type { Ticket } from "@/lib/types";
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  if (session?.profile.role !== "admin") return new NextResponse("Forbidden", { status: 403 });
+  if (!session?.access.isAdmin) return new NextResponse("Forbidden", { status: 403 });
 
   const supabase = await createClient();
   const [{ data: event }, { data: tickets }] = await Promise.all([

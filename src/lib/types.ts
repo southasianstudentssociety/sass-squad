@@ -1,4 +1,4 @@
-export type UserRole = "user" | "staff" | "admin";
+export type TeamPosition = "exco" | "subcommittee";
 export type TicketStatus = "awaiting_payment" | "confirmed" | "cancelled";
 export type TicketSource = "online" | "walk_in" | "comp";
 export type EventAccess = "everyone" | "members_only";
@@ -8,9 +8,32 @@ export type Profile = {
   email: string;
   full_name: string | null;
   phone: string | null;
-  role: UserRole;
   onboarded: boolean;
 };
+
+/** What the signed-in user may do, from public.my_access(). The database enforces it too. */
+export type Access = {
+  /** Active ExCo membership: events, members, payments, team. */
+  isAdmin: boolean;
+  /** Active team membership or door-volunteer grant: the scanner. */
+  isStaff: boolean;
+  /** Default end date for new memberships (31 Aug of this academic year). */
+  termEnd: string;
+};
+
+export type Department = { id: string; name: string };
+
+export type TeamMembership = {
+  id: string;
+  user_id: string;
+  department_id: string;
+  position: TeamPosition;
+  title: string | null;
+  starts_on: string;
+  ends_on: string;
+};
+
+export type DoorStaff = { user_id: string; expires_on: string };
 
 export type Member = {
   id: string;

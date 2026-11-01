@@ -1,0 +1,245 @@
+import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
+import { addDays, formatDate, todayInHongKong } from "@/lib/format";
+import type { Department, DoorStaff, TeamMembership } from "@/lib/types";
+import { FormMessage } from "@/components/form-message";
+import { SubmitButton } from "@/components/submit-button";
+import {
+  addTeamMember,
+  deleteDepartment,
+  endTeamMembership,
+  removeDoorStaff,
+  saveDepartment,
+  setDoorStaff,
+} from "../actions";
+
+export const metadata = { title: "Team" };
+
+type Person = { full_name: string | null; email: string };
+type MembershipRow = TeamMembership & { person: Person | null };
+type DoorRow = DoorStaff & { person: Person | null };
+
+const POSITION_LABEL = { exco: "ExCo", subcommittee: "Subcommittee" } as const;
+
+export default async function TeamPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+  const sp = await searchParams;
+  const session = await getSession();
+  const supabase = await createClient();
+  const [{ data: departments }, { data: memberships }, { data: door }] = await Promise.all([
+    supabase.from("departments").select("id, name").order("name").returns<Department[]>(),
+    supabase
+      .from("team_memberships")
+      .select("id, user_id, department_id, position, title, starts_on, ends_on, person:profiles!team_memberships_user_id_fkey(full_name, email)")
+      .order("ends_on", { ascending: false })
+      .returns<MembershipRow[]>(),
+    supabase
+      .from("door_staff")
+      .select("user_id, expires_on, person:profiles!door_staff_user_id_fkey(full_name, email)")
+      .order("expires_on", { ascending: false })
+      .returns<DoorRow[]>(),
+  ]);
+
+  const today = todayInHongKong();
+  const termEnd = session?.access.termEnd || addDays(today, 180);
+  const deptName = new Map((departments ?? []).map((d) => [d.id, d.name]));
+  const all = memberships ?? [];
+  const active = all.filter((m) => m.starts_on <= today && m.ends_on >= today);
+  const upcoming = all.filter((m) => m.starts_on > today);
+  const ended = all.filter((m) => m.ends_on < today).slice(0, 30);
+  const byDept = (a: MembershipRow, b: MembershipRow) =>
+    (deptName.get(a.department_id) ?? "").localeCompare(deptName.get(b.department_id) ?? "") ||
+    a.position.localeCompare(b.position);
+
+  // Lockout warning: if every ExCo membership (active or upcoming) ends soon, nobody can manage the hub afterwards.
+  const excoEnds = [...active, ...upcoming].filter((m) => m.position === "exco").map((m) => m.ends_on);
+  const lastExcoDay = excoEnds.length ? excoEnds.sort().at(-1)! : null;
+  const lockoutSoon = lastExcoDay !== null && lastExcoDay <= addDays(today, 30);
+
+  const doorRows = door ?? [];
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-display font-normal">Team</h1>
+        <p className="text-sm text-muted">
+          <strong>ExCo</strong> can manage events, members, payments and this page.{" "}
+          <strong>Subcommittee</strong> and <strong>door volunteers</strong> can use the scanner from 24 hours before an event.
+          Access ends automatically on the last day of each person&apos;s term.
+        </p>
+      </div>
+      <FormMessage error={sp.error} success={sp.ok} />
+
+      {lockoutSoon && (
+        <p role="alert" className="rounded-lg border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
+          Every ExCo&apos;s access ends by <strong>{formatDate(lastExcoDay)}</strong>. Add next term&apos;s ExCo before then,
+          or nobody will be able to manage the hub.
+        </p>
+      )}
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Add someone to the team</h2>
+        {(departments ?? []).length === 0 ? (
+          <p className="card text-sm text-muted">Add a department first (bottom of this page).</p>
+        ) : (
+          <form action={addTeamMember} className="card grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <label className="label" htmlFor="tm-email">Email</label>
+              <input id="tm-email" name="email" type="email" required placeholder="They must have logged in once" className="input" />
+            </div>
+            <div>
+              <label className="label" htmlFor="tm-dept">Department</label>
+              <select id="tm-dept" name="department_id" required className="input">
+                {(departments ?? []).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label" htmlFor="tm-pos">Position</label>
+              <select id="tm-pos" name="position" className="input" defaultValue="subcommittee">
+                <option value="subcommittee">Subcommittee (scanner)</option>
+                <option value="exco">ExCo (full admin)</option>
+              </select>
+            </div>
+            <div>
+              <label className="label" htmlFor="tm-title">Title (optional)</label>
+              <input id="tm-title" name="title" maxLength={60} placeholder="e.g. Treasurer" className="input" />
+            </div>
+            <div>
+              <label className="label" htmlFor="tm-start">From</label>
+              <input id="tm-start" name="starts_on" type="date" required defaultValue={today} className="input" />
+            </div>
+            <div>
+              <label className="label" htmlFor="tm-end">Until (end of term)</label>
+              <input id="tm-end" name="ends_on" type="date" required defaultValue={termEnd} className="input" />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <SubmitButton pendingText="Adding…">Add to team</SubmitButton>
+            </div>
+          </form>
+        )}
+      </section>
+
+      <MembershipTable title={`Current team (${active.length})`} rows={[...active].sort(byDept)} deptName={deptName} endable />
+      {upcoming.length > 0 && <MembershipTable title="Starting later" rows={[...upcoming].sort(byDept)} deptName={deptName} endable />}
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Door volunteers</h2>
+        <p className="text-sm text-muted">For people who help at the door but aren&apos;t on the team. Scanner access only.</p>
+        <form action={setDoorStaff} className="card flex flex-wrap items-end gap-3">
+          <div className="min-w-60 flex-1">
+            <label className="label" htmlFor="ds-email">Email</label>
+            <input id="ds-email" name="email" type="email" required placeholder="They must have logged in once" className="input" />
+          </div>
+          <div>
+            <label className="label" htmlFor="ds-exp">Access until</label>
+            <input id="ds-exp" name="expires_on" type="date" required min={today} defaultValue={addDays(today, 30)} className="input" />
+          </div>
+          <SubmitButton pendingText="Saving…">Give door access</SubmitButton>
+        </form>
+        {doorRows.length > 0 && (
+          <div className="card overflow-x-auto p-0">
+            <table className="table">
+              <thead><tr><th>Name</th><th>Email</th><th>Until</th><th /></tr></thead>
+              <tbody>
+                {doorRows.map((d) => (
+                  <tr key={d.user_id} className={d.expires_on < today ? "opacity-50" : undefined}>
+                    <td className="font-semibold">{d.person?.full_name ?? "-"}</td>
+                    <td>{d.person?.email}</td>
+                    <td>{formatDate(d.expires_on)}{d.expires_on < today && " (expired)"}</td>
+                    <td className="text-right">
+                      <form action={removeDoorStaff}>
+                        <input type="hidden" name="user_id" value={d.user_id} />
+                        <SubmitButton className="btn-danger px-3 py-1 text-xs" pendingText="Removing…">Remove</SubmitButton>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {ended.length > 0 && <MembershipTable title="Past team" rows={ended} deptName={deptName} muted />}
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Departments</h2>
+        <div className="card space-y-3">
+          {(departments ?? []).map((d) => (
+            <div key={d.id} className="flex flex-wrap items-center gap-2">
+              <form action={saveDepartment} className="flex flex-1 gap-2">
+                <input type="hidden" name="id" value={d.id} />
+                <input name="name" defaultValue={d.name} required maxLength={60} aria-label={`Rename ${d.name}`} className="input" />
+                <SubmitButton className="btn-ghost" pendingText="Saving…">Rename</SubmitButton>
+              </form>
+              <form action={deleteDepartment}>
+                <input type="hidden" name="id" value={d.id} />
+                <SubmitButton className="btn-danger" pendingText="Deleting…">Delete</SubmitButton>
+              </form>
+            </div>
+          ))}
+          <form action={saveDepartment} className="flex gap-2 border-t border-line pt-3">
+            <input name="name" required maxLength={60} placeholder="New department, e.g. Finance" aria-label="New department name" className="input" />
+            <SubmitButton pendingText="Adding…">Add</SubmitButton>
+          </form>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function MembershipTable({
+  title,
+  rows,
+  deptName,
+  endable = false,
+  muted = false,
+}: {
+  title: string;
+  rows: MembershipRow[];
+  deptName: Map<string, string>;
+  endable?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-bold">{title}</h2>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">Nobody yet.</p>
+      ) : (
+        <div className={`card overflow-x-auto p-0 ${muted ? "opacity-70" : ""}`}>
+          <table className="table">
+            <thead>
+              <tr><th>Name</th><th>Department</th><th>Position</th><th>Term</th>{endable && <th />}</tr>
+            </thead>
+            <tbody>
+              {rows.map((m) => (
+                <tr key={m.id}>
+                  <td>
+                    <span className="font-semibold">{m.person?.full_name ?? "-"}</span>
+                    <span className="block text-xs text-muted">{m.person?.email}</span>
+                  </td>
+                  <td>{deptName.get(m.department_id) ?? "-"}</td>
+                  <td>
+                    <span className={`badge ${m.position === "exco" ? "bg-brand text-brand-ink" : "bg-accent text-accent-ink"}`}>
+                      {POSITION_LABEL[m.position]}
+                    </span>
+                    {m.title && <span className="block text-xs text-muted">{m.title}</span>}
+                  </td>
+                  <td className="whitespace-nowrap text-sm">{formatDate(m.starts_on)} – {formatDate(m.ends_on)}</td>
+                  {endable && (
+                    <td className="text-right">
+                      <form action={endTeamMembership}>
+                        <input type="hidden" name="id" value={m.id} />
+                        <SubmitButton className="btn-danger px-3 py-1 text-xs" pendingText="Ending…">End now</SubmitButton>
+                      </form>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}

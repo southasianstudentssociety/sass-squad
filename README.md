@@ -13,13 +13,16 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | Anyone | Browse events, log in with Google or an emailed one-time code (uni or Gmail), set their name |
 | Members (email is on the member list and not expired) | Member price, early access, members-only events, one free ticket per event |
 | Non-members | Get tickets at the non-member price. Paid tickets stay **Awaiting payment** until Finance marks them paid |
-| Staff | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count. Only from 24h before an event until 12h after it ends; they can't see other people's profiles or other events' attendees |
-| Admins | Create and edit events, confirm FPS payments, cancel tickets, undo check-ins, import and manage members, CSV and printable guest lists, assign roles |
+| Subcommittee and door volunteers | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count. Only from 24h before an event until 12h after it ends; they can't see other people's profiles or other events' attendees |
+| ExCo | Create and edit events, confirm FPS payments, cancel tickets, undo check-ins, import and manage members, CSV and printable guest lists, manage the team |
+
+Access comes from **Admin → Team**: each person has a department, a position (ExCo or subcommittee) and a term with an end date. Access stops automatically after the last day of the term, so handover doesn't depend on anyone remembering to remove people. Door volunteers who aren't on the team get scanner-only access with its own expiry date. The app won't let you end the last active ExCo membership, and warns when every ExCo's term ends within 30 days.
 
 All the ticket rules live in Postgres functions (`supabase/migrations/`), so they can't be bypassed from the browser:
 - `claim_ticket`: membership, sales windows, capacity (row-locked), one ticket per person
 - `check_in`: one atomic update, so two scanners can't both accept the same ticket. Returns *ok / already used / unpaid / cancelled / wrong event / invalid*
-- `create_door_ticket`, `confirm_payment`, `cancel_ticket`, `undo_check_in`, `set_user_role`
+- `create_door_ticket`, `confirm_payment`, `cancel_ticket`, `undo_check_in`
+- `add_team_member`, `end_team_membership`, `set_door_staff`, `remove_door_staff`, `my_access`: team and access. RLS uses `private.is_admin()` (active ExCo) and `private.is_staff()` (active team member or door volunteer)
 
 ## Setup
 
@@ -58,12 +61,16 @@ npm install
 npm run dev
 ```
 
-### 3. Make yourself admin
-Log in once on the site, then in the Supabase SQL Editor run:
+### 3. Make yourself ExCo
+Log in once on the site, then in the Supabase SQL Editor run (replace the email and department):
 ```sql
-update public.profiles set role = 'admin' where email = 'you@example.com';
+insert into public.departments (name) values ('General') on conflict (name) do nothing;
+insert into public.team_memberships (user_id, department_id, position, starts_on, ends_on)
+select p.id, d.id, 'exco', current_date, private.current_term_end()
+from public.profiles p, public.departments d
+where p.email = 'you@example.com' and d.name = 'General';
 ```
-After that, add other staff and admins from **Admin → Staff & roles**.
+After that, add everyone else from **Admin → Team**. The same SQL is how you get back in if every ExCo's term has ended.
 
 ### 4. Import members
 Google Sheet: **File → Download → CSV**, then **Admin → Members → Import**. You need `Name` and `Email` columns. Optional columns: `Alt email`, `Student ID`, `Purchased`, `Valid until` (DD/MM/YYYY). Re-importing updates existing rows by email. From now on, **manage members in the app**, not the Sheet.

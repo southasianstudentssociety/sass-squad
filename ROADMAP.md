@@ -5,7 +5,7 @@ Scope agreed so far. Build one module at a time; each must survive real use befo
 ## Phase 1: Ticketing (built, not yet used at a real event)
 Events, member pricing and early access, QR tickets, door scanner, FPS payment confirmation, member list.
 
-## Phase 2: Team model (prerequisite for everything below)
+## Phase 2: Team model (built, not yet used by the real team)
 The hub serves two groups: **members** (attendees) and the **team** (ExCos and subcommittee members), organised into **departments**.
 - Replace the single `user | staff | admin` role with team membership per academic term: person, department, position (ExCo / subcommittee), term start and end.
 - Permissions come from position and department (e.g. Finance ExCo approves reimbursements, department heads see their department's work).
