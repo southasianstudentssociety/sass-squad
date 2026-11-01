@@ -98,3 +98,9 @@ export function addDays(date: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/** End of an event: just the time if it's the same day as the start, otherwise date and time. */
+export function formatEnd(startIso: string, endIso: string): string {
+  const day = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date(iso));
+  return day(startIso) === day(endIso) ? formatTime(endIso) : formatDateTime(endIso);
+}
