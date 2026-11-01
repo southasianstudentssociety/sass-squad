@@ -75,6 +75,11 @@ export default async function EventPage({
           )}
         </div>
 
+        {session && !isMember && event.member_price_cents < event.public_price_cents && (
+          <Link href="/membership" className="block rounded-xl bg-accent/30 px-3.5 py-2.5 text-sm transition-colors hover:bg-accent/45">
+            Members pay <strong>{formatPrice(event.member_price_cents)}</strong>. Become a member →
+          </Link>
+        )}
         <FormMessage error={sp.error} />
 
         {existingTicketId ? (

@@ -4,6 +4,7 @@ export type BudgetRow = {
   starts_at: string | null;
   tickets_confirmed: number;
   ticket_income: number;
+  membership_income: number;
   unpaid_income: number;
   expenses: number;
   reimbursements: number;

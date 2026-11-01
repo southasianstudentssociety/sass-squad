@@ -13,7 +13,7 @@ export default async function BudgetsPage() {
   const { data } = await supabase.rpc("event_finance_summary");
   const rows = (data ?? []) as BudgetRow[];
   const total = rows.reduce(
-    (a, r) => ({ income: a.income + r.ticket_income, costs: a.costs + r.expenses + r.reimbursements, net: a.net + r.net }),
+    (a, r) => ({ income: a.income + r.ticket_income + r.membership_income, costs: a.costs + r.expenses + r.reimbursements, net: a.net + r.net }),
     { income: 0, costs: 0, net: 0 },
   );
 
@@ -44,7 +44,7 @@ export default async function BudgetsPage() {
                 <p className="text-sm text-muted">{r.starts_at ? formatDate(r.starts_at) : "Running costs and claims without an event"}</p>
               </div>
               <dl className="space-y-1.5 text-sm">
-                <Line label={`Tickets (${r.tickets_confirmed})`} value={money(r.ticket_income)} />
+                {r.event_id ? <Line label={`Tickets (${r.tickets_confirmed})`} value={money(r.ticket_income)} /> : <Line label="Memberships" value={money(r.membership_income)} />}
                 <Line label="Expenses" value={money(-r.expenses)} />
                 <Line label="Reimbursements" value={money(-r.reimbursements)} />
               </dl>

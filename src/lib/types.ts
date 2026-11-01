@@ -222,3 +222,29 @@ export type TaskLogEntry = {
   note: string | null;
   created_at: string;
 };
+
+export type MembershipOffer = {
+  id: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  valid_until: string;
+  is_open: boolean;
+  payment_instructions: string | null;
+};
+
+export type MembershipApplication = {
+  id: string;
+  offer_id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  student_id: string | null;
+  price_cents: number;
+  status: "awaiting_payment" | "confirmed" | "cancelled";
+  payment_reference: string;
+  created_at: string;
+  confirmed_at: string | null;
+};
+
+export type Feedback = { event_id: string; rating: number; comment: string | null; anonymous: boolean };

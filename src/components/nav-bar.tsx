@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRef } from "react";
 import { motion } from "motion/react";
 import { Menu } from "@base-ui/react/menu";
-import { Boxes, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
+import { BadgeCheck, Boxes, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -99,6 +99,11 @@ export function NavBar({ user }: { user: User | null }) {
                     {user.isMember ? "Member" : "Not a member"}
                   </span>
                 </div>
+                {!user.isMember && (
+                  <MenuLink href="/membership">
+                    <BadgeCheck className="size-4 text-brand" aria-hidden /><span className="font-medium text-brand">Become a member</span>
+                  </MenuLink>
+                )}
                 <div className="my-1 h-px bg-line" />
                 <MenuLink href="/tickets">
                   <UserRound className="size-4 opacity-60" aria-hidden />My tickets

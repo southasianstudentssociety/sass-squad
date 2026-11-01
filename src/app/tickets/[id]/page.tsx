@@ -10,6 +10,8 @@ import { CopyButton } from "@/components/copy-button";
 import { Illustration } from "@/components/illustrations";
 import { LiveTicket } from "./live-ticket";
 import { AddToCalendar } from "@/components/add-to-calendar";
+import { feedbackOpen } from "@/lib/feedback";
+import { FeedbackForm } from "./feedback-form";
 
 export const metadata = { title: "Ticket" };
 
@@ -26,6 +28,11 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     .eq("user_id", session.userId)
     .maybeSingle<Row>();
   if (!t) notFound();
+
+  const canRate = !!t.checked_in_at && feedbackOpen(t.event.starts_at);
+  const { data: myFeedback } = canRate
+    ? await supabase.from("event_feedback").select("rating, comment, anonymous").eq("event_id", t.event_id).maybeSingle<{ rating: number; comment: string | null; anonymous: boolean }>()
+    : { data: null };
 
   const showQr = t.status === "confirmed";
   const qrSvg = showQr
@@ -84,6 +91,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           />
         )}
       </div>
+
+      {canRate && <FeedbackForm eventId={t.event_id} initial={myFeedback} />}
 
       {t.status !== "cancelled" && !t.checked_in_at && <AddToCalendar event={t.event} className="justify-center" />}
 

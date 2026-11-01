@@ -11,6 +11,8 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | Who | Can do |
 |---|---|
 | Anyone | Browse events, log in with Google or an emailed one-time code (uni or Gmail), set their name |
+| Anyone logged in (membership) | Join at **/membership**: pay the offer by FPS with a `MEM-` reference; once ExCo confirms, they're added to (or renewed on) the member list and member prices apply immediately. Free offers confirm instantly |
+| People who came to an event | Rate it 1–5 with an optional comment, anonymously if they like, for 30 days after it starts |
 | Members (email is on the member list and not expired) | Member price, early access, members-only events, one free ticket per event |
 | Non-members | Get tickets at the non-member price. Paid tickets stay **Awaiting payment** until Finance marks them paid |
 | Subcommittee and door volunteers | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count. Only from 24h before an event until 12h after it ends; they can't see other people's profiles or other events' attendees |
@@ -18,6 +20,7 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | Team members (tasks) | See every department's tasks; add and edit tasks in their own departments (ExCo: any department); move tasks they own between To do, Doing, Blocked (with a reason) and Done |
 | Team members (inventory) | See what the society owns, where it is and who has it; check items out to a team member and record returns |
 | Finance (ExCo in a department marked *handles finance*) | See every claim and receipt, approve or reject, mark paid, download all claims as CSV. Can't review or pay their own claim. **Event budgets**: record the society's own spending per event (venue, alcohol, food, ...), void mistakes with a reason, and see each event's income, costs and net, with a CSV for the treasurer |
+| ExCo (memberships, feedback, attendance) | Publish membership offers and confirm payments (Admin → Memberships); read each event's feedback (names hidden for anonymous ones, enforced in the database); see regulars, turn-up rates and active members who haven't come yet (Admin → Attendance) |
 | ExCo (door live) | Per-event live dashboard: arrived vs confirmed, check-in rate, still to arrive, rejections by type, arrivals chart, latest scans by volunteer. Refreshes every 10 s |
 | ExCo | Create and edit events, confirm FPS payments, cancel tickets, undo check-ins, import and manage members, CSV and printable guest lists, manage the team |
 
