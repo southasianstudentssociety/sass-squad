@@ -190,3 +190,30 @@ export type InventoryLogEntry = {
   details: Record<string, unknown> | null;
   created_at: string;
 };
+
+export type TaskStatus = "todo" | "doing" | "blocked" | "done" | "cancelled";
+
+export type Task = {
+  id: string;
+  department_id: string;
+  event_id: string | null;
+  title: string;
+  description: string | null;
+  owner_id: string | null;
+  due_on: string | null;
+  status: TaskStatus;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+};
+
+export type TaskLogEntry = {
+  id: number;
+  task_id: string;
+  action: "created" | "edited" | "status";
+  actor_id: string | null;
+  details: Record<string, unknown> | null;
+  note: string | null;
+  created_at: string;
+};
