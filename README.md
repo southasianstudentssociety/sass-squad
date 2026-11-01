@@ -24,7 +24,7 @@ Access comes from **Admin → Team**: each person has a department, a position (
 
 All the ticket rules live in Postgres functions (`supabase/migrations/`), so they can't be bypassed from the browser:
 - `claim_ticket`: membership, sales windows, capacity (row-locked), one ticket per person
-- `check_in`: one atomic update, so two scanners can't both accept the same ticket. Returns *ok / already used / unpaid / cancelled / wrong event / invalid*
+- `preview_ticket` then `check_in`: door staff see the result first (it stays on screen), then swipe to admit. `check_in` is one atomic update, so two scanners can't both accept the same ticket. Returns *ok / already used / unpaid / cancelled / wrong event / invalid*
 - `create_door_ticket`, `confirm_payment`, `cancel_ticket`, `undo_check_in`
 - `submit_claim`, `revise_claim`, `withdraw_claim`, `review_claim`, `mark_claim_paid`: reimbursements. Claims are never edited: a change is a new revision, every status change is logged with who, when and which revision, and approval is tied to the revision Finance actually saw. Receipts live in the private `receipts` Storage bucket (uploaded straight from the phone, readable only by the claimant and Finance, can't be overwritten or deleted)
 - `create_task`, `update_task`, `set_task_status`: department task tracker. Tasks are cancelled, never deleted, and every change is logged in `task_log`

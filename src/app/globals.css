@@ -190,16 +190,18 @@ h2.font-display {
   animation: var(--animate-shimmer);
 }
 
+/* Native selects keep the phone's own picker, with a quiet chevron. Unlayered on purpose:
+   it must beat the .input utility's horizontal padding, or text runs under the chevron. */
+select.input {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%236f6862' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
 @layer components {
-  /* Native selects keep the phone's own picker, with a quiet chevron. */
-  select.input {
-    appearance: none;
-    padding-right: 2.25rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%236f6862' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1rem;
-  }
   textarea.input {
     resize: vertical;
   }

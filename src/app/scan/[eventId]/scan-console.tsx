@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
-import { checkInAction, createDoorTicketAction, searchTickets, type Counts, type SearchRow } from "../actions";
+import { checkInAction, createDoorTicketAction, previewAction, searchTickets, type Counts, type SearchRow } from "../actions";
 import type { CheckInResponse, ScanResult, TicketSource } from "@/lib/types";
 import { formatPrice, formatTime } from "@/lib/format";
+import { SwipeToConfirm } from "@/components/swipe-to-confirm";
 
 type Tab = "scan" | "search" | "door";
 
 const RESULT_COPY: Record<ScanResult, { title: string; tone: "ok" | "bad" | "warn" }> = {
-  ok: { title: "VALID: let them in", tone: "ok" },
+  valid: { title: "VALID TICKET", tone: "ok" },
+  ok: { title: "CHECKED IN", tone: "ok" },
   already_used: { title: "ALREADY USED", tone: "bad" },
   unpaid: { title: "NOT PAID", tone: "warn" },
   cancelled: { title: "CANCELLED TICKET", tone: "bad" },
@@ -68,10 +70,24 @@ export function ScanConsole(props: {
   );
 }
 
-function ResultCard({ res, error, onDismiss }: { res?: CheckInResponse; error?: string; onDismiss: () => void }) {
+/**
+ * Shows a scan / lookup result and stays until the door person acts:
+ * valid → swipe to admit (or cancel); anything else → tap to dismiss.
+ */
+function ResultCard({
+  res,
+  error,
+  onDismiss,
+  onAdmit,
+}: {
+  res?: CheckInResponse;
+  error?: string;
+  onDismiss: () => void;
+  onAdmit?: (ticketId: string) => Promise<boolean | void>;
+}) {
   if (error) {
     return (
-      <button onClick={onDismiss} className="w-full animate-pop rounded-2xl bg-bad p-6 text-left text-white">
+      <button onClick={onDismiss} className="w-full animate-pop rounded-3xl bg-bad p-6 text-left text-white">
         <p className="text-2xl font-extrabold">ERROR</p>
         <p className="mt-1">{error}</p>
         <p className="mt-4 text-sm opacity-80">Tap to continue</p>
@@ -81,73 +97,125 @@ function ResultCard({ res, error, onDismiss }: { res?: CheckInResponse; error?: 
   if (!res) return null;
   const copy = RESULT_COPY[res.result];
   const t = res.ticket;
-  return (
-    <button onClick={onDismiss} className={`w-full animate-pop rounded-2xl p-6 text-left text-white ${TONE_BG[copy.tone]}`}>
-      <p className="text-3xl font-extrabold leading-tight">{copy.title}</p>
-      {t && (
-        <div className="mt-3 space-y-1">
-          <p className="text-2xl font-bold">{t.holder_name}</p>
+  const awaitingSwipe = res.result === "valid" && t && onAdmit;
+
+  const body = (
+    <>
+      <p className="text-[13px] font-semibold tracking-[0.14em] opacity-90">{copy.title}</p>
+      {t ? (
+        <div className="mt-2 space-y-1">
+          <p className="text-[1.9rem] font-bold leading-tight">{t.holder_name}</p>
           <p className="text-sm opacity-90">
             {t.is_member ? "Member ticket" : "Non-member ticket"} · {formatPrice(t.price_cents)}
             {t.source !== "online" && ` · ${t.source === "comp" ? "Comp" : "Door"}`}
           </p>
-          {t.is_member && !t.member_now && (
-            <p className="text-sm font-semibold">⚠ Membership has since expired</p>
-          )}
+          {t.is_member && !t.member_now && <p className="text-sm font-semibold">⚠ Membership has since expired</p>}
           {res.result === "already_used" && t.checked_in_at && (
-            <p className="text-sm font-semibold">First scanned at {formatTime(t.checked_in_at)}. Check ID, this may be a shared screenshot.</p>
+            <p className="text-sm font-semibold">First checked in at {formatTime(t.checked_in_at)}. Check ID, this may be a shared screenshot.</p>
           )}
           {res.result === "unpaid" && <p className="text-sm font-semibold">Ref {t.payment_reference}. Send to Finance or use Walk-in.</p>}
-          {res.result === "ok" && <p className="text-sm opacity-90">If anything looks off, check their student ID matches this name.</p>}
+          {res.result === "valid" && <p className="text-sm opacity-90">Check their student ID matches this name, then swipe.</p>}
         </div>
+      ) : (
+        <p className="mt-2 text-lg font-semibold">{res.result === "wrong_event" ? "This ticket is for a different event." : "This QR isn't a SASS ticket."}</p>
       )}
-      <p className="mt-4 text-sm opacity-80">Tap to scan next</p>
+    </>
+  );
+
+  if (awaitingSwipe) {
+    return (
+      <div className="w-full animate-pop space-y-5 rounded-3xl bg-ok p-6 text-white shadow-[0_12px_32px_-8px_rgb(21_128_61/0.5)]">
+        <div>{body}</div>
+        <SwipeToConfirm label="Swipe to check in" onConfirm={() => onAdmit(t.id)} />
+        <button onClick={onDismiss} className="mx-auto block text-sm text-white/80 underline-offset-4 hover:underline">
+          Not them? Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={onDismiss} className={`w-full animate-pop rounded-3xl p-6 text-left text-white ${TONE_BG[copy.tone]}`}>
+      {body}
+      <p className="mt-4 text-sm opacity-80">{res.result === "ok" ? "Tap or wait to scan next" : "Tap to continue"}</p>
     </button>
   );
 }
 
-function ScanTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Counts) => void }) {
+/** Shared preview → swipe → admit flow for the Scan and Find name tabs. */
+function useAdmission(eventId: string, onCounts: (c: Counts) => void, after?: () => void) {
   const [res, setRes] = useState<CheckInResponse | undefined>();
   const [error, setError] = useState<string | undefined>();
-  const [busy, setBusy] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showing = busy || !!res || !!error;
 
   const dismiss = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     setRes(undefined);
     setError(undefined);
   }, []);
-
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const preview = useCallback(
+    async (input: { qr?: string; ticketId?: string }) => {
+      try {
+        const out = await previewAction(eventId, input);
+        if (out.error) setError(out.error);
+        else {
+          setRes(out.response);
+          navigator.vibrate?.(out.response?.result === "valid" ? 40 : [200, 100, 200]);
+        }
+      } catch {
+        setError("No connection. Use 'Find name' once back online, or the printed list.");
+      }
+    },
+    [eventId],
+  );
+
+  // Step 2: the swipe. If someone else admitted this ticket in the meantime, show that instead.
+  const admit = useCallback(
+    async (ticketId: string) => {
+      try {
+        const out = await checkInAction(eventId, { ticketId });
+        if (out.counts) onCounts(out.counts);
+        if (out.error) {
+          setError(out.error);
+          return;
+        }
+        setRes(out.response);
+        after?.();
+        if (out.response?.result === "ok") timer.current = setTimeout(dismiss, 1800);
+        else navigator.vibrate?.([200, 100, 200]);
+      } catch {
+        setError("No connection. The ticket was not checked in. Try again.");
+      }
+    },
+    [eventId, onCounts, dismiss, after],
+  );
+
+  return { res, error, dismiss, preview, admit };
+}
+
+function ScanTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Counts) => void }) {
+  const { res, error, dismiss, preview, admit } = useAdmission(eventId, onCounts);
+  const [busy, setBusy] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const showing = busy || !!res || !!error;
 
   const onScan = useCallback(
     async (codes: IDetectedBarcode[]) => {
       const raw = codes[0]?.rawValue;
-      if (!raw || busy || res || error) return;
+      if (!raw || showing) return;
       setBusy(true);
-      try {
-        const out = await checkInAction(eventId, { qr: raw });
-        if (out.counts) onCounts(out.counts);
-        if (out.error) setError(out.error);
-        else {
-          setRes(out.response);
-          if (out.response?.result === "ok") timer.current = setTimeout(dismiss, 2500);
-          navigator.vibrate?.(out.response?.result === "ok" ? 80 : [200, 100, 200]);
-        }
-      } catch {
-        setError("No connection. Use 'Find name' once back online, or the printed list.");
-      } finally {
-        setBusy(false);
-      }
+      await preview({ qr: raw });
+      setBusy(false);
     },
-    [busy, res, error, eventId, onCounts, dismiss],
+    [showing, preview],
   );
 
   return (
     <div className="space-y-3">
-      <div className="relative overflow-hidden rounded-2xl bg-black">
+      {/* The camera stays paused while a result is on screen, so nothing changes under the door person's eyes. */}
+      <div className={`relative overflow-hidden rounded-3xl bg-black transition-opacity ${res || error ? "opacity-40" : ""}`}>
         <Scanner
           onScan={onScan}
           onError={(e) => setCameraError(e instanceof Error ? e.message : "Camera unavailable")}
@@ -164,11 +232,11 @@ function ScanTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Counts)
         )}
       </div>
       {cameraError && (
-        <p className="rounded-lg bg-warn/10 px-3 py-2 text-sm text-warn">
+        <p className="rounded-xl bg-warn/10 px-3 py-2 text-sm text-warn">
           Camera problem: {cameraError}. Allow camera access in your browser settings (the site must be on https), or use &quot;Find name&quot;.
         </p>
       )}
-      <ResultCard res={res} error={error} onDismiss={dismiss} />
+      <ResultCard res={res} error={error} onDismiss={dismiss} onAdmit={admit} />
     </div>
   );
 }
@@ -176,9 +244,9 @@ function ScanTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Counts)
 function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Counts) => void }) {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<SearchRow[]>([]);
-  const [res, setRes] = useState<CheckInResponse | undefined>();
-  const [error, setError] = useState<string | undefined>();
   const [pending, start] = useTransition();
+  const refresh = useCallback(() => start(async () => setRows(await searchTickets(eventId, q))), [eventId, q]);
+  const { res, error, dismiss, preview, admit } = useAdmission(eventId, onCounts, refresh);
 
   useEffect(() => {
     const term = q;
@@ -187,15 +255,6 @@ function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Count
     }, 250);
     return () => clearTimeout(h);
   }, [q, eventId]);
-
-  const checkIn = (ticketId: string) =>
-    start(async () => {
-      const out = await checkInAction(eventId, { ticketId });
-      if (out.counts) onCounts(out.counts);
-      setError(out.error);
-      setRes(out.response);
-      setRows(await searchTickets(eventId, q));
-    });
 
   return (
     <div className="space-y-3">
@@ -206,9 +265,9 @@ function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Count
         className="input"
         autoFocus
       />
-      <ResultCard res={res} error={error} onDismiss={() => { setRes(undefined); setError(undefined); }} />
+      <ResultCard res={res} error={error} onDismiss={dismiss} onAdmit={admit} />
       {pending && <p className="text-sm text-muted">Searching…</p>}
-      <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+      <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
         {rows.map((r) => (
           <li key={r.id} className="flex items-center justify-between gap-3 p-3">
             <div className="min-w-0">
@@ -222,7 +281,13 @@ function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Count
             ) : r.status === "awaiting_payment" ? (
               <span className="badge bg-warn/10 text-warn">Unpaid</span>
             ) : (
-              <button onClick={() => checkIn(r.id)} disabled={pending} className="btn-primary px-3 py-1.5">Check in</button>
+              <button
+                onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); preview({ ticketId: r.id }); }}
+                disabled={!!res}
+                className="btn-primary px-3 py-1.5"
+              >
+                Check in
+              </button>
             )}
           </li>
         ))}
@@ -234,29 +299,35 @@ function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Count
 
 function DoorTab({ eventId, defaultDollars, onCounts }: { eventId: string; defaultDollars: string; onCounts: (c: Counts) => void }) {
   const [msg, setMsg] = useState<{ ok?: string; error?: string }>({});
-  const [pending, start] = useTransition();
   const [source, setSource] = useState<TicketSource>("walk_in");
+  const [checkInNow, setCheckInNow] = useState(true);
+  const [round, setRound] = useState(0); // remounts the slider after each ticket
   const formRef = useRef<HTMLFormElement>(null);
 
-  const submit = (fd: FormData) =>
-    start(async () => {
-      const out = await createDoorTicketAction(eventId, {
-        name: String(fd.get("name") ?? ""),
-        email: String(fd.get("email") ?? ""),
-        dollars: source === "comp" ? "0" : String(fd.get("dollars") ?? "0"),
-        source,
-        checkIn: fd.get("check_in") === "on",
-        notes: String(fd.get("notes") ?? ""),
-      });
-      if (out.counts) onCounts(out.counts);
-      setMsg(out);
-      if (out.ok) formRef.current?.reset();
+  async function submit(): Promise<boolean> {
+    const form = formRef.current;
+    if (!form || !form.reportValidity()) return false;
+    const fd = new FormData(form);
+    const out = await createDoorTicketAction(eventId, {
+      name: String(fd.get("name") ?? ""),
+      email: String(fd.get("email") ?? ""),
+      dollars: source === "comp" ? "0" : String(fd.get("dollars") ?? "0"),
+      source,
+      checkIn: checkInNow,
+      notes: String(fd.get("notes") ?? ""),
     });
+    if (out.counts) onCounts(out.counts);
+    setMsg(out);
+    if (out.error) return false;
+    form.reset();
+    setRound((r) => r + 1);
+    return true;
+  }
 
   return (
-    <form ref={formRef} action={submit} className="card space-y-3">
+    <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="card space-y-3">
       <p className="text-sm text-muted">
-        For people paying at the door. Only submit once you&apos;ve <strong>seen the transfer land</strong> (or taken cash).
+        For people paying at the door. Only add them once you&apos;ve <strong>seen the transfer land</strong> (or taken cash).
       </p>
       <div className="grid grid-cols-2 gap-1 rounded-xl bg-line p-1 text-sm font-semibold">
         <button type="button" onClick={() => setSource("walk_in")} className={`rounded-lg py-1.5 ${source === "walk_in" ? "bg-surface shadow" : "text-muted"}`}>Paid walk-in</button>
@@ -282,11 +353,16 @@ function DoorTab({ eventId, defaultDollars, onCounts }: { eventId: string; defau
         <input id="notes" name="notes" placeholder="e.g. paid via FPS, ref from banking app" className="input" />
       </div>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="check_in" defaultChecked /> Check them in now
+        <input type="checkbox" checked={checkInNow} onChange={(e) => setCheckInNow(e.target.checked)} /> Check them in now
       </label>
-      {msg.ok && <p className="rounded-lg bg-ok/10 px-3 py-2 text-sm font-semibold text-ok">{msg.ok}</p>}
-      {msg.error && <p className="rounded-lg bg-bad/10 px-3 py-2 text-sm text-bad">{msg.error}</p>}
-      <button disabled={pending} className="btn-primary w-full">{pending ? "Saving…" : "Add confirmed ticket"}</button>
+      {msg.ok && <p className="animate-fade-up rounded-xl bg-ok/10 px-3 py-2 text-sm font-semibold text-ok">{msg.ok}</p>}
+      {msg.error && <p className="animate-fade-up rounded-xl bg-bad/10 px-3 py-2 text-sm text-bad">{msg.error}</p>}
+      <SwipeToConfirm
+        key={round}
+        variant="plain"
+        label={checkInNow ? "Swipe to add & check in" : "Swipe to add ticket"}
+        onConfirm={submit}
+      />
     </form>
   );
 }

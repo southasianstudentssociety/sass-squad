@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { claimableEvents } from "@/lib/claim-data";
 import { teamNames } from "@/lib/inventory";
 import { formatDate, todayInHongKong } from "@/lib/format";
-import { OPEN_STATUSES, TASK_STATUS } from "@/lib/tasks";
+import { OPEN_STATUSES, TASK_KIND, TASK_STATUS, formatTaskTime } from "@/lib/tasks";
 import type { Department, Task, TaskStatus } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/illustrations";
 
 export const metadata = { title: "Tasks" };
 
-type SP = { view?: string; department?: string; event?: string; done?: string; ok?: string; error?: string };
+type SP = { view?: string; department?: string; event?: string; done?: string; due?: string; ok?: string; error?: string };
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<SP> }) {
   const session = await requireTeam("/tasks");
@@ -109,12 +109,15 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 const overdue = t.due_on && t.due_on < today && OPEN_STATUSES.includes(t.status);
                 return (
                   <article key={t.id} className="card animate-fade-up space-y-2 p-3.5">
-                    <Link href={`/tasks/${t.id}`} className="block font-semibold underline">{t.title}</Link>
+                    <Link href={`/tasks/${t.id}`} className="flex items-start gap-2 font-medium hover:underline">
+                      <KindIcon kind={t.kind} />
+                      <span>{t.title}</span>
+                    </Link>
                     <p className="text-xs text-muted">
                       {deptName.get(t.department_id)}
                       {t.event_id && eventName.get(t.event_id) && ` · ${eventName.get(t.event_id)}`}
                       {" · "}{t.owner_id ? (names.get(t.owner_id) ?? "Former team member") : <strong>Unassigned</strong>}
-                      {t.due_on && <span className={overdue ? "font-semibold text-bad" : undefined}> · due {formatDate(t.due_on)}{overdue && " (overdue)"}</span>}
+                      {t.due_on && <span className={overdue ? "font-semibold text-bad" : undefined}> · {t.kind === "upload" ? "goes up" : "due"} {formatDate(t.due_on)}{t.due_time && ` ${formatTaskTime(t.due_time)}`}{overdue && " (overdue)"}</span>}
                     </p>
                     {(t.status === "todo" || t.status === "doing") && (
                       <form action={setTaskStatus}>
@@ -135,7 +138,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       </div>
       )}
 
-      <details className="card" open={all.length === 0}>
+      <details className="card" open={all.length === 0 || !!sp.due}>
         <summary className="cursor-pointer font-bold">Add a task</summary>
         {creatable.length === 0 ? (
           <p className="mt-3 text-sm text-muted">You&apos;re not in a department yet. Ask an ExCo to add you on the Team page.</p>
@@ -167,8 +170,20 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               </select>
             </div>
             <div>
-              <label className="label" htmlFor="nt-due">Due (optional)</label>
-              <input id="nt-due" name="due_on" type="date" className="input" />
+              <label className="label" htmlFor="nt-kind">Type</label>
+              <select id="nt-kind" name="kind" defaultValue="task" className="input">
+                {Object.entries(TASK_KIND).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <div>
+                <label className="label" htmlFor="nt-due">Date</label>
+                <input id="nt-due" name="due_on" type="date" defaultValue={sp.due && /^\d{4}-\d{2}-\d{2}$/.test(sp.due) ? sp.due : undefined} className="input" />
+              </div>
+              <div>
+                <label className="label" htmlFor="nt-time">Time</label>
+                <input id="nt-time" name="due_time" type="time" className="input w-28" />
+              </div>
             </div>
             <div className="sm:col-span-2">
               <label className="label" htmlFor="nt-desc">Details (optional)</label>
@@ -179,5 +194,14 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         )}
       </details>
     </div>
+  );
+}
+
+function KindIcon({ kind }: { kind: Task["kind"] }) {
+  const k = TASK_KIND[kind];
+  return (
+    <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md ${k.chip}`} title={k.short}>
+      <k.icon className="size-3.5" aria-hidden />
+    </span>
   );
 }
