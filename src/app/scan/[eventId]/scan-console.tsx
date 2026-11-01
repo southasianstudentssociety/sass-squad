@@ -7,6 +7,7 @@ import { checkInAction, createDoorTicketAction, previewAction, searchTickets, ty
 import type { CheckInResponse, ScanResult, TicketSource } from "@/lib/types";
 import { formatPrice, formatTime } from "@/lib/format";
 import { SwipeToConfirm } from "@/components/swipe-to-confirm";
+import { AnimatePresence, motion } from "motion/react";
 
 type Tab = "scan" | "search" | "door";
 
@@ -87,7 +88,7 @@ function ResultCard({
 }) {
   if (error) {
     return (
-      <button onClick={onDismiss} className="w-full animate-pop rounded-3xl bg-bad p-6 text-left text-white">
+      <button onClick={onDismiss} className="w-full rounded-3xl bg-bad p-6 text-left text-white shadow-2xl">
         <p className="text-2xl font-extrabold">ERROR</p>
         <p className="mt-1">{error}</p>
         <p className="mt-4 text-sm opacity-80">Tap to continue</p>
@@ -124,7 +125,7 @@ function ResultCard({
 
   if (awaitingSwipe) {
     return (
-      <div className="w-full animate-pop space-y-5 rounded-3xl bg-ok p-6 text-white shadow-[0_12px_32px_-8px_rgb(21_128_61/0.5)]">
+      <div className="w-full space-y-5 rounded-3xl bg-ok p-6 text-white shadow-2xl">
         <div>{body}</div>
         <SwipeToConfirm label="Swipe to check in" onConfirm={() => onAdmit(t.id)} />
         <button onClick={onDismiss} className="mx-auto block text-sm text-white/80 underline-offset-4 hover:underline">
@@ -135,10 +136,68 @@ function ResultCard({
   }
 
   return (
-    <button onClick={onDismiss} className={`w-full animate-pop rounded-3xl p-6 text-left text-white ${TONE_BG[copy.tone]}`}>
+    <button onClick={onDismiss} className={`w-full rounded-3xl p-6 text-left text-white shadow-2xl ${TONE_BG[copy.tone]}`}>
       {body}
       <p className="mt-4 text-sm opacity-80">{res.result === "ok" ? "Tap or wait to scan next" : "Tap to continue"}</p>
     </button>
+  );
+}
+
+/**
+ * Pop-up over the scanner: dims the screen and centres the result card.
+ * Rejections: tap anywhere to dismiss. Valid tickets: a stray tap outside does nothing
+ * (so nobody is turned away by accident); swipe to admit, or Cancel / Escape to back out.
+ * After the swipe the card shows "Checked in" briefly, then fades away.
+ */
+export function ResultLayer(props: {
+  res?: CheckInResponse;
+  error?: string;
+  onDismiss: () => void;
+  onAdmit?: (ticketId: string) => Promise<boolean | void>;
+}) {
+  const open = !!(props.res || props.error);
+  const awaitingSwipe = props.res?.result === "valid";
+  const { onDismiss } = props;
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onDismiss();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onDismiss]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="result-layer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ticket result"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-[3px]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, transition: { duration: 0.35 } }}
+          transition={{ duration: 0.18 }}
+          onClick={(e) => { if (e.target === e.currentTarget && !awaitingSwipe) onDismiss(); }}
+        >
+          <motion.div
+            className="w-full max-w-md"
+            initial={{ opacity: 0, y: 24, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97, transition: { duration: 0.35, ease: [0.4, 0, 1, 1] } }}
+            transition={{ type: "spring", stiffness: 420, damping: 32 }}
+          >
+            <ResultCard {...props} />
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -183,7 +242,7 @@ function useAdmission(eventId: string, onCounts: (c: Counts) => void, after?: ()
         }
         setRes(out.response);
         after?.();
-        if (out.response?.result === "ok") timer.current = setTimeout(dismiss, 1800);
+        if (out.response?.result === "ok") timer.current = setTimeout(dismiss, 1100);
         else navigator.vibrate?.([200, 100, 200]);
       } catch {
         setError("No connection. The ticket was not checked in. Try again.");
@@ -215,7 +274,7 @@ function ScanTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Counts)
   return (
     <div className="space-y-3">
       {/* The camera stays paused while a result is on screen, so nothing changes under the door person's eyes. */}
-      <div className={`relative overflow-hidden rounded-3xl bg-black transition-opacity ${res || error ? "opacity-40" : ""}`}>
+      <div className="relative overflow-hidden rounded-3xl bg-black">
         <Scanner
           onScan={onScan}
           onError={(e) => setCameraError(e instanceof Error ? e.message : "Camera unavailable")}
@@ -236,7 +295,7 @@ function ScanTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Counts)
           Camera problem: {cameraError}. Allow camera access in your browser settings (the site must be on https), or use &quot;Find name&quot;.
         </p>
       )}
-      <ResultCard res={res} error={error} onDismiss={dismiss} onAdmit={admit} />
+      <ResultLayer res={res} error={error} onDismiss={dismiss} onAdmit={admit} />
     </div>
   );
 }
@@ -265,7 +324,7 @@ function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Count
         className="input"
         autoFocus
       />
-      <ResultCard res={res} error={error} onDismiss={dismiss} onAdmit={admit} />
+      <ResultLayer res={res} error={error} onDismiss={dismiss} onAdmit={admit} />
       {pending && <p className="text-sm text-muted">Searching…</p>}
       <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
         {rows.map((r) => (
@@ -282,7 +341,7 @@ function SearchTab({ eventId, onCounts }: { eventId: string; onCounts: (c: Count
               <span className="badge bg-warn/10 text-warn">Unpaid</span>
             ) : (
               <button
-                onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); preview({ ticketId: r.id }); }}
+                onClick={() => preview({ ticketId: r.id })}
                 disabled={!!res}
                 className="btn-primary px-3 py-1.5"
               >
