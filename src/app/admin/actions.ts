@@ -71,6 +71,15 @@ export async function saveEvent(formData: FormData) {
   if (error || !data) {
     back(returnTo, { error: error?.code === "23505" ? "That slug is already used by another event." : "Couldn't save the event." });
   }
+  // Team price lives in its own table that only the team can read.
+  const teamRaw = String(formData.get("team_price") ?? "").trim();
+  const { error: teamError } = await supabase.rpc("set_event_team_price", {
+    p_event_id: data.id,
+    p_price_cents: teamRaw === "" ? null : dollarsToCents(teamRaw),
+  });
+  if (teamError) {
+    back(`/admin/events/${data.id}/edit`, { error: teamError.code === "P0001" ? `Event saved, but not the team price: ${teamError.message}` : "Event saved, but not the team price." });
+  }
   revalidatePath("/", "layout");
   redirect(`/admin/events/${data.id}?ok=${encodeURIComponent("Event saved.")}`);
 }

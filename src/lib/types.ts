@@ -81,6 +81,8 @@ export type Ticket = {
   holder_name: string;
   holder_email: string | null;
   is_member: boolean;
+  /** Bought at the event's team price (team members only). */
+  team_rate?: boolean;
   price_cents: number;
   status: TicketStatus;
   source: TicketSource;
@@ -237,6 +239,8 @@ export type MembershipOffer = {
   price_cents: number;
   valid_until: string;
   is_open: boolean;
+  /** Only current team members see it and can buy it. */
+  team_only: boolean;
   payment_instructions: string | null;
 };
 

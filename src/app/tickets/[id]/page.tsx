@@ -44,7 +44,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       <dt className="text-muted">Name</dt>
       <dd className="text-right font-medium">{t.holder_name}</dd>
       <dt className="text-muted">Ticket</dt>
-      <dd className="text-right">{t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}</dd>
+      <dd className="text-right">{t.team_rate ? "Team" : t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}</dd>
       <dt className="text-muted">Reference</dt>
       <dd className="text-right font-mono text-[13px]">{t.payment_reference}</dd>
       <dt className="text-muted">Status</dt>

@@ -11,14 +11,17 @@ export const metadata = { title: "Edit event" };
 export default async function EditEvent({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
-  const { data: event } = await supabase.from("events").select(EVENT_COLUMNS).eq("id", id).maybeSingle<SassEvent>();
+  const [{ data: event }, { data: team }] = await Promise.all([
+    supabase.from("events").select(EVENT_COLUMNS).eq("id", id).maybeSingle<SassEvent>(),
+    supabase.from("event_team_prices").select("price_cents").eq("event_id", id).maybeSingle<{ price_cents: number }>(),
+  ]);
   if (!event) notFound();
   return (
     <div className="space-y-4">
       <Link href={`/admin/events/${id}`} className="text-sm text-muted underline">← Back to event</Link>
       <h1 className="text-2xl font-display font-normal">Edit: {event.title}</h1>
       <FormMessage error={sp.error} />
-      <EventForm event={event} />
+      <EventForm event={event} teamPriceCents={team?.price_cents ?? null} />
     </div>
   );
 }

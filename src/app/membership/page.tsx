@@ -96,7 +96,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
             <input type="hidden" name="offer_id" value={o.id} />
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-lg font-medium">{o.name}</p>
+                <p className="text-lg font-medium">{o.name}{o.team_only && <span className="badge ml-2 bg-sass-blue/10 align-middle text-sass-blue">Team only</span>}</p>
                 <p className="text-sm text-muted">Valid until {formatDate(o.valid_until)}</p>
               </div>
               <p className="text-2xl font-semibold tabular-nums">{formatPrice(o.price_cents)}</p>
