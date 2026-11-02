@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Images } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { EVENT_COLUMNS, hoursAgoIso } from "@/lib/events";
@@ -8,10 +8,12 @@ import type { SassEvent } from "@/lib/types";
 import { EventCard } from "@/components/event-card";
 import { EmptyState, Illustration } from "@/components/illustrations";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
+import { GalleryStrip } from "@/components/gallery-strip";
+import { galleryItems } from "@/lib/gallery";
 
 export default async function Home() {
   const supabase = await createClient();
-  const [session, { data }] = await Promise.all([
+  const [session, { data }, photos] = await Promise.all([
     getSession(),
     supabase
       .from("events")
@@ -21,6 +23,7 @@ export default async function Home() {
       .order("starts_at")
       .limit(3)
       .returns<SassEvent[]>(),
+    galleryItems(),
   ]);
   const events = data ?? [];
   const firstName = session?.profile.full_name?.split(" ")[0];
@@ -70,6 +73,21 @@ export default async function Home() {
           </Stagger>
         )}
       </section>
+
+      {photos.length > 0 && (
+        <section className="pb-10 sm:pb-12">
+          <div className="mb-6 flex items-end justify-between gap-3">
+            <div>
+              <h2 className="font-display text-2xl text-ink">Gallery</h2>
+              <p className="mt-1 text-sm text-muted">Moments from past SASS nights.</p>
+            </div>
+            <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="btn-ghost shrink-0">
+              <Images className="size-4" aria-hidden />View all photos
+            </a>
+          </div>
+          <GalleryStrip items={photos} />
+        </section>
+      )}
     </div>
   );
 }
