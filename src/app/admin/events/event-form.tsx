@@ -48,7 +48,7 @@ export function EventForm({ event, teamPriceCents }: { event?: SassEvent; teamPr
         <Field label="Non-member price (HK$)">
           <input name="public_price" inputMode="decimal" defaultValue={dollars(event?.public_price_cents)} className="input" />
         </Field>
-        <Field label="Team price (HK$, optional)" className="sm:col-span-2" hint="For ExCo and subcommittee. Only current team members can see it. Their place is reserved: sold out, sales dates and members-only don't stop them. Blank = no team price.">
+        <Field label="Subcommittee price (HK$, optional)" className="sm:col-span-2" hint="What subcommittee pay. Only current team members can see it. ExCo are always free. Team places are reserved: sold out, sales dates and members-only don't stop them. Blank = no subcommittee price.">
           <input name="team_price" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue={teamPriceCents == null ? "" : dollars(teamPriceCents)} placeholder="e.g. 30.00" className="input sm:max-w-xs" />
         </Field>
         <Field label="Member sales open (optional)" hint="Blank = same as general sales">

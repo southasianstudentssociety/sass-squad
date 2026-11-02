@@ -40,8 +40,11 @@ export default async function EventPage({
       : Promise.resolve({ data: null }),
   ]);
   const existingTicketId = existing?.id ?? null;
+  const isExco = isTeam && (session?.access.isAdmin ?? false);
+  // Subcommittee pay the team price (if set); ExCo are always free. Both are reserved places.
   const teamPrice = isTeam ? (team?.price_cents ?? null) : null;
-  const canSwitchToTeam = teamPrice !== null && existing?.status === "awaiting_payment" && !existing.team_rate;
+  const myTeamPrice = isExco ? 0 : teamPrice;
+  const canSwitchToTeam = myTeamPrice !== null && existing?.status === "awaiting_payment" && !existing.team_rate;
 
   const isMember = session?.isMember ?? false;
   const sales = salesStateFor(event, isMember);
@@ -69,12 +72,15 @@ export default async function EventPage({
 
       <aside className="order-1 h-fit animate-fade-up space-y-5 rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-lift)] sm:p-6 lg:sticky lg:top-24 lg:order-2">
         <div className="space-y-1.5 text-sm">
+          {isExco && <PriceRow label="ExCo" value="Free" highlight note="only the team sees this" />}
           {teamPrice !== null && (
-            <PriceRow label="Team" value={formatPrice(teamPrice)} highlight note="only the team sees this" />
+            isExco
+              ? <PriceRow label="Subcommittee" value={formatPrice(teamPrice)} />
+              : <PriceRow label="Team" value={formatPrice(teamPrice)} highlight note="only the team sees this" />
           )}
-          <PriceRow label="Members" value={formatPrice(event.member_price_cents)} highlight={teamPrice === null && isMember} />
+          <PriceRow label="Members" value={formatPrice(event.member_price_cents)} highlight={myTeamPrice === null && isMember} />
           {event.access === "everyone" ? (
-            <PriceRow label="Non-members" value={formatPrice(event.public_price_cents)} highlight={teamPrice === null && !!session && !isMember} />
+            <PriceRow label="Non-members" value={formatPrice(event.public_price_cents)} highlight={myTeamPrice === null && !!session && !isMember} />
           ) : (
             <p className="px-3 text-muted">Members only</p>
           )}
@@ -100,8 +106,8 @@ export default async function EventPage({
               <form action={claimTeamTicket}>
                 <input type="hidden" name="event_id" value={event.id} />
                 <input type="hidden" name="slug" value={event.slug} />
-                <SubmitButton className="btn-ghost w-full" pendingText="Switching…">Switch to the team price · {formatPrice(teamPrice!)}</SubmitButton>
-                <p className="hint text-center">Your ticket isn&apos;t paid yet, so it can move to the team price. Same reference.</p>
+                <SubmitButton className="btn-ghost w-full" pendingText="Switching…">{isExco ? "Switch to my free ExCo ticket" : `Switch to the team price · ${formatPrice(myTeamPrice!)}`}</SubmitButton>
+                <p className="hint text-center">Your ticket isn&apos;t paid yet, so it can move to the {isExco ? "ExCo" : "team"} price. Same reference.</p>
               </form>
             )}
           </div>
@@ -111,14 +117,14 @@ export default async function EventPage({
           <Link href={`/login?next=${encodeURIComponent(`/events/${event.slug}`)}`} className="btn-primary w-full py-3">
             Log in to get a ticket
           </Link>
-        ) : teamPrice !== null ? (
+        ) : myTeamPrice !== null ? (
           <form action={claimTeamTicket}>
             <input type="hidden" name="event_id" value={event.id} />
             <input type="hidden" name="slug" value={event.slug} />
             <SubmitButton className="btn-primary w-full py-3" pendingText="Getting your ticket…">
-              {teamPrice === 0 ? "Get my free team ticket" : `Get team ticket · ${formatPrice(teamPrice)}`}
+              {isExco ? "Get my free ExCo ticket" : myTeamPrice === 0 ? "Get my free team ticket" : `Get team ticket · ${formatPrice(myTeamPrice)}`}
             </SubmitButton>
-            <p className="hint text-center">Your place is reserved as part of the team.{teamPrice > 0 && " You'll get FPS payment details and a reference on the next screen."}</p>
+            <p className="hint text-center">Your place is reserved as part of the team.{myTeamPrice > 0 && " You'll get FPS payment details and a reference on the next screen."}</p>
           </form>
         ) : sales.state === "members_only" ? (
           <p className="text-sm leading-relaxed text-muted">

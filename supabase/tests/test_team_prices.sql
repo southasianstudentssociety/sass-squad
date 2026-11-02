@@ -95,8 +95,26 @@ select pg_temp.check((select price_cents = 0 and team_rate and status = 'confirm
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select public.set_event_team_price('20000000-0000-0000-0000-000000000002', null);
 select pg_temp.check((select count(*) = 0 from public.event_team_prices where event_id = '20000000-0000-0000-0000-000000000002'), 'removed');
+-- subcommittee: no team price / finished event
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.fails($$select public.claim_team_ticket('20000000-0000-0000-0000-000000000002')$$, 'no team price');
 select pg_temp.fails($$select public.claim_team_ticket('20000000-0000-0000-0000-000000000003')$$, 'finished');
+
+-- ExCo (0017): free for every event, with or without a team price
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select price_cents = 0 and status = 'confirmed' and team_rate from public.claim_team_ticket('20000000-0000-0000-0000-000000000001')), 'exco free where team price is 30');
+select pg_temp.check((select price_cents = 0 and status = 'confirmed' from public.claim_team_ticket('20000000-0000-0000-0000-000000000002')), 'exco free with no team price');
+select pg_temp.fails($$select public.claim_team_ticket('20000000-0000-0000-0000-000000000003')$$, 'finished');
+-- ExCo still sees the subcommittee price
+select pg_temp.check((select price_cents = 3000 from public.event_team_prices where event_id = '20000000-0000-0000-0000-000000000001'), 'exco sees team price');
+reset role;
+-- ExCo with an unpaid normal ticket switches to free
+insert into public.events (id, slug, title, starts_at, member_price_cents, public_price_cents, is_published) values
+  ('20000000-0000-0000-0000-000000000004', 'holi', 'Holi', now() + interval '20 days', 5000, 10000, true);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+create temp table t4 on commit drop as select * from public.claim_ticket('20000000-0000-0000-0000-000000000004');
+select pg_temp.check((select price_cents = 10000 and status = 'awaiting_payment' from t4), 'exco normal ticket first');
+select pg_temp.check((select id = (select id from t4) and price_cents = 0 and status = 'confirmed' from public.claim_team_ticket('20000000-0000-0000-0000-000000000004')), 'exco switched to free');
 reset role;
 
 -- ------------------------------------------------ team-only membership offers
