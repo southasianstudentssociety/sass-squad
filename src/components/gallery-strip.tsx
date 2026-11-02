@@ -7,8 +7,25 @@ import { cn } from "@/lib/utils";
 
 type Item = { id: string; src: string; alt: string };
 
-// Collage rhythm: big square, two small, tall, two small, wide... (2 rows, scrolling sideways).
-const SHAPES = ["col-span-2 row-span-2", "", "", "row-span-2", "", "col-span-2", "", "row-span-2", ""];
+// The collage is built from blocks that each fill BOTH rows exactly, so there
+// are never holes: a big square (1 photo, 2x2), a tall tile (1 photo, 1x2),
+// a stack (2 photos, 1x1 on top of each other) or a wide pair (2 photos, 2x1
+// each). Most event photos are portrait, so tall tiles and stacks dominate.
+type Block = "big" | "tall" | "stack" | "wide";
+const RHYTHM: Block[] = ["big", "stack", "tall", "stack", "tall", "wide", "stack", "tall"];
+const CLASS: Record<Block, string> = { big: "col-span-2 row-span-2", tall: "row-span-2", stack: "", wide: "col-span-2" };
+const SIZE: Record<Block, number> = { big: 1, tall: 1, stack: 2, wide: 2 };
+
+/** One class per photo. If a two-photo block would be left with one photo, that photo goes tall instead. */
+function shapes(count: number): string[] {
+  const out: string[] = [];
+  for (let b = 0; out.length < count; b++) {
+    const block = RHYTHM[b % RHYTHM.length];
+    if (SIZE[block] === 2 && count - out.length === 1) out.push(CLASS.tall);
+    else for (let k = 0; k < SIZE[block]; k++) out.push(CLASS[block]);
+  }
+  return out;
+}
 
 /**
  * A two-row photo collage that drifts slowly sideways and loops. It pauses
@@ -72,12 +89,13 @@ export function GalleryStrip({ items }: { items: Item[] }) {
     if (el) el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: reduce ? "auto" : "smooth" });
   };
 
+  const shape = shapes(items.length);
   const tiles = (copy: number) =>
     items.map((item, i) => (
       <figure
         key={`${copy}-${item.id}`}
         aria-hidden={copy > 0 || undefined}
-        className={cn("overflow-hidden rounded-2xl bg-line", SHAPES[i % SHAPES.length])}
+        className={cn("overflow-hidden rounded-2xl bg-line", shape[i])}
       >
         {/* Public Storage URLs, already resized on upload. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
