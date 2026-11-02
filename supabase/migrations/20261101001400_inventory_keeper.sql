@@ -103,7 +103,7 @@ begin
   if v_item.retired_at is not null then
     raise exception 'This item is retired.' using errcode = 'P0001';
   end if;
-  if not (private.is_admin() or v_item.keeper_id = auth.uid()) then
+  if not (private.is_admin() or coalesce(v_item.keeper_id = auth.uid(), false)) then
     raise exception 'Only the person in charge of this item, or an ExCo, can hand it on.' using errcode = 'P0001';
   end if;
   if p_keeper_id is not distinct from v_item.keeper_id then

@@ -46,6 +46,9 @@ create temp table it on commit drop as
 select pg_temp.check((select keeper_id = '00000000-0000-0000-0000-00000000000b' from public.inventory_overview where name = 'Diyas'), 'view has keeper');
 select pg_temp.fails($$select public.create_inventory_item('X', null, null, 'good', 1, null, '00000000-0000-0000-0000-00000000000d')$$, 'current team member');
 
+-- nobody in charge: only ExCo can assign it
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.fails($$select public.transfer_inventory_item((select id from public.inventory_items where name = 'Old call'), '00000000-0000-0000-0000-00000000000c')$$, 'Only the person in charge');
 -- sub2 is not in charge: can't transfer
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.fails($$select public.transfer_inventory_item((select id from public.inventory_items where name = 'Diyas'), '00000000-0000-0000-0000-00000000000c')$$, 'Only the person in charge');
