@@ -8,7 +8,7 @@ import { CONDITIONS, teamNames } from "@/lib/inventory";
 import type { InventoryAction, InventoryItem, InventoryLoan, InventoryLogEntry } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
-import { adjustItem, checkOut, retireItem, returnLoan, updateItem } from "../actions";
+import { adjustItem, checkOut, retireItem, returnLoan, transferItem, updateItem } from "../actions";
 
 export const metadata = { title: "Inventory item" };
 
@@ -20,6 +20,7 @@ const ACTION_LABEL: Record<InventoryAction, string> = {
   returned: "Returned",
   lost: "Lost",
   retired: "Retired",
+  transferred: "Handed on",
 };
 
 export default async function ItemPage({
@@ -46,7 +47,10 @@ export default async function ItemPage({
   const loans = loansData ?? [];
   const log = logData ?? [];
   const directory = (team ?? []) as { user_id: string; full_name: string | null; email: string }[];
+  const str = (v: unknown) => (typeof v === "string" ? v : null);
   const names = await teamNames([
+    item.keeper_id,
+    ...log.flatMap((e) => [str(e.details?.from), str(e.details?.to), str(e.details?.keeper_id)]),
     ...loans.flatMap((l) => [l.borrower_id, l.checked_out_by]),
     ...log.flatMap((e) => [e.actor_id, typeof e.details?.borrower_id === "string" ? e.details.borrower_id : null]),
   ]);
@@ -54,6 +58,7 @@ export default async function ItemPage({
   const today = todayInHongKong();
   const retired = Boolean(item.retired_at);
   const isExco = session.access.isAdmin;
+  const canTransfer = !retired && (isExco || item.keeper_id === session.userId);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -70,6 +75,33 @@ export default async function ItemPage({
       </div>
       <FormMessage error={sp.error} success={sp.ok} />
       {item.notes && <p className="card whitespace-pre-wrap text-sm">{item.notes}</p>}
+
+      <section className="card space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-bold">Person in charge</h2>
+          <p className="text-sm">{item.keeper_id ? <strong>{name(item.keeper_id)}</strong> : <span className="text-muted">Nobody yet</span>}</p>
+        </div>
+        <p className="text-xs text-muted">The person who answers for this item and knows where it is. Handing it on is logged in the history below.</p>
+        {canTransfer ? (
+          <form action={transferItem} className="grid gap-2 border-t border-line pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <input type="hidden" name="item_id" value={id} />
+            <div>
+              <label className="label text-xs" htmlFor="tr-to">Hand it to</label>
+              <select id="tr-to" name="keeper_id" required defaultValue="" className="input">
+                <option value="" disabled>Choose a person</option>
+                {directory.filter((p) => p.user_id !== item.keeper_id).map((p) => <option key={p.user_id} value={p.user_id}>{p.full_name ?? p.email}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label text-xs" htmlFor="tr-note">Note (optional)</label>
+              <input id="tr-note" name="note" maxLength={500} placeholder="e.g. Handed over after Diwali" className="input" />
+            </div>
+            <SubmitButton pendingText="Saving…">Transfer</SubmitButton>
+          </form>
+        ) : !retired && (
+          <p className="text-xs text-muted">Only {item.keeper_id ? name(item.keeper_id) : "an ExCo"}{item.keeper_id && " or an ExCo"} can hand it on.</p>
+        )}
+      </section>
 
       {loans.length > 0 && (
         <section className="space-y-3">
@@ -202,6 +234,8 @@ export default async function ItemPage({
                 {e.quantity_delta !== 0 && ` (${e.quantity_delta > 0 ? "+" : ""}${e.quantity_delta})`}
                 {e.action === "checked_out" && typeof e.details?.borrower_id === "string" && ` to ${name(e.details.borrower_id)}`}
                 {e.action === "edited" && e.details && `: ${Object.keys(e.details).join(", ")}`}
+                {e.action === "transferred" && ` from ${str(e.details?.from) ? name(str(e.details?.from)) : "nobody"} to ${str(e.details?.to) ? name(str(e.details?.to)) : "nobody"}`}
+                {e.action === "created" && str(e.details?.keeper_id) && `, in charge: ${name(str(e.details?.keeper_id))}`}
                 {" "}by {name(e.actor_id)}{e.note && `: ${e.note}`}
               </span>
             </li>

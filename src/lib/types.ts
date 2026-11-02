@@ -23,7 +23,7 @@ export type Access = {
   isFinance: boolean;
   /** ExCo in a finance department (the VP of Finance): may approve and pay their own claims, flagged. */
   isFinanceExco: boolean;
-  /** Hub owner: controls the team, departments, door volunteers and the owner list. */
+  /** Hub owner: controls the team, departments and the owner list. */
   isOwner: boolean;
   /** Default end date for new memberships (31 Aug of this academic year). */
   termEnd: string;
@@ -157,7 +157,7 @@ export type ClaimEvent = {
 };
 
 export type ItemCondition = "new" | "good" | "worn" | "damaged";
-export type InventoryAction = "created" | "edited" | "adjusted" | "checked_out" | "returned" | "lost" | "retired";
+export type InventoryAction = "created" | "edited" | "adjusted" | "checked_out" | "returned" | "lost" | "retired" | "transferred";
 
 export type InventoryItem = {
   id: string;
@@ -167,6 +167,7 @@ export type InventoryItem = {
   condition: ItemCondition;
   quantity: number;
   notes: string | null;
+  keeper_id: string | null;
   retired_at: string | null;
   updated_at: string;
   on_loan: number;

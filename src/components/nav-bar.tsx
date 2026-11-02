@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRef } from "react";
 import { motion } from "motion/react";
 import { Menu } from "@base-ui/react/menu";
-import { BadgeCheck, Boxes, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
+import { BadgeCheck, Boxes, CalendarCog, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -57,6 +57,20 @@ export function NavBar({ user }: { user: User | null }) {
               <NavLink key={l.href} href={l.href} active={isActive(l.href)}>{l.label}</NavLink>
             ))}
           </nav>
+
+        {user?.isAdmin && (
+            <Link
+              href="/admin"
+              className={cn(
+                "flex shrink-0 items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm whitespace-nowrap text-ink shadow-[var(--shadow-soft)] transition hover:border-ink/15 sm:px-2.5",
+                pathname === "/admin" || pathname.startsWith("/admin/events") ? "border-ink/20" : undefined,
+              )}
+              aria-label="Manage events"
+            >
+              <CalendarCog className="size-4 opacity-70" aria-hidden />
+              <span className="hidden sm:inline">Manage events</span>
+            </Link>
+          )}
 
         {team.length > 0 && (
               <Menu.Root>

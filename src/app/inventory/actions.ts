@@ -36,6 +36,7 @@ export async function createItem(formData: FormData) {
     p_condition: condition(formData) ?? "good",
     p_quantity: int(formData, "quantity") ?? 1,
     p_notes: optional(formData, "notes"),
+    p_keeper_id: optional(formData, "keeper_id"),
   });
   if (error || !data) back("/inventory", { error: rpcError(error, "Couldn't add the item.") });
   refresh();
@@ -79,6 +80,20 @@ export async function retireItem(formData: FormData) {
   if (error) back(`/inventory/${id}`, { error: rpcError(error, "Couldn't retire the item.") });
   refresh(id);
   back(`/inventory/${id}`, { ok: "Item retired. It stays in the history." });
+}
+
+export async function transferItem(formData: FormData) {
+  const id = str(formData, "item_id");
+  await requireTeam(`/inventory/${id}`);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("transfer_inventory_item", {
+    p_item_id: id,
+    p_keeper_id: optional(formData, "keeper_id"),
+    p_note: optional(formData, "note"),
+  });
+  if (error) back(`/inventory/${id}`, { error: rpcError(error, "Couldn't hand it on.") });
+  refresh(id);
+  back(`/inventory/${id}`, { ok: "Person in charge updated." });
 }
 
 export async function checkOut(formData: FormData) {

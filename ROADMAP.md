@@ -28,6 +28,11 @@ Tasks per department and event, with owner, due date and status.
 ## Built beyond the original phases (Nov 2026)
 Swipe-to-confirm check-in, ticket tear-off on check-in, six-month team calendar, door live dashboard, add-to-calendar, event budgets with Finance expenses, membership purchase in the app, event feedback and attendance. All built 1–2 Nov 2026; none has been used at a real event yet.
 
+## Changed 2 Nov 2026
+- **Door volunteers removed from the app.** Only team members scan. The `door_staff` table and RPCs are still in the database (unused); drop them in a later cleanup migration.
+- **Event budgets became Accounts**: income as well as expenses, a year statement and an opening bank balance. Ticket sales, memberships and reimbursements are automatic lines rather than an "import", so they can't be counted twice or go out of date.
+- **Inventory**: person in charge and transfers. **Tasks**: Add task pop-up, card/table views.
+
 ## On hold
 - **Waitlist for sold-out events.** Decided 2 Nov 2026 to hold it. It changes `claim_ticket`, the function every ticket purchase goes through, so it waits until after Diwali (21 Nov) and until an event actually sells out. Revisit then.
 

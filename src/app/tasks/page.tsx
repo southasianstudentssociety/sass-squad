@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LayoutGrid, Plus, Table2 } from "lucide-react";
 import { requireTeam } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { claimableEvents } from "@/lib/claim-data";
@@ -10,10 +11,12 @@ import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { createTask, setTaskStatus } from "./actions";
 import { EmptyState } from "@/components/illustrations";
+import { Modal } from "@/components/modal";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Tasks" };
 
-type SP = { view?: string; department?: string; event?: string; done?: string; due?: string; ok?: string; error?: string };
+type SP = { view?: string; layout?: string; department?: string; event?: string; done?: string; due?: string; ok?: string; error?: string };
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<SP> }) {
   const session = await requireTeam("/tasks");
@@ -48,102 +51,33 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const myOpen = all.filter((t) => t.owner_id === session.userId && OPEN_STATUSES.includes(t.status));
   const overdueMine = myOpen.filter((t) => t.due_on && t.due_on < today).length;
   const unassigned = all.filter((t) => !t.owner_id && OPEN_STATUSES.includes(t.status)).length;
-  const here = `/tasks?${new URLSearchParams(Object.entries({ view, department: sp.department ?? "", event: sp.event ?? "", done: sp.done ?? "" }).filter(([, v]) => v)).toString()}`;
+  const layout = sp.layout === "table" ? "table" : "board";
+  const keep = { view, layout, department: sp.department ?? "", event: sp.event ?? "", done: sp.done ?? "" };
+  const link = (changes: Partial<typeof keep>) =>
+    `/tasks?${new URLSearchParams(Object.entries({ ...keep, ...changes }).filter(([, v]) => v)).toString()}`;
+  const here = link({});
+  const statusOrder: TaskStatus[] = ["blocked", "doing", "todo", "done", "cancelled"];
+  const tableRows = [...tasks].sort(
+    (a, b) =>
+      statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status) ||
+      (a.due_on ?? "9999").localeCompare(b.due_on ?? "9999") ||
+      a.title.localeCompare(b.title),
+  );
   const creatable = departments.filter((d) => myDepts.has(d.id));
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-display font-normal">Tasks</h1>
-        <p className="text-sm text-muted">
-          {myOpen.length} open for you{overdueMine > 0 && <span className="text-bad"> · {overdueMine} overdue</span>}
-          {unassigned > 0 && ` · ${unassigned} unassigned`}
-        </p>
-      </div>
-      <FormMessage error={sp.error} success={sp.ok} />
-
-      <form className="flex flex-wrap items-end gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <label className="label text-xs" htmlFor="tf-view">Show</label>
-          <select id="tf-view" name="view" defaultValue={view} className="input">
-            <option value="mine">My tasks</option>
-            <option value="all">Everyone&apos;s</option>
-          </select>
+          <h1 className="text-3xl font-display font-normal">Tasks</h1>
+          <p className="text-sm text-muted">
+            {myOpen.length} open for you{overdueMine > 0 && <span className="text-bad"> · {overdueMine} overdue</span>}
+            {unassigned > 0 && ` · ${unassigned} unassigned`}
+          </p>
         </div>
-        <div>
-          <label className="label text-xs" htmlFor="tf-dept">Department</label>
-          <select id="tf-dept" name="department" defaultValue={sp.department ?? ""} className="input">
-            <option value="">All</option>
-            {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="label text-xs" htmlFor="tf-event">Event</label>
-          <select id="tf-event" name="event" defaultValue={sp.event ?? ""} className="input">
-            <option value="">All</option>
-            {events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
-          </select>
-        </div>
-        <label className="flex items-center gap-1.5 pb-2 text-sm">
-          <input type="checkbox" name="done" value="1" defaultChecked={showDone} /> Include done
-        </label>
-        <button className="btn-ghost">Filter</button>
-      </form>
-
-      {all.length === 0 ? (
-        <div className="card">
-          <EmptyState illustration="tasks" title="No tasks yet">Add the first one below. Everyone on the team sees every department&apos;s tasks.</EmptyState>
-        </div>
-      ) : (
-      <div className="grid gap-4 lg:grid-cols-3">
-        {statuses.map((status) => {
-          const column = tasks.filter((t) => t.status === status);
-          return (
-            <section key={status} className="space-y-2">
-              <h2 className="flex items-center gap-2 font-bold">
-                <span className={`badge ${TASK_STATUS[status].cls}`}>{TASK_STATUS[status].label}</span>
-                <span className="text-sm font-normal text-muted">{column.length}</span>
-              </h2>
-              {column.length === 0 && <p className="rounded-xl border border-dashed border-line px-3 py-6 text-center text-sm text-muted">Nothing here</p>}
-              {column.map((t) => {
-                const overdue = t.due_on && t.due_on < today && OPEN_STATUSES.includes(t.status);
-                return (
-                  <article key={t.id} className="card animate-fade-up space-y-2 p-3.5">
-                    <Link href={`/tasks/${t.id}`} className="flex items-start gap-2 font-medium hover:underline">
-                      <KindIcon kind={t.kind} />
-                      <span>{t.title}</span>
-                    </Link>
-                    <p className="text-xs text-muted">
-                      {deptName.get(t.department_id)}
-                      {t.event_id && eventName.get(t.event_id) && ` · ${eventName.get(t.event_id)}`}
-                      {" · "}{t.owner_id ? (names.get(t.owner_id) ?? "Former team member") : <strong>Unassigned</strong>}
-                      {t.due_on && <span className={overdue ? "font-semibold text-bad" : undefined}> · {t.kind === "upload" ? "goes up" : "due"} {formatDate(t.due_on)}{t.due_time && ` ${formatTaskTime(t.due_time)}`}{overdue && " (overdue)"}</span>}
-                    </p>
-                    {(t.status === "todo" || t.status === "doing") && (
-                      <form action={setTaskStatus}>
-                        <input type="hidden" name="task_id" value={t.id} />
-                        <input type="hidden" name="return_to" value={here} />
-                        <input type="hidden" name="status" value={t.status === "todo" ? "doing" : "done"} />
-                        <SubmitButton className="btn-ghost px-2 py-1 text-xs" pendingText="Saving…">
-                          {t.status === "todo" ? "Start" : "Mark done"}
-                        </SubmitButton>
-                      </form>
-                    )}
-                  </article>
-                );
-              })}
-            </section>
-          );
-        })}
-      </div>
-      )}
-
-      <details className="card" open={all.length === 0 || !!sp.due}>
-        <summary className="cursor-pointer font-bold">Add a task</summary>
-        {creatable.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">You&apos;re not in a department yet. Ask an ExCo to add you on the Team page.</p>
-        ) : (
-          <form action={createTask} className="mt-4 grid gap-3 sm:grid-cols-2">
+        {creatable.length > 0 ? (
+          <Modal label="Add task" title="Add a task" icon={<Plus className="size-4" aria-hidden />} defaultOpen={!!sp.due}>
+            <form action={createTask} className="grid gap-3 sm:grid-cols-2">
             <input type="hidden" name="return_to" value={here} />
             <div className="sm:col-span-2">
               <label className="label" htmlFor="nt-title">What needs doing</label>
@@ -191,9 +125,166 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             </div>
             <div className="sm:col-span-2"><SubmitButton pendingText="Adding…">Add task</SubmitButton></div>
           </form>
+          </Modal>
+        ) : (
+          <p className="max-w-60 text-right text-xs text-muted">You&apos;re not in a department yet, so you can&apos;t add tasks. Ask a hub owner to add you on the Team page.</p>
         )}
-      </details>
+      </div>
+      <FormMessage error={sp.error} success={sp.ok} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Segmented
+          label="Whose tasks"
+          options={[
+            { href: link({ view: "mine" }), label: "My tasks", active: view === "mine" },
+            { href: link({ view: "all" }), label: "Everyone's", active: view === "all" },
+          ]}
+        />
+        <Segmented
+          label="Layout"
+          options={[
+            { href: link({ layout: "board" }), label: <><LayoutGrid className="size-4" aria-hidden />Cards</>, active: layout === "board" },
+            { href: link({ layout: "table" }), label: <><Table2 className="size-4" aria-hidden />Table</>, active: layout === "table" },
+          ]}
+        />
+      </div>
+
+      <form className="flex flex-wrap items-end gap-2">
+        <input type="hidden" name="view" value={view} />
+        <input type="hidden" name="layout" value={layout} />
+        <div>
+          <label className="label text-xs" htmlFor="tf-dept">Department</label>
+          <select id="tf-dept" name="department" defaultValue={sp.department ?? ""} className="input">
+            <option value="">All</option>
+            {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label text-xs" htmlFor="tf-event">Event</label>
+          <select id="tf-event" name="event" defaultValue={sp.event ?? ""} className="input">
+            <option value="">All</option>
+            {events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
+          </select>
+        </div>
+        <label className="flex items-center gap-1.5 pb-2 text-sm">
+          <input type="checkbox" name="done" value="1" defaultChecked={showDone} /> Include done
+        </label>
+        <button className="btn-ghost">Apply</button>
+      </form>
+
+      {all.length === 0 ? (
+        <div className="card">
+          <EmptyState illustration="tasks" title="No tasks yet">Add the first one with <strong>Add task</strong> at the top. Everyone on the team sees every department&apos;s tasks.</EmptyState>
+        </div>
+      ) : layout === "table" ? (
+        <div className="card overflow-auto p-0 max-h-[75vh]">
+          <table className="sheet min-w-[56rem]">
+            <thead>
+              <tr>
+                <th className="num">#</th><th>Task</th><th>Type</th><th>Status</th><th>Department</th><th>Event</th><th>Who</th><th>Due</th><th />
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.length === 0 && (
+                <tr><td colSpan={9} className="py-8 text-center text-muted">No tasks match. Try &ldquo;Everyone&apos;s&rdquo; or another filter.</td></tr>
+              )}
+              {tableRows.map((t, i) => {
+                const overdue = t.due_on && t.due_on < today && OPEN_STATUSES.includes(t.status);
+                return (
+                  <tr key={t.id}>
+                    <td className="num">{i + 1}</td>
+                    <td className="max-w-80"><Link href={`/tasks/${t.id}`} className="font-medium hover:underline">{t.title}</Link></td>
+                    <td><span className="flex items-center gap-1.5 whitespace-nowrap"><KindIcon kind={t.kind} />{TASK_KIND[t.kind].short}</span></td>
+                    <td><span className={`badge ${TASK_STATUS[t.status].cls}`}>{TASK_STATUS[t.status].label}</span></td>
+                    <td className="whitespace-nowrap">{deptName.get(t.department_id)}</td>
+                    <td className="whitespace-nowrap">{(t.event_id && eventName.get(t.event_id)) || <span className="text-muted">-</span>}</td>
+                    <td className="whitespace-nowrap">{t.owner_id ? (names.get(t.owner_id) ?? "Former team member") : <strong>Unassigned</strong>}</td>
+                    <td className={cn("whitespace-nowrap tabular-nums", overdue && "font-semibold text-bad")}>
+                      {t.due_on ? <>{formatDate(t.due_on)}{t.due_time && ` ${formatTaskTime(t.due_time)}`}{overdue && " (overdue)"}</> : <span className="text-muted">-</span>}
+                    </td>
+                    <td>
+                      {(t.status === "todo" || t.status === "doing") && (
+                        <form action={setTaskStatus}>
+                          <input type="hidden" name="task_id" value={t.id} />
+                          <input type="hidden" name="return_to" value={here} />
+                          <input type="hidden" name="status" value={t.status === "todo" ? "doing" : "done"} />
+                          <SubmitButton className="btn-ghost px-2 py-1 text-xs" pendingText="Saving…">
+                            {t.status === "todo" ? "Start" : "Mark done"}
+                          </SubmitButton>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+      <div className="grid gap-4 lg:grid-cols-3">
+        {statuses.map((status) => {
+          const column = tasks.filter((t) => t.status === status);
+          return (
+            <section key={status} className="space-y-2">
+              <h2 className="flex items-center gap-2 font-bold">
+                <span className={`badge ${TASK_STATUS[status].cls}`}>{TASK_STATUS[status].label}</span>
+                <span className="text-sm font-normal text-muted">{column.length}</span>
+              </h2>
+              {column.length === 0 && <p className="rounded-xl border border-dashed border-line px-3 py-6 text-center text-sm text-muted">Nothing here</p>}
+              {column.map((t) => {
+                const overdue = t.due_on && t.due_on < today && OPEN_STATUSES.includes(t.status);
+                return (
+                  <article key={t.id} className="card animate-fade-up space-y-2 p-3.5">
+                    <Link href={`/tasks/${t.id}`} className="flex items-start gap-2 font-medium hover:underline">
+                      <KindIcon kind={t.kind} />
+                      <span>{t.title}</span>
+                    </Link>
+                    <p className="text-xs text-muted">
+                      {deptName.get(t.department_id)}
+                      {t.event_id && eventName.get(t.event_id) && ` · ${eventName.get(t.event_id)}`}
+                      {" · "}{t.owner_id ? (names.get(t.owner_id) ?? "Former team member") : <strong>Unassigned</strong>}
+                      {t.due_on && <span className={overdue ? "font-semibold text-bad" : undefined}> · {t.kind === "upload" ? "goes up" : "due"} {formatDate(t.due_on)}{t.due_time && ` ${formatTaskTime(t.due_time)}`}{overdue && " (overdue)"}</span>}
+                    </p>
+                    {(t.status === "todo" || t.status === "doing") && (
+                      <form action={setTaskStatus}>
+                        <input type="hidden" name="task_id" value={t.id} />
+                        <input type="hidden" name="return_to" value={here} />
+                        <input type="hidden" name="status" value={t.status === "todo" ? "doing" : "done"} />
+                        <SubmitButton className="btn-ghost px-2 py-1 text-xs" pendingText="Saving…">
+                          {t.status === "todo" ? "Start" : "Mark done"}
+                        </SubmitButton>
+                      </form>
+                    )}
+                  </article>
+                );
+              })}
+            </section>
+          );
+        })}
+      </div>
+      )}
+
     </div>
+  );
+}
+
+function Segmented({ label, options }: { label: string; options: { href: string; label: React.ReactNode; active: boolean }[] }) {
+  return (
+    <nav aria-label={label} className="inline-flex gap-1 rounded-xl bg-line p-1 text-sm font-medium">
+      {options.map((o) => (
+        <Link
+          key={o.href}
+          href={o.href}
+          aria-current={o.active ? "page" : undefined}
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors",
+            o.active ? "bg-surface shadow-[var(--shadow-soft)]" : "text-muted hover:text-ink",
+          )}
+        >
+          {o.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 

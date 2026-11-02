@@ -145,6 +145,12 @@ h2.font-display {
 @utility btn-accent {
   @apply btn bg-accent text-accent-ink hover:brightness-95;
 }
+@utility btn-blue {
+  @apply btn bg-sass-blue text-white hover:brightness-110;
+}
+@utility btn-green {
+  @apply btn bg-ok text-white hover:brightness-110;
+}
 @utility btn-ghost {
   @apply btn border border-line bg-surface text-ink hover:border-ink/15 hover:bg-page;
   box-shadow: var(--shadow-soft);
@@ -227,6 +233,35 @@ select.input {
   }
   .table tbody tr:last-child td {
     border-bottom: 0;
+  }
+  /* Spreadsheet-style table: gridlines, sticky header, compact rows. */
+  .sheet {
+    @apply w-full border-separate border-spacing-0 text-left text-sm;
+  }
+  .sheet th {
+    @apply sticky top-0 z-[1] border-b border-r border-line bg-page px-3 py-2 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase;
+  }
+  .sheet td {
+    @apply border-b border-r border-line px-3 py-2 align-middle;
+  }
+  .sheet th:last-child,
+  .sheet td:last-child {
+    border-right: 0;
+  }
+  .sheet tbody tr:nth-child(even) td {
+    background: color-mix(in oklab, var(--page) 55%, var(--surface));
+  }
+  .sheet tbody tr:hover td {
+    background: color-mix(in oklab, var(--sass-blue) 5%, var(--surface));
+  }
+  .sheet tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .sheet .num {
+    @apply w-10 bg-page text-center text-xs text-muted tabular-nums;
+  }
+  .sheet tfoot td {
+    @apply border-t border-b-0 border-line bg-page font-semibold;
   }
   /* unDraw illustrations: accent follows currentColor. */
   .illustration svg {
