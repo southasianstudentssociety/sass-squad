@@ -1,16 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { addDays, formatDate, todayInHongKong } from "@/lib/format";
-import type { Department, DoorStaff, TeamMembership } from "@/lib/types";
+import type { Department, TeamMembership } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import {
   addTeamMember,
   deleteDepartment,
   endTeamMembership,
-  removeDoorStaff,
   saveDepartment,
-  setDoorStaff,
   grantOwner,
   revokeOwner,
 } from "../actions";
@@ -19,7 +17,6 @@ export const metadata = { title: "Team" };
 
 type Person = { full_name: string | null; email: string };
 type MembershipRow = TeamMembership & { person: Person | null };
-type DoorRow = DoorStaff & { person: Person | null };
 
 const POSITION_LABEL = { exco: "ExCo", subcommittee: "Subcommittee" } as const;
 
@@ -27,18 +24,13 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const session = await getSession();
   const supabase = await createClient();
-  const [{ data: departments }, { data: memberships }, { data: door }] = await Promise.all([
+  const [{ data: departments }, { data: memberships }] = await Promise.all([
     supabase.from("departments").select("id, name, handles_finance").order("name").returns<Department[]>(),
     supabase
       .from("team_memberships")
       .select("id, user_id, department_id, position, title, starts_on, ends_on, person:profiles!team_memberships_user_id_fkey(full_name, email)")
       .order("ends_on", { ascending: false })
       .returns<MembershipRow[]>(),
-    supabase
-      .from("door_staff")
-      .select("user_id, expires_on, person:profiles!door_staff_user_id_fkey(full_name, email)")
-      .order("expires_on", { ascending: false })
-      .returns<DoorRow[]>(),
   ]);
 
   const owner = session?.access.isOwner ?? false;
@@ -65,22 +57,20 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const lastExcoDay = excoEnds.length ? excoEnds.sort().at(-1)! : null;
   const lockoutSoon = lastExcoDay !== null && lastExcoDay <= addDays(today, 30);
 
-  const doorRows = door ?? [];
-
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-display font-normal">Team</h1>
         <p className="text-sm text-muted">
           <strong>ExCo</strong> can manage events, members and payments. <strong>Hub owners</strong> also control this page.{" "}
-          <strong>Subcommittee</strong> and <strong>door volunteers</strong> can use the scanner from 24 hours before an event.
+          <strong>Subcommittee</strong> can use the scanner from 24 hours before an event.
           Access ends automatically on the last day of each person&apos;s term.
         </p>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />
       {!owner && (
         <p className="rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-muted">
-          You can see the team here. Only hub owners{ownerNames && ` (${ownerNames})`} can add or remove people, change departments or give door access.
+          You can see the team here. Only hub owners{ownerNames && ` (${ownerNames})`} can add or remove people, or change departments.
         </p>
       )}
 
@@ -136,46 +126,6 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       <MembershipTable title={`Current team (${active.length})`} rows={[...active].sort(byDept)} deptName={deptName} endable={owner} />
       {upcoming.length > 0 && <MembershipTable title="Starting later" rows={[...upcoming].sort(byDept)} deptName={deptName} endable={owner} />}
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold">Door volunteers</h2>
-        <p className="text-sm text-muted">For people who help at the door but aren&apos;t on the team. Scanner access only.</p>
-        {owner && <form action={setDoorStaff} className="card flex flex-wrap items-end gap-3">
-          <div className="min-w-60 flex-1">
-            <label className="label" htmlFor="ds-email">Email</label>
-            <input id="ds-email" name="email" type="email" required placeholder="They must have logged in once" className="input" />
-          </div>
-          <div>
-            <label className="label" htmlFor="ds-exp">Access until</label>
-            <input id="ds-exp" name="expires_on" type="date" required min={today} defaultValue={addDays(today, 30)} className="input" />
-          </div>
-          <SubmitButton pendingText="Saving…">Give door access</SubmitButton>
-        </form>}
-        {doorRows.length > 0 && (
-          <div className="card overflow-x-auto p-0">
-            <table className="table">
-              <thead><tr><th>Name</th><th>Email</th><th>Until</th><th /></tr></thead>
-              <tbody>
-                {doorRows.map((d) => (
-                  <tr key={d.user_id} className={d.expires_on < today ? "opacity-50" : undefined}>
-                    <td className="font-semibold">{d.person?.full_name ?? "-"}</td>
-                    <td>{d.person?.email}</td>
-                    <td>{formatDate(d.expires_on)}{d.expires_on < today && " (expired)"}</td>
-                    <td className="text-right">
-                      {owner && (
-                        <form action={removeDoorStaff}>
-                          <input type="hidden" name="user_id" value={d.user_id} />
-                          <SubmitButton className="btn-danger px-3 py-1 text-xs" pendingText="Removing…">Remove</SubmitButton>
-                        </form>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
       {ended.length > 0 && <MembershipTable title="Past team" rows={ended} deptName={deptName} muted />}
 
       <section className="space-y-3">
@@ -219,7 +169,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Hub owners</h2>
         <p className="text-sm text-muted">
-          Owners control this page: the team, departments, door volunteers and who else is an owner. They also count as Finance.
+          Owners control this page: the team, departments and who else is an owner. They also count as Finance.
           Pass ownership on before you leave; there must always be at least one owner.
         </p>
         <ul className="card divide-y divide-line p-0 text-sm">

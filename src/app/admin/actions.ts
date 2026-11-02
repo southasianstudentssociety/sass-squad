@@ -264,26 +264,6 @@ export async function endTeamMembership(formData: FormData) {
   back(TEAM, { ok: "Membership ended. Their access stops now." });
 }
 
-export async function setDoorStaff(formData: FormData) {
-  await requireOwner();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const expiresOn = dateOrNull(formData.get("expires_on"));
-  if (!email || !expiresOn) back(TEAM, { error: "Email and expiry date are required." });
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("set_door_staff", { p_email: email, p_expires_on: expiresOn });
-  if (error) back(TEAM, { error: rpcError(error, "Couldn't give door access.") });
-  revalidatePath("/", "layout");
-  back(TEAM, { ok: `${email} can scan tickets until ${expiresOn}.` });
-}
-
-export async function removeDoorStaff(formData: FormData) {
-  await requireOwner();
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("remove_door_staff", { p_user_id: String(formData.get("user_id")) });
-  if (error) back(TEAM, { error: rpcError(error, "Couldn't remove door access.") });
-  revalidatePath("/", "layout");
-  back(TEAM, { ok: "Door access removed." });
-}
 
 export async function grantOwner(formData: FormData) {
   await requireOwner();

@@ -66,8 +66,8 @@ export default async function ManageEvent({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/events/${event.slug}`} className="btn-ghost">View page</Link>
-          <Link href={`/admin/events/${id}/edit`} className="btn-ghost">Edit</Link>
-          <Link href={`/admin/events/${id}/live`} className="btn-ghost">Door live</Link>
+          <Link href={`/admin/events/${id}/edit`} className="btn-green">Edit</Link>
+          <Link href={`/admin/events/${id}/live`} className="btn-blue">Door live</Link>
           <Link href={`/admin/events/${id}/feedback`} className="btn-ghost">Feedback</Link>
           <Link href={`/scan/${id}`} className="btn-primary">Open scanner</Link>
         </div>

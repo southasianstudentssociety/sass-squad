@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/finance", label: "Claims", match: (p: string) => p === "/finance" },
-  { href: "/finance/budgets", label: "Event budgets", match: (p: string) => p.startsWith("/finance/budgets") },
+  { href: "/finance/budgets", label: "Accounts", match: (p: string) => p.startsWith("/finance/budgets") },
 ];
 
 export function FinanceTabs() {
