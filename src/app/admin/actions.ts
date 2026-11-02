@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { localToIso, dollarsToCents, slugify } from "@/lib/format";
 import { parseCsv, parseDayFirstDate } from "@/lib/csv";
@@ -210,7 +210,7 @@ function dateOrNull(v: FormDataEntryValue | null): string | null {
 }
 
 export async function saveDepartment(formData: FormData) {
-  await requireAdmin();
+  await requireOwner();
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   if (!name || name.length > 60) back(TEAM, { error: "Department name must be 1–60 characters." });
@@ -225,7 +225,7 @@ export async function saveDepartment(formData: FormData) {
 }
 
 export async function deleteDepartment(formData: FormData) {
-  await requireAdmin();
+  await requireOwner();
   const supabase = await createClient();
   const { error } = await supabase.from("departments").delete().eq("id", String(formData.get("id")));
   if (error) back(TEAM, { error: error.code === "23503" ? "This department has (or had) team members, so it's kept for history. Rename it instead." : "Couldn't delete the department." });
@@ -234,7 +234,7 @@ export async function deleteDepartment(formData: FormData) {
 }
 
 export async function addTeamMember(formData: FormData) {
-  await requireAdmin();
+  await requireOwner();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const position = String(formData.get("position"));
   const departmentId = String(formData.get("department_id") ?? "");
@@ -256,7 +256,7 @@ export async function addTeamMember(formData: FormData) {
 }
 
 export async function endTeamMembership(formData: FormData) {
-  await requireAdmin();
+  await requireOwner();
   const supabase = await createClient();
   const { error } = await supabase.rpc("end_team_membership", { p_id: String(formData.get("id")) });
   if (error) back(TEAM, { error: rpcError(error, "Couldn't end that membership.") });
@@ -265,7 +265,7 @@ export async function endTeamMembership(formData: FormData) {
 }
 
 export async function setDoorStaff(formData: FormData) {
-  await requireAdmin();
+  await requireOwner();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const expiresOn = dateOrNull(formData.get("expires_on"));
   if (!email || !expiresOn) back(TEAM, { error: "Email and expiry date are required." });
@@ -277,10 +277,29 @@ export async function setDoorStaff(formData: FormData) {
 }
 
 export async function removeDoorStaff(formData: FormData) {
-  await requireAdmin();
+  await requireOwner();
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_door_staff", { p_user_id: String(formData.get("user_id")) });
   if (error) back(TEAM, { error: rpcError(error, "Couldn't remove door access.") });
   revalidatePath("/", "layout");
   back(TEAM, { ok: "Door access removed." });
+}
+
+export async function grantOwner(formData: FormData) {
+  await requireOwner();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("grant_owner", { p_email: email });
+  if (error) back(TEAM, { error: rpcError(error, "Couldn't add them as an owner.") });
+  revalidatePath("/", "layout");
+  back(TEAM, { ok: `${email} is now a hub owner.` });
+}
+
+export async function revokeOwner(formData: FormData) {
+  await requireOwner();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("revoke_owner", { p_user_id: String(formData.get("user_id")) });
+  if (error) back(TEAM, { error: rpcError(error, "Couldn't remove them as an owner.") });
+  revalidatePath("/", "layout");
+  back(TEAM, { ok: "Owner removed." });
 }

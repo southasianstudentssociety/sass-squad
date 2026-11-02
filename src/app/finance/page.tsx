@@ -23,6 +23,8 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
   const count = (s: ClaimStatus) => all.filter((c) => c.status === s).length;
   const total = (s: ClaimStatus) => all.filter((c) => c.status === s).reduce((n, c) => n + c.current.amount_cents, 0);
   const rows = all.filter((c) => c.status === status);
+  const selfApproved = (c: (typeof all)[number]) => c.claim_events.some((e) => e.by_claimant);
+  const selfCount = all.filter(selfApproved).length;
 
   return (
     <div className="space-y-6">
@@ -35,6 +37,11 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
         </div>
         <a href="/finance/export" className="btn-ghost">Download all (CSV)</a>
       </div>
+      {session.access.isOwner && selfCount > 0 && (
+        <p className="rounded-xl border border-warn/25 bg-warn/[0.06] px-3.5 py-2.5 text-sm text-warn">
+          {selfCount} claim{selfCount === 1 ? " was" : "s were"} approved or paid by the person who submitted {selfCount === 1 ? "it" : "them"} (the Finance ExCo). They&apos;re marked &quot;self-approved&quot; below.
+        </p>
+      )}
 
       <nav className="flex flex-wrap gap-2 text-sm">
         {TABS.map((t) => (
@@ -61,6 +68,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
                   {c.claimant?.full_name ?? c.claimant?.email ?? "-"} · {c.reference} · {formatDate(c.updated_at)}
                   {c.current_revision > 1 && ` · version ${c.current_revision}`}
                   {c.claimant_id === session.userId && " · your own claim"}
+                  {selfApproved(c) && " · self-approved"}
                 </p>
               </Link>
             </li>
@@ -80,6 +88,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
                       {c.reference}{c.current_revision > 1 && ` · version ${c.current_revision}`}
                       {c.claimant_id === session.userId && " · your own claim"}
                     </span>
+                    {selfApproved(c) && <span className="badge mt-1 bg-warn/10 text-warn">self-approved</span>}
                   </td>
                   <td>{c.claimant?.full_name ?? c.claimant?.email ?? "-"}</td>
                   <td className="whitespace-nowrap font-semibold">{formatPrice(c.current.amount_cents)}</td>

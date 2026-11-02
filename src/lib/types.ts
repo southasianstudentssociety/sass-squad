@@ -19,8 +19,12 @@ export type Access = {
   isStaff: boolean;
   /** Active team membership (ExCo or subcommittee): can submit reimbursement claims. */
   isTeam: boolean;
-  /** Active ExCo in a department that handles finance: reviews and pays claims. */
+  /** Active ExCo in a department that handles finance, or a hub owner: reviews and pays claims. */
   isFinance: boolean;
+  /** ExCo in a finance department (the VP of Finance): may approve and pay their own claims, flagged. */
+  isFinanceExco: boolean;
+  /** Hub owner: controls the team, departments, door volunteers and the owner list. */
+  isOwner: boolean;
   /** Default end date for new memberships (31 Aug of this academic year). */
   termEnd: string;
 };
@@ -147,6 +151,8 @@ export type ClaimEvent = {
   to_status: ClaimStatus;
   actor_id: string | null;
   note: string | null;
+  /** The claimant reviewed or paid their own claim (Finance ExCo only). */
+  by_claimant: boolean;
   created_at: string;
 };
 

@@ -25,6 +25,12 @@ Items the society owns (decorations, equipment, leftover stock): quantity, locat
 Tasks per department and event, with owner, due date and status.
 **Decision (1 Nov 2026):** built because the team committed to moving off their current tool. If it isn't in regular use by the end of December, remove it from the nav rather than keep two places for tasks.
 
+## Built beyond the original phases (Nov 2026)
+Swipe-to-confirm check-in, ticket tear-off on check-in, six-month team calendar, door live dashboard, add-to-calendar, event budgets with Finance expenses, membership purchase in the app, event feedback and attendance. All built 1–2 Nov 2026; none has been used at a real event yet.
+
+## On hold
+- **Waitlist for sold-out events.** Decided 2 Nov 2026 to hold it. It changes `claim_ticket`, the function every ticket purchase goes through, so it waits until after Diwali (21 Nov) and until an event actually sells out. Revisit then.
+
 ## Not started
 - Gallery (embeds and Supabase Storage)
-- Bank statement CSV matcher for FPS payments
+- Bank statement CSV matcher for FPS payments (recommended next: removes hand-ticking "Mark paid" for every FPS ticket)
