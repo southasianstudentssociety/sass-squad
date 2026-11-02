@@ -20,8 +20,8 @@ export async function GET() {
 
   const csv = toCsv([
     ["EVENT SUMMARY"],
-    ["Event", "Date", "Confirmed tickets", "Ticket income (HK$)", "Expenses (HK$)", "Reimbursements (HK$)", "Net (HK$)", "Unpaid tickets (HK$)", "Claims to review (HK$)"],
-    ...rows.map((r) => [r.title, r.starts_at?.slice(0, 10) ?? "", r.tickets_confirmed, hk(r.ticket_income), hk(r.expenses), hk(r.reimbursements), hk(r.net), hk(r.unpaid_income), hk(r.pending_reimbursements)]),
+    ["Event", "Date", "Confirmed tickets", "Ticket income (HK$)", "Membership income (HK$)", "Expenses (HK$)", "Reimbursements (HK$)", "Net (HK$)", "Unpaid tickets (HK$)", "Claims to review (HK$)"],
+    ...rows.map((r) => [r.title, r.starts_at?.slice(0, 10) ?? "", r.tickets_confirmed, hk(r.ticket_income), hk(r.membership_income), hk(r.expenses), hk(r.reimbursements), hk(r.net), hk(r.unpaid_income), hk(r.pending_reimbursements)]),
     [],
     ["EXPENSES"],
     ["Paid on", "Event", "Category", "Description", "Paid to", "Amount (HK$)", "Voided", "Void reason"],

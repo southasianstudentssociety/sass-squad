@@ -5,6 +5,7 @@ import { formatDateTime, formatPrice, TIME_ZONE } from "@/lib/format";
 import { hoursAgoIso } from "@/lib/events";
 import type { SassEvent, Ticket } from "@/lib/types";
 import { StatusBadge } from "@/components/status-badge";
+import { feedbackOpen } from "@/lib/feedback";
 import { EmptyState } from "@/components/illustrations";
 import { Stagger, StaggerItem } from "@/components/motion";
 
@@ -22,6 +23,10 @@ export default async function TicketsPage() {
     .order("created_at", { ascending: false })
     .returns<Row[]>();
 
+  const { data: rated } = await supabase.from("event_feedback").select("event_id").returns<{ event_id: string }[]>();
+  const ratedEvents = new Set((rated ?? []).map((r) => r.event_id));
+  const attended = (data ?? []).filter((t) => t.checked_in_at).length;
+
   const cutoff = hoursAgoIso(12);
   const tickets = data ?? [];
   const upcoming = tickets.filter((t) => new Date(t.event.starts_at) > new Date(cutoff));
@@ -33,6 +38,7 @@ export default async function TicketsPage() {
         <div>
           <p className="eyebrow">{session.profile.full_name}</p>
           <h1 className="mt-2 font-display text-3xl sm:text-4xl">My tickets</h1>
+          {attended > 0 && <p className="mt-1 text-sm text-ink/80">You&apos;ve been to {attended} SASS event{attended === 1 ? "" : "s"}. Thanks for coming!</p>}
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
             {session.email}
             {session.isMember ? <span className="badge bg-accent text-accent-ink">Member</span> : <span className="badge bg-line text-muted">Not a member</span>}
@@ -50,14 +56,14 @@ export default async function TicketsPage() {
       ) : (
         <>
           <TicketList title="Upcoming" tickets={upcoming} empty="No upcoming tickets." />
-          {past.length > 0 && <TicketList title="Past" tickets={past} muted />}
+          {past.length > 0 && <TicketList title="Past" tickets={past} muted rateable={ratedEvents} />}
         </>
       )}
     </div>
   );
 }
 
-function TicketList({ title, tickets, empty, muted }: { title: string; tickets: Row[]; empty?: string; muted?: boolean }) {
+function TicketList({ title, tickets, empty, muted, rateable }: { title: string; tickets: Row[]; empty?: string; muted?: boolean; rateable?: Set<string> }) {
   return (
     <section>
       <h2 className="eyebrow mb-3">{title}</h2>
@@ -76,7 +82,9 @@ function TicketList({ title, tickets, empty, muted }: { title: string; tickets: 
                   <p className="truncate font-medium">{t.event.title}</p>
                   <p className="truncate text-sm text-muted">{formatDateTime(t.event.starts_at)} · {formatPrice(t.price_cents)}</p>
                 </div>
-                <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />
+                {rateable && t.checked_in_at && !rateable.has(t.event_id) && feedbackOpen(t.event.starts_at)
+                  ? <span className="badge bg-accent text-accent-ink">Rate it</span>
+                  : <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />}
               </Link>
             </StaggerItem>
           ))}

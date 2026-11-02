@@ -52,7 +52,7 @@ export default async function BudgetPage({ params, searchParams }: { params: Pro
       <FormMessage error={sp.error} success={sp.ok} />
 
       <section className="card space-y-2 p-5 text-sm">
-        <Row label={`Tickets (${row.tickets_confirmed} confirmed)`} value={money(row.ticket_income)} />
+        {general ? <Row label="Memberships sold in the app" value={money(row.membership_income)} /> : <Row label={`Tickets (${row.tickets_confirmed} confirmed)`} value={money(row.ticket_income)} />}
         {byCategory.map(([cat, cents]) => <Row key={cat} label={cat} value={money(-cents)} muted />)}
         {row.reimbursements > 0 && <Row label="Reimbursements (approved / paid claims)" value={money(-row.reimbursements)} muted />}
         <div className="flex items-baseline justify-between border-t border-line pt-3">
@@ -61,7 +61,7 @@ export default async function BudgetPage({ params, searchParams }: { params: Pro
         </div>
         {(row.unpaid_income > 0 || row.pending_reimbursements > 0) && (
           <p className="text-xs text-muted">
-            Not counted yet: {[row.unpaid_income > 0 && `${money(row.unpaid_income)} from unpaid tickets`, row.pending_reimbursements > 0 && `${money(row.pending_reimbursements)} in claims waiting for review`].filter(Boolean).join(" · ")}
+            Not counted yet: {[row.unpaid_income > 0 && `${money(row.unpaid_income)} not paid yet`, row.pending_reimbursements > 0 && `${money(row.pending_reimbursements)} in claims waiting for review`].filter(Boolean).join(" · ")}
           </p>
         )}
       </section>
