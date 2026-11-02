@@ -10,6 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link href="/admin/members" className="btn-ghost px-3 py-1.5">Members</Link>
         <Link href="/admin/memberships" className="btn-ghost px-3 py-1.5">Memberships</Link>
         <Link href="/admin/attendance" className="btn-ghost px-3 py-1.5">Attendance</Link>
+        <Link href="/admin/gallery" className="btn-ghost px-3 py-1.5">Gallery</Link>
         <Link href="/admin/team" className="btn-ghost px-3 py-1.5">Team</Link>
       </nav>
       {children}

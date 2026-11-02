@@ -35,9 +35,10 @@ Swipe-to-confirm check-in, ticket tear-off on check-in, six-month team calendar,
 
 - **Team prices** per event (only the team sees them; place reserved) and **team-only membership offers**. Normal ticket buying (`claim_ticket`) was deliberately not changed; team tickets use their own `claim_team_ticket`.
 
+- **Gallery** on the home page: photos uploaded on Admin → Gallery (public `gallery` bucket), "View all photos" opens the Drive folder.
+
 ## On hold
 - **Waitlist for sold-out events.** Decided 2 Nov 2026 to hold it. It changes `claim_ticket`, the function every ticket purchase goes through, so it waits until after Diwali (21 Nov) and until an event actually sells out. Revisit then.
 
 ## Not started
-- Gallery (embeds and Supabase Storage)
 - Bank statement CSV matcher for FPS payments (recommended next: removes hand-ticking "Mark paid" for every FPS ticket)
