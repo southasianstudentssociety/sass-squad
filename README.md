@@ -24,6 +24,8 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | ExCo (door live) | Per-event live dashboard: arrived vs confirmed, check-in rate, still to arrive, rejections by type, arrivals chart, latest scans by volunteer. Refreshes every 10 s |
 | ExCo | Create and edit events, confirm FPS payments, cancel tickets, undo check-ins, import and manage members, CSV and printable guest lists, manage the team |
 
+**Hub owners** (a small list, e.g. the President and the internal-affairs lead) are the only people who can change the team: add or end memberships, create or rename departments, choose which department handles finance, give door access, and add or remove owners. They also count as Finance. Owners pass the role on; the app won't remove the last one.
+
 Access comes from **Admin → Team**: each person has a department, a position (ExCo or subcommittee) and a term with an end date. Access stops automatically after the last day of the term, so handover doesn't depend on anyone remembering to remove people. Door volunteers who aren't on the team get scanner-only access with its own expiry date. The app won't let you end the last active ExCo membership, and warns when every ExCo's term ends within 30 days.
 
 All the ticket rules live in Postgres functions (`supabase/migrations/`), so they can't be bypassed from the browser:
@@ -72,16 +74,17 @@ npm install
 npm run dev
 ```
 
-### 3. Make yourself ExCo
+### 3. Make yourself ExCo and hub owner
 Log in once on the site, then in the Supabase SQL Editor run (replace the email and department):
 ```sql
-insert into public.departments (name) values ('General') on conflict (name) do nothing;
+insert into public.departments (name) values ('Internal Affairs') on conflict (name) do nothing;
 insert into public.team_memberships (user_id, department_id, position, starts_on, ends_on)
 select p.id, d.id, 'exco', current_date, private.current_term_end()
 from public.profiles p, public.departments d
-where p.email = 'you@example.com' and d.name = 'General';
+where p.email = 'you@example.com' and d.name = 'Internal Affairs';
+insert into public.hub_owners (user_id) select id from public.profiles where email = 'you@example.com';
 ```
-After that, add everyone else from **Admin → Team**. The same SQL is how you get back in if every ExCo's term has ended.
+After that, add everyone else from **Admin → Team**. The same SQL is how you get back in if every ExCo's term has ended or no owner is left.
 
 ### 4. Import members
 Google Sheet: **File → Download → CSV**, then **Admin → Members → Import**. You need `Name` and `Email` columns. Optional columns: `Alt email`, `Student ID`, `Purchased`, `Valid until` (DD/MM/YYYY). Re-importing updates existing rows by email. From now on, **manage members in the app**, not the Sheet.

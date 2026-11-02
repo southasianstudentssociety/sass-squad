@@ -11,6 +11,8 @@ import {
   removeDoorStaff,
   saveDepartment,
   setDoorStaff,
+  grantOwner,
+  revokeOwner,
 } from "../actions";
 
 export const metadata = { title: "Team" };
@@ -39,6 +41,14 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       .returns<DoorRow[]>(),
   ]);
 
+  const owner = session?.access.isOwner ?? false;
+  const { data: ownerRows } = await supabase
+    .from("hub_owners")
+    .select("user_id, granted_at, person:profiles!hub_owners_user_id_fkey(full_name, email)")
+    .order("granted_at")
+    .returns<{ user_id: string; granted_at: string; person: { full_name: string | null; email: string } | null }[]>();
+  const owners = ownerRows ?? [];
+  const ownerNames = owners.map((o) => o.person?.full_name ?? o.person?.email).filter(Boolean).join(" and ");
   const today = todayInHongKong();
   const termEnd = session?.access.termEnd || addDays(today, 180);
   const deptName = new Map((departments ?? []).map((d) => [d.id, d.name]));
@@ -62,12 +72,17 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       <div>
         <h1 className="text-2xl font-display font-normal">Team</h1>
         <p className="text-sm text-muted">
-          <strong>ExCo</strong> can manage events, members, payments and this page.{" "}
+          <strong>ExCo</strong> can manage events, members and payments. <strong>Hub owners</strong> also control this page.{" "}
           <strong>Subcommittee</strong> and <strong>door volunteers</strong> can use the scanner from 24 hours before an event.
           Access ends automatically on the last day of each person&apos;s term.
         </p>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />
+      {!owner && (
+        <p className="rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-muted">
+          You can see the team here. Only hub owners{ownerNames && ` (${ownerNames})`} can add or remove people, change departments or give door access.
+        </p>
+      )}
 
       {lockoutSoon && (
         <p role="alert" className="rounded-lg border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
@@ -76,7 +91,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         </p>
       )}
 
-      <section className="space-y-3">
+      {owner && <section className="space-y-3">
         <h2 className="text-lg font-bold">Add someone to the team</h2>
         {(departments ?? []).length === 0 ? (
           <p className="card text-sm text-muted">Add a department first (bottom of this page).</p>
@@ -116,15 +131,15 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             </div>
           </form>
         )}
-      </section>
+      </section>}
 
-      <MembershipTable title={`Current team (${active.length})`} rows={[...active].sort(byDept)} deptName={deptName} endable />
-      {upcoming.length > 0 && <MembershipTable title="Starting later" rows={[...upcoming].sort(byDept)} deptName={deptName} endable />}
+      <MembershipTable title={`Current team (${active.length})`} rows={[...active].sort(byDept)} deptName={deptName} endable={owner} />
+      {upcoming.length > 0 && <MembershipTable title="Starting later" rows={[...upcoming].sort(byDept)} deptName={deptName} endable={owner} />}
 
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Door volunteers</h2>
         <p className="text-sm text-muted">For people who help at the door but aren&apos;t on the team. Scanner access only.</p>
-        <form action={setDoorStaff} className="card flex flex-wrap items-end gap-3">
+        {owner && <form action={setDoorStaff} className="card flex flex-wrap items-end gap-3">
           <div className="min-w-60 flex-1">
             <label className="label" htmlFor="ds-email">Email</label>
             <input id="ds-email" name="email" type="email" required placeholder="They must have logged in once" className="input" />
@@ -134,7 +149,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             <input id="ds-exp" name="expires_on" type="date" required min={today} defaultValue={addDays(today, 30)} className="input" />
           </div>
           <SubmitButton pendingText="Saving…">Give door access</SubmitButton>
-        </form>
+        </form>}
         {doorRows.length > 0 && (
           <div className="card overflow-x-auto p-0">
             <table className="table">
@@ -146,10 +161,12 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                     <td>{d.person?.email}</td>
                     <td>{formatDate(d.expires_on)}{d.expires_on < today && " (expired)"}</td>
                     <td className="text-right">
-                      <form action={removeDoorStaff}>
-                        <input type="hidden" name="user_id" value={d.user_id} />
-                        <SubmitButton className="btn-danger px-3 py-1 text-xs" pendingText="Removing…">Remove</SubmitButton>
-                      </form>
+                      {owner && (
+                        <form action={removeDoorStaff}>
+                          <input type="hidden" name="user_id" value={d.user_id} />
+                          <SubmitButton className="btn-danger px-3 py-1 text-xs" pendingText="Removing…">Remove</SubmitButton>
+                        </form>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -164,9 +181,16 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Departments</h2>
         <p className="text-sm text-muted">
-          ExCo in a department that <strong>handles finance</strong> can see every reimbursement claim, receipt and payment detail, and approve and pay claims.
+          ExCo in a department that <strong>handles finance</strong> (and hub owners) can see every reimbursement claim, receipt and payment detail, and approve and pay claims.
           {!(departments ?? []).some((d) => d.handles_finance) && " No department handles finance yet, so nobody can approve claims."}
         </p>
+        {!owner ? (
+          <ul className="card flex flex-wrap gap-2">
+            {(departments ?? []).map((d) => (
+              <li key={d.id} className="badge bg-ink/[0.06] py-1 text-sm text-ink">{d.name}{d.handles_finance && " · finance"}</li>
+            ))}
+          </ul>
+        ) : (
         <div className="card space-y-3">
           {(departments ?? []).map((d) => (
             <div key={d.id} className="flex flex-wrap items-center gap-2">
@@ -189,6 +213,40 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             <SubmitButton pendingText="Adding…">Add</SubmitButton>
           </form>
         </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Hub owners</h2>
+        <p className="text-sm text-muted">
+          Owners control this page: the team, departments, door volunteers and who else is an owner. They also count as Finance.
+          Pass ownership on before you leave; there must always be at least one owner.
+        </p>
+        <ul className="card divide-y divide-line p-0 text-sm">
+          {owners.map((o) => (
+            <li key={o.user_id} className="flex items-center justify-between gap-3 px-4 py-3">
+              <span className="min-w-0">
+                <span className="block truncate font-medium">{o.person?.full_name ?? "-"}</span>
+                <span className="block truncate text-xs text-muted">{o.person?.email} · since {formatDate(o.granted_at)}</span>
+              </span>
+              {owner && owners.length > 1 && (
+                <form action={revokeOwner}>
+                  <input type="hidden" name="user_id" value={o.user_id} />
+                  <SubmitButton className="btn-danger px-3 py-1 text-xs" pendingText="Removing…">Remove</SubmitButton>
+                </form>
+              )}
+            </li>
+          ))}
+        </ul>
+        {owner && (
+          <form action={grantOwner} className="card flex flex-wrap items-end gap-3">
+            <div className="min-w-60 flex-1">
+              <label className="label" htmlFor="ow-email">Make someone an owner</label>
+              <input id="ow-email" name="email" type="email" required placeholder="They must have logged in once" className="input" />
+            </div>
+            <SubmitButton className="btn-ghost" pendingText="Saving…">Add owner</SubmitButton>
+          </form>
+        )}
       </section>
     </div>
   );

@@ -19,8 +19,10 @@ export type Access = {
   isStaff: boolean;
   /** Active team membership (ExCo or subcommittee): can submit reimbursement claims. */
   isTeam: boolean;
-  /** Active ExCo in a department that handles finance: reviews and pays claims. */
+  /** Active ExCo in a department that handles finance, or a hub owner: reviews and pays claims. */
   isFinance: boolean;
+  /** Hub owner: controls the team, departments, door volunteers and the owner list. */
+  isOwner: boolean;
   /** Default end date for new memberships (31 Aug of this academic year). */
   termEnd: string;
 };
