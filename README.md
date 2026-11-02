@@ -15,6 +15,7 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | People who came to an event | Rate it 1–5 with an optional comment, anonymously if they like, for 30 days after it starts |
 | Members (email is on the member list and not expired) | Member price, early access, members-only events, one free ticket per event |
 | Non-members | Get tickets at the non-member price. Paid tickets stay **Awaiting payment** until Finance marks them paid |
+| Team (ExCo and subcommittee): team prices | If an event has a **team price**, only current team members see it on the event page and get a "Get team ticket" button. Their place is reserved: sold out, sales dates and members-only don't stop them. Same FPS payment and reference. An unpaid normal-price ticket can be switched to the team price. ExCo can also publish **team-only membership offers** and keep them on sale all year |
 | Subcommittee | Scan mode: camera QR scan, find by name, add walk-ins and comps, live check-in count. Only from 24h before an event until 12h after it ends; they can't see other people's profiles or other events' attendees |
 | Team members (ExCo and subcommittee) | Submit reimbursement claims with a receipt photo, see their status, fix and resubmit if rejected |
 | Team members (tasks) | See every department's tasks; add and edit tasks in their own departments (ExCo: any department); move tasks they own between To do, Doing, Blocked (with a reason) and Done |

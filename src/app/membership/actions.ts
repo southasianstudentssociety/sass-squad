@@ -51,6 +51,7 @@ export async function saveOffer(formData: FormData) {
     price_cents: dollarsToCents(formData.get("price")),
     valid_until: str(formData, "valid_until"),
     is_open: formData.get("is_open") === "on",
+    team_only: formData.get("team_only") === "on",
     payment_instructions: str(formData, "payment_instructions") || null,
     updated_at: new Date().toISOString(),
   };

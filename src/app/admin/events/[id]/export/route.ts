@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const csv = toCsv([
     ["Name", "Email", "Member", "Status", "Price (HK$)", "Reference", "Source", "Checked in at", "Notes"],
     ...(tickets ?? []).map((t) => [
-      t.holder_name, t.holder_email, t.is_member ? "yes" : "no", t.status, (t.price_cents / 100).toFixed(2),
+      t.holder_name, t.holder_email, t.team_rate ? "team" : t.is_member ? "yes" : "no", t.status, (t.price_cents / 100).toFixed(2),
       t.payment_reference, t.source, t.checked_in_at ?? "", t.notes ?? "",
     ]),
   ]);

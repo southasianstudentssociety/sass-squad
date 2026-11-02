@@ -7,7 +7,7 @@ import { formatDateTime, formatPrice, formatEnd } from "@/lib/format";
 import type { SassEvent } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
-import { claimTicket } from "./actions";
+import { claimTeamTicket, claimTicket } from "./actions";
 import { AddToCalendar } from "@/components/add-to-calendar";
 
 export default async function EventPage({
@@ -23,17 +23,25 @@ export default async function EventPage({
   if (!event) notFound();
 
   const session = await getSession();
-  let existingTicketId: string | null = null;
-  if (session) {
-    const { data } = await supabase
-      .from("tickets")
-      .select("id")
-      .eq("event_id", event.id)
-      .eq("user_id", session.userId)
-      .neq("status", "cancelled")
-      .maybeSingle<{ id: string }>();
-    existingTicketId = data?.id ?? null;
-  }
+  const isTeam = session?.access.isTeam ?? false;
+  const [{ data: existing }, { data: team }] = await Promise.all([
+    session
+      ? supabase
+          .from("tickets")
+          .select("id, status, team_rate")
+          .eq("event_id", event.id)
+          .eq("user_id", session.userId)
+          .neq("status", "cancelled")
+          .maybeSingle<{ id: string; status: string; team_rate: boolean }>()
+      : Promise.resolve({ data: null }),
+    // Only current team members can read team prices; everyone else gets nothing back.
+    isTeam
+      ? supabase.from("event_team_prices").select("price_cents").eq("event_id", event.id).maybeSingle<{ price_cents: number }>()
+      : Promise.resolve({ data: null }),
+  ]);
+  const existingTicketId = existing?.id ?? null;
+  const teamPrice = isTeam ? (team?.price_cents ?? null) : null;
+  const canSwitchToTeam = teamPrice !== null && existing?.status === "awaiting_payment" && !existing.team_rate;
 
   const isMember = session?.isMember ?? false;
   const sales = salesStateFor(event, isMember);
@@ -61,9 +69,12 @@ export default async function EventPage({
 
       <aside className="order-1 h-fit animate-fade-up space-y-5 rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-lift)] sm:p-6 lg:sticky lg:top-24 lg:order-2">
         <div className="space-y-1.5 text-sm">
-          <PriceRow label="Members" value={formatPrice(event.member_price_cents)} highlight={isMember} />
+          {teamPrice !== null && (
+            <PriceRow label="Team" value={formatPrice(teamPrice)} highlight note="only the team sees this" />
+          )}
+          <PriceRow label="Members" value={formatPrice(event.member_price_cents)} highlight={teamPrice === null && isMember} />
           {event.access === "everyone" ? (
-            <PriceRow label="Non-members" value={formatPrice(event.public_price_cents)} highlight={!!session && !isMember} />
+            <PriceRow label="Non-members" value={formatPrice(event.public_price_cents)} highlight={teamPrice === null && !!session && !isMember} />
           ) : (
             <p className="px-3 text-muted">Members only</p>
           )}
@@ -83,13 +94,32 @@ export default async function EventPage({
         <FormMessage error={sp.error} />
 
         {existingTicketId ? (
-          <Link href={`/tickets/${existingTicketId}`} className="btn-primary w-full py-3">View my ticket</Link>
+          <div className="space-y-2">
+            <Link href={`/tickets/${existingTicketId}`} className="btn-primary w-full py-3">View my ticket</Link>
+            {canSwitchToTeam && !over && (
+              <form action={claimTeamTicket}>
+                <input type="hidden" name="event_id" value={event.id} />
+                <input type="hidden" name="slug" value={event.slug} />
+                <SubmitButton className="btn-ghost w-full" pendingText="Switching…">Switch to the team price · {formatPrice(teamPrice!)}</SubmitButton>
+                <p className="hint text-center">Your ticket isn&apos;t paid yet, so it can move to the team price. Same reference.</p>
+              </form>
+            )}
+          </div>
         ) : over ? (
           <p className="rounded-xl bg-page px-3.5 py-3 text-center text-sm text-muted">This event has finished.</p>
         ) : !session ? (
           <Link href={`/login?next=${encodeURIComponent(`/events/${event.slug}`)}`} className="btn-primary w-full py-3">
             Log in to get a ticket
           </Link>
+        ) : teamPrice !== null ? (
+          <form action={claimTeamTicket}>
+            <input type="hidden" name="event_id" value={event.id} />
+            <input type="hidden" name="slug" value={event.slug} />
+            <SubmitButton className="btn-primary w-full py-3" pendingText="Getting your ticket…">
+              {teamPrice === 0 ? "Get my free team ticket" : `Get team ticket · ${formatPrice(teamPrice)}`}
+            </SubmitButton>
+            <p className="hint text-center">Your place is reserved as part of the team.{teamPrice > 0 && " You'll get FPS payment details and a reference on the next screen."}</p>
+          </form>
         ) : sales.state === "members_only" ? (
           <p className="text-sm leading-relaxed text-muted">
             This event is for members only. If you&apos;re a member and see this, ask a committee member to check the
@@ -116,10 +146,10 @@ export default async function EventPage({
   );
 }
 
-function PriceRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function PriceRow({ label, value, highlight, note }: { label: string; value: string; highlight?: boolean; note?: string }) {
   return (
     <div className={`flex items-baseline justify-between rounded-xl px-3 py-2 transition-colors ${highlight ? "bg-brand-soft text-ink" : "text-ink/80"}`}>
-      <span>{label}{highlight && <span className="ml-1.5 text-xs text-brand">· your price</span>}</span>
+      <span>{label}{highlight && <span className="ml-1.5 text-xs text-brand">· your price{note && `, ${note}`}</span>}</span>
       <span className={`tabular-nums ${highlight ? "text-base font-semibold" : ""}`}>{value}</span>
     </div>
   );

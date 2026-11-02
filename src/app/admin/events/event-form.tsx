@@ -5,7 +5,7 @@ import { SubmitButton } from "@/components/submit-button";
 
 const dollars = (p?: number) => (p == null ? "0" : (p / 100).toFixed(2));
 
-export function EventForm({ event }: { event?: SassEvent }) {
+export function EventForm({ event, teamPriceCents }: { event?: SassEvent; teamPriceCents?: number | null }) {
   return (
     <div className="space-y-6">
       <form action={saveEvent} className="card grid gap-4 sm:grid-cols-2">
@@ -47,6 +47,9 @@ export function EventForm({ event }: { event?: SassEvent }) {
         </Field>
         <Field label="Non-member price (HK$)">
           <input name="public_price" inputMode="decimal" defaultValue={dollars(event?.public_price_cents)} className="input" />
+        </Field>
+        <Field label="Team price (HK$, optional)" className="sm:col-span-2" hint="For ExCo and subcommittee. Only current team members can see it. Their place is reserved: sold out, sales dates and members-only don't stop them. Blank = no team price.">
+          <input name="team_price" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue={teamPriceCents == null ? "" : dollars(teamPriceCents)} placeholder="e.g. 30.00" className="input sm:max-w-xs" />
         </Field>
         <Field label="Member sales open (optional)" hint="Blank = same as general sales">
           <input name="member_sales_open_at" type="datetime-local" defaultValue={isoToLocal(event?.member_sales_open_at)} className="input" />

@@ -114,7 +114,10 @@ function OfferForm({ offer }: { offer?: MembershipOffer }) {
         <label className="label text-xs">FPS payment details</label>
         <textarea name="payment_instructions" rows={2} maxLength={1000} defaultValue={offer?.payment_instructions ?? ""} placeholder="FPS ID / account name" className="input" />
       </div>
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_open" defaultChecked={offer?.is_open ?? true} /> On sale</label>
+      <div className="space-y-1.5">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_open" defaultChecked={offer?.is_open ?? true} /> On sale</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="team_only" defaultChecked={offer?.team_only ?? false} /> Team only (only ExCo and subcommittee see and can buy it)</label>
+      </div>
       <div className="sm:text-right"><SubmitButton className="btn-ghost" pendingText="Saving…">{offer ? "Save" : "Create offer"}</SubmitButton></div>
     </form>
   );

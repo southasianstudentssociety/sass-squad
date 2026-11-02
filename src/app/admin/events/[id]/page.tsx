@@ -121,7 +121,7 @@ export default async function ManageEvent({
               <CopyButton value={t.payment_reference} />
             </div>
             <p className="text-xs text-muted">
-              {t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}
+              {t.team_rate ? "Team" : t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}
               {t.source !== "online" && ` · ${t.source === "comp" ? "Comp" : "Walk-in"}`}
               {t.checked_in_at && ` · in at ${formatTime(t.checked_in_at)}`}
               {" · booked "}{formatDateTime(t.created_at)}
@@ -161,7 +161,7 @@ export default async function ManageEvent({
                 </td>
                 <td className="font-mono text-xs">{t.payment_reference}</td>
                 <td className="whitespace-nowrap text-xs">
-                  {t.is_member ? "Member" : "Non-member"}
+                  {t.team_rate ? "Team" : t.is_member ? "Member" : "Non-member"}
                   {t.source !== "online" && <><br />{t.source === "comp" ? "Comp" : "Walk-in"}</>}
                 </td>
                 <td>{formatPrice(t.price_cents)}</td>
