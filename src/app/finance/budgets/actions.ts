@@ -25,7 +25,7 @@ function withMessage(path: string, key: "ok" | "error", msg: string) {
   return `${path}${path.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(msg)}`;
 }
 
-export type EntryResult = { error: string } | undefined;
+export type EntryResult = { error: string } | { to: string };
 
 // Called from the client form after an optional receipt upload.
 export async function addEntry(formData: FormData): Promise<EntryResult> {
@@ -45,7 +45,8 @@ export async function addEntry(formData: FormData): Promise<EntryResult> {
   });
   if (error) return { error: rpcError(error, `Couldn't save the ${kind}.`) };
   revalidatePath("/finance/budgets", "layout");
-  redirect(withMessage(back, "ok", kind === "income" ? "Income added." : "Expense added."));
+  // The form navigates itself, so it can close its pop-up first.
+  return { to: withMessage(back, "ok", kind === "income" ? "Income added." : "Expense added.") };
 }
 
 export async function voidExpense(formData: FormData) {

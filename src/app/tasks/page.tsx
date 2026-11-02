@@ -11,7 +11,7 @@ import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { createTask, setTaskStatus } from "./actions";
 import { EmptyState } from "@/components/illustrations";
-import { Modal } from "@/components/modal";
+import { Modal, ModalFormDone } from "@/components/modal";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Tasks" };
@@ -123,6 +123,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               <label className="label" htmlFor="nt-desc">Details (optional)</label>
               <textarea id="nt-desc" name="description" rows={2} maxLength={2000} className="input" />
             </div>
+            <ModalFormDone className="sm:col-span-2" />
             <div className="sm:col-span-2"><SubmitButton pendingText="Adding…">Add task</SubmitButton></div>
           </form>
           </Modal>

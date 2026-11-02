@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useModal } from "@/components/modal";
 import { createClient } from "@/lib/supabase/browser";
 import { RECEIPT_MAX_BYTES, RECEIPT_TYPES } from "@/lib/claims";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, type EntryKind } from "@/lib/budgets";
@@ -27,6 +29,8 @@ export function EntryForm({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const router = useRouter();
+  const { close } = useModal();
   const income = kind === "income";
   const p = income ? "in" : "ex";
 
@@ -48,7 +52,9 @@ export function EntryForm({
         fd.set("receipt_path", path);
       }
       const res = await addEntry(fd);
-      if (res?.error) setError(res.error);
+      if ("error" in res) return setError(res.error);
+      close();
+      router.replace(res.to, { scroll: false });
     });
   }
 

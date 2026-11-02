@@ -15,7 +15,7 @@ export type Profile = {
 export type Access = {
   /** Active ExCo membership: events, members, payments, team. */
   isAdmin: boolean;
-  /** Active team membership or door-volunteer grant: the scanner. */
+  /** Active team membership (or a legacy door grant): the scanner. */
   isStaff: boolean;
   /** Active team membership (ExCo or subcommittee): can submit reimbursement claims. */
   isTeam: boolean;
