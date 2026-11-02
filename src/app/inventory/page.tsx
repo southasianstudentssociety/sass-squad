@@ -8,7 +8,7 @@ import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { createItem } from "./actions";
 import { EmptyState } from "@/components/illustrations";
-import { Modal } from "@/components/modal";
+import { Modal, ModalFormDone } from "@/components/modal";
 import { Plus } from "lucide-react";
 
 export const metadata = { title: "Inventory" };
@@ -92,6 +92,7 @@ export default async function InventoryPage({
               <label className="label" htmlFor="ni-notes">Notes (optional)</label>
               <input id="ni-notes" name="notes" maxLength={1000} className="input" />
             </div>
+            <ModalFormDone className="sm:col-span-2" />
             <div className="sm:col-span-2"><SubmitButton pendingText="Adding…">Add item</SubmitButton></div>
           </form>
           </Modal>
