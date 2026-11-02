@@ -31,7 +31,7 @@ export async function GET() {
 
   const csv = toCsv([
     ["Reference", "Status", "Claimant", "Claimant email", "Event", "Description", "Amount (HK$)", "Pay by", "Payment details",
-      "Version", "Submitted at", "Approved by", "Approved at", "Paid by", "Paid at", "Payment reference", "Last rejection reason"],
+      "Version", "Submitted at", "Approved by", "Approved at", "Paid by", "Paid at", "Payment reference", "Last rejection reason", "Self-approved"],
     ...[...claims].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((c) => {
       const events = [...c.claim_events].sort((a, b) => a.created_at.localeCompare(b.created_at));
       const approved = events.filter((e) => e.to_status === "approved").at(-1);
@@ -43,6 +43,7 @@ export async function GET() {
         c.current.payout_details ?? "", c.current_revision, c.created_at,
         who(approved?.actor_id ?? null), approved?.created_at ?? "", who(paid?.actor_id ?? null), paid?.created_at ?? "",
         paid?.note ?? "", rejected?.note ?? "",
+        events.some((e) => e.by_claimant) ? "yes" : "",
       ];
     }),
   ]);

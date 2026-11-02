@@ -56,8 +56,10 @@ export default async function ClaimPage({
   const mine = claim.claimant_id === session.userId;
   const finance = session.access.isFinance;
   const canChange = mine && (claim.status === "submitted" || claim.status === "rejected");
-  const canReview = finance && !mine && claim.status === "submitted";
-  const canPay = finance && !mine && claim.status === "approved";
+  // The Finance ExCo (VP of Finance) may act on their own claim; it's recorded as self-approved.
+  const selfOk = mine && session.access.isFinanceExco;
+  const canReview = finance && (!mine || selfOk) && claim.status === "submitted";
+  const canPay = finance && (!mine || selfOk) && claim.status === "approved";
   const st = CLAIM_STATUS[claim.status];
   const receiptUrl = urlOf(current.receipt_path);
   const lastRejection = [...(history ?? [])].reverse().find((h) => h.to_status === "rejected");
@@ -148,8 +150,14 @@ export default async function ClaimPage({
         </div>
       )}
 
-      {finance && mine && (claim.status === "submitted" || claim.status === "approved") && (
-        <p className="card text-sm text-muted">This is your own claim, so another Finance ExCo has to review and pay it.</p>
+      {finance && mine && !selfOk && (claim.status === "submitted" || claim.status === "approved") && (
+        <p className="card text-sm text-muted">This is your own claim, so the Finance ExCo or another owner has to review and pay it.</p>
+      )}
+      {selfOk && (claim.status === "submitted" || claim.status === "approved") && (
+        <p className="rounded-xl border border-warn/25 bg-warn/[0.06] px-3.5 py-2.5 text-sm text-warn">
+          This is your own claim. You can approve and pay it as the Finance ExCo, but it&apos;s recorded as <strong>self-approved</strong> and
+          shown to the hub owners and in the treasurer&apos;s export.
+        </p>
       )}
 
       {canReview && (
@@ -193,6 +201,7 @@ export default async function ClaimPage({
               <span className="text-muted">{formatDateTime(h.created_at)}</span>
               <span>
                 <strong>{CLAIM_STATUS[h.to_status].label}</strong> by {nameOf(h.actor_id)} (version {h.revision})
+                {h.by_claimant && <span className="badge ml-1 bg-warn/10 text-warn">self-approved</span>}
                 {h.note && <>: {h.note}</>}
               </span>
             </li>
