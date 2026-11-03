@@ -27,7 +27,7 @@ function refresh(id?: string) {
 }
 
 export async function createItem(formData: FormData) {
-  await requireAdmin("/inventory");
+  await requireTeam("/inventory");
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_inventory_item", {
     p_name: str(formData, "name"),
@@ -45,7 +45,7 @@ export async function createItem(formData: FormData) {
 
 export async function updateItem(formData: FormData) {
   const id = str(formData, "item_id");
-  await requireAdmin(`/inventory/${id}`);
+  await requireTeam(`/inventory/${id}`);
   const supabase = await createClient();
   const { error } = await supabase.rpc("update_inventory_item", {
     p_item_id: id,
@@ -62,7 +62,7 @@ export async function updateItem(formData: FormData) {
 
 export async function adjustItem(formData: FormData) {
   const id = str(formData, "item_id");
-  await requireAdmin(`/inventory/${id}`);
+  await requireTeam(`/inventory/${id}`);
   const amount = int(formData, "amount") ?? 0;
   const delta = str(formData, "direction") === "remove" ? -Math.abs(amount) : Math.abs(amount);
   const supabase = await createClient();

@@ -138,7 +138,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           label="Whose tasks"
           options={[
             { href: link({ view: "mine" }), label: "My tasks", active: view === "mine" },
-            { href: link({ view: "all" }), label: "Everyone's", active: view === "all" },
+            { href: link({ view: "all" }), label: session.access.isAdmin ? "Everyone's" : "My department's", active: view === "all" },
           ]}
         />
         <Segmented
@@ -175,7 +175,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
 
       {all.length === 0 ? (
         <div className="card">
-          <EmptyState illustration="tasks" title="No tasks yet">Add the first one with <strong>Add task</strong> at the top. Everyone on the team sees every department&apos;s tasks.</EmptyState>
+          <EmptyState illustration="tasks" title="No tasks yet">Add the first one with <strong>Add task</strong> at the top. Subcommittee see their own department&apos;s tasks; ExCo see every department&apos;s.</EmptyState>
         </div>
       ) : layout === "table" ? (
         <div className="card overflow-auto p-0 max-h-[75vh]">
@@ -187,7 +187,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             </thead>
             <tbody>
               {tableRows.length === 0 && (
-                <tr><td colSpan={9} className="py-8 text-center text-muted">No tasks match. Try &ldquo;Everyone&apos;s&rdquo; or another filter.</td></tr>
+                <tr><td colSpan={9} className="py-8 text-center text-muted">No tasks match. Try the other tab or another filter.</td></tr>
               )}
               {tableRows.map((t, i) => {
                 const overdue = t.due_on && t.due_on < today && OPEN_STATUSES.includes(t.status);

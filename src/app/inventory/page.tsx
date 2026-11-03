@@ -55,7 +55,7 @@ export default async function InventoryPage({
             {overdue.length > 0 && <span className="text-bad"> · {overdue.length} overdue</span>}
           </p>
         </div>
-        {session.access.isAdmin && (
+        {session.access.isTeam && (
           <Modal label="Add item" title="Add an item" icon={<Plus className="size-4" aria-hidden />}>
             <form action={createItem} className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -154,7 +154,7 @@ export default async function InventoryPage({
 
         {items.length === 0 ? (
           <div className="card">{allItems.length === 0
-            ? <EmptyState illustration="boxes" title="Nothing in the inventory yet">{session.access.isAdmin ? "Add the first item with Add item at the top: decorations, equipment, leftover stock." : "An ExCo can add the society's things here."}</EmptyState>
+            ? <EmptyState illustration="boxes" title="Nothing in the inventory yet">Add the first item with <strong>Add item</strong> at the top: decorations, equipment, leftover stock.</EmptyState>
             : <p className="py-6 text-center text-sm text-muted">No items match.</p>}</div>
         ) : (
           <div className="card max-h-[75vh] overflow-auto p-0">

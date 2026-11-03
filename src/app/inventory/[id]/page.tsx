@@ -175,9 +175,9 @@ export default async function ItemPage({
         </section>
       )}
 
-      {isExco && !retired && (
+      {!retired && (
         <section className="space-y-3">
-          <h2 className="text-lg font-bold">Manage (ExCo)</h2>
+          <h2 className="text-lg font-bold">Manage</h2>
           <form action={adjustItem} className="card flex flex-wrap items-end gap-2">
             <input type="hidden" name="item_id" value={id} />
             <div>
@@ -210,7 +210,7 @@ export default async function ItemPage({
             <div className="sm:col-span-2"><SubmitButton className="btn-ghost" pendingText="Saving…">Save details</SubmitButton></div>
           </form>
 
-          {item.on_loan === 0 && (
+          {isExco && item.on_loan === 0 && (
             <form action={retireItem} className="card flex flex-wrap items-end gap-2">
               <input type="hidden" name="item_id" value={id} />
               <div className="min-w-48 flex-1">

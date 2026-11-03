@@ -82,7 +82,7 @@ export function CalendarView(d: CalendarData) {
         <form className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="month" value={month} />
           <div className="grid grid-cols-2 gap-1 rounded-xl bg-line p-1 text-sm font-medium">
-            <Link href={qs({ mine: "" })} className={cn("rounded-lg px-3 py-1.5 text-center", !mine ? "bg-surface shadow-[var(--shadow-soft)]" : "text-muted")}>Everyone</Link>
+            <Link href={qs({ mine: "" })} className={cn("rounded-lg px-3 py-1.5 text-center", !mine ? "bg-surface shadow-[var(--shadow-soft)]" : "text-muted")}>All</Link>
             <Link href={qs({ mine: "1" })} className={cn("rounded-lg px-3 py-1.5 text-center", mine ? "bg-surface shadow-[var(--shadow-soft)]" : "text-muted")}>Mine</Link>
           </div>
           {mine && <input type="hidden" name="mine" value="1" />}

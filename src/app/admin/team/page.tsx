@@ -5,9 +5,10 @@ import type { Department, TeamMembership } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import {
-  addTeamMember,
   deleteDepartment,
   endTeamMembership,
+  inviteTeamMember,
+  revokeTeamInvite,
   saveDepartment,
   grantOwner,
   revokeOwner,
@@ -17,6 +18,7 @@ export const metadata = { title: "Team" };
 
 type Person = { full_name: string | null; email: string };
 type MembershipRow = TeamMembership & { person: Person | null };
+type Invite = { id: string; full_name: string; email: string; alt_email: string | null; department_id: string; position: "exco" | "subcommittee"; title: string | null; starts_on: string; ends_on: string };
 
 const POSITION_LABEL = { exco: "ExCo", subcommittee: "Subcommittee" } as const;
 
@@ -24,14 +26,25 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const session = await getSession();
   const supabase = await createClient();
-  const [{ data: departments }, { data: memberships }] = await Promise.all([
+  const [{ data: departments }, { data: memberships }, { data: inviteData }, { data: profileData }] = await Promise.all([
     supabase.from("departments").select("id, name, handles_finance").order("name").returns<Department[]>(),
     supabase
       .from("team_memberships")
       .select("id, user_id, department_id, position, title, starts_on, ends_on, person:profiles!team_memberships_user_id_fkey(full_name, email)")
       .order("ends_on", { ascending: false })
       .returns<MembershipRow[]>(),
+    supabase
+      .from("team_invites")
+      .select("id, full_name, email, alt_email, department_id, position, title, starts_on, ends_on")
+      .is("revoked_at", null)
+      .gte("ends_on", todayInHongKong())
+      .order("full_name")
+      .returns<Invite[]>(),
+    supabase.from("profiles").select("email").returns<{ email: string }[]>(),
   ]);
+  // Invites whose person hasn't logged in yet with either email.
+  const loggedIn = new Set((profileData ?? []).map((p) => p.email.toLowerCase()));
+  const waiting = (inviteData ?? []).filter((i) => !loggedIn.has(i.email.toLowerCase()) && !(i.alt_email && loggedIn.has(i.alt_email.toLowerCase())));
 
   const owner = session?.access.isOwner ?? false;
   const { data: ownerRows } = await supabase
@@ -86,11 +99,20 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         {(departments ?? []).length === 0 ? (
           <p className="card text-sm text-muted">Add a department first (bottom of this page).</p>
         ) : (
-          <form action={addTeamMember} className="card grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="sm:col-span-2 lg:col-span-1">
-              <label className="label" htmlFor="tm-email">Email</label>
-              <input id="tm-email" name="email" type="email" required placeholder="They must have logged in once" className="input" />
+          <form action={inviteTeamMember} className="card grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className="label" htmlFor="tm-name">Name</label>
+              <input id="tm-name" name="full_name" required maxLength={100} className="input" />
             </div>
+            <div>
+              <label className="label" htmlFor="tm-email">UST email</label>
+              <input id="tm-email" name="email" type="email" required placeholder="name@connect.ust.hk" className="input" />
+            </div>
+            <div>
+              <label className="label" htmlFor="tm-alt">Gmail (optional)</label>
+              <input id="tm-alt" name="alt_email" type="email" placeholder="If they log in with Google" className="input" />
+            </div>
+            <p className="hint sm:col-span-2 lg:col-span-3">They don&apos;t need to have logged in. They get access the first time they log in with either email.</p>
             <div>
               <label className="label" htmlFor="tm-dept">Department</label>
               <select id="tm-dept" name="department_id" required className="input">
@@ -100,7 +122,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             <div>
               <label className="label" htmlFor="tm-pos">Position</label>
               <select id="tm-pos" name="position" className="input" defaultValue="subcommittee">
-                <option value="subcommittee">Subcommittee (scanner)</option>
+                <option value="subcommittee">Subcommittee (own department&apos;s tasks, calendar, inventory, claims, scanner)</option>
                 <option value="exco">ExCo (full admin)</option>
               </select>
             </div>
@@ -122,6 +144,37 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           </form>
         )}
       </section>}
+
+      {waiting.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-bold">Waiting for first login ({waiting.length})</h2>
+          <p className="text-sm text-muted">On the team list, but they haven&apos;t logged in yet. Access starts automatically when they do.</p>
+          <div className="card overflow-x-auto p-0">
+            <table className="sheet min-w-[40rem]">
+              <thead><tr><th>Name</th><th>Emails</th><th>Department</th><th>Position</th><th>Until</th>{owner && <th />}</tr></thead>
+              <tbody>
+                {waiting.map((i) => (
+                  <tr key={i.id}>
+                    <td className="font-medium">{i.full_name}</td>
+                    <td className="text-xs">{i.email}{i.alt_email && <><br />{i.alt_email}</>}</td>
+                    <td className="whitespace-nowrap">{deptName.get(i.department_id)}</td>
+                    <td className="whitespace-nowrap">{POSITION_LABEL[i.position]}{i.title && ` · ${i.title}`}</td>
+                    <td className="whitespace-nowrap">{formatDate(i.ends_on)}</td>
+                    {owner && (
+                      <td>
+                        <form action={revokeTeamInvite}>
+                          <input type="hidden" name="id" value={i.id} />
+                          <SubmitButton className="btn-danger px-2 py-1 text-xs" pendingText="…">Cancel</SubmitButton>
+                        </form>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <MembershipTable title={`Current team (${active.length})`} rows={[...active].sort(byDept)} deptName={deptName} endable={owner} />
       {upcoming.length > 0 && <MembershipTable title="Starting later" rows={[...upcoming].sort(byDept)} deptName={deptName} endable={owner} />}
