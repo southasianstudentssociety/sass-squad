@@ -8,9 +8,9 @@ import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { Reveal } from "@/components/motion";
 import { applyForMembership, cancelMyApplication } from "./actions";
-import { LAST_PRICE_NOTE, MEMBERSHIP_BENEFITS, NEXT_MEMBERSHIP_YEAR } from "@/lib/membership-content";
+import { NEXT_MEMBERSHIP_YEAR } from "@/lib/membership-content";
+import { BenefitGrid, MembershipHero, NotTheTeam, PaysForItself, PriceTiers } from "./showcase";
 
 export const metadata = { title: "Membership" };
 
@@ -32,21 +32,11 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   const isTeam = session?.access.isTeam ?? false;
   const offerFor = (id: string) => open.find((o) => o.id === id);
 
-  return (
-    <div className="mx-auto max-w-xl space-y-8">
-      {pending && <AutoRefresh seconds={15} />}
-      <Reveal className="text-center">
-        <p className="eyebrow">South Asian Student Society</p>
-        <h1 className="mt-3 font-display text-4xl">Membership</h1>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
-          {memberUntil ? "Thanks for being part of SASS. Here's what your membership gets you." : "One membership, a whole year of SASS. Here's what members get."}
-        </p>
-      </Reveal>
-      <FormMessage error={sp.error} success={sp.ok} />
+  const joinable = !memberUntil && (open.length > 0 || !!pending);
 
-      {!memberUntil && <Benefits title="What members get" />}
-
-      {memberUntil ? (
+  // Membership status / payment / buy / closed, depending on who's looking.
+  const status = (
+    memberUntil ? (
         <div className="card animate-fade-up space-y-4 border-ok/30 p-6">
           <div className="flex items-center gap-4">
             <BadgeCheck className="size-11 shrink-0 text-ok" aria-hidden />
@@ -100,7 +90,6 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
             <>
               <p className="font-medium">Membership sales are closed for now</p>
               <p className="mx-auto max-w-sm text-sm text-muted">Stay tuned for the {NEXT_MEMBERSHIP_YEAR} membership. We&apos;ll announce it on our Instagram{session ? "" : ", and you can buy it right here"}.</p>
-              {LAST_PRICE_NOTE && <p className="text-sm">Last time: <strong>{LAST_PRICE_NOTE}</strong></p>}
             </>
           )}
         </div>
@@ -132,28 +121,36 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
             )}
           </form>
         ))
-      )}
-
-      {memberUntil && <Benefits title="What you enjoy" />}
-    </div>
+      )
   );
-}
 
-function Benefits({ title }: { title: string }) {
   return (
-    <section className="space-y-3">
-      <h2 className="eyebrow text-center">{title}</h2>
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {MEMBERSHIP_BENEFITS.map((b) => (
-          <li key={b.title} className="card flex gap-3 p-4">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand"><b.icon className="size-[18px]" aria-hidden /></span>
-            <span>
-              <span className="block font-medium">{b.title}</span>
-              <span className="text-sm text-muted">{b.text}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <div className="space-y-16 sm:space-y-24">
+      {pending && <AutoRefresh seconds={15} />}
+      <MembershipHero memberUntil={memberUntil} joinable={joinable} />
+      <FormMessage error={sp.error} success={sp.ok} />
+
+      {memberUntil ? (
+        <>
+          <div className="mx-auto max-w-xl">
+            {status}
+
+          </div>
+          <BenefitGrid title="What you enjoy" />
+        </>
+      ) : (
+        <>
+          <PaysForItself />
+          <BenefitGrid title="Members get more" />
+          <PriceTiers salesOpen={open.length > 0} nextYear={NEXT_MEMBERSHIP_YEAR} />
+          <NotTheTeam />
+          <section id="join" className="mx-auto max-w-xl scroll-mt-24 space-y-4">
+            <h2 className="text-center font-display text-3xl">{open.length > 0 || pending ? "Join SASS" : "Get your membership"}</h2>
+            {status}
+
+          </section>
+        </>
+      )}
+    </div>
   );
 }
