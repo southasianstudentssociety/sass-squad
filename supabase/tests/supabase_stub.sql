@@ -48,3 +48,14 @@ grant execute on all functions in schema storage to anon, authenticated;
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+
+-- Linked sign-in methods (e.g. Google) for an account.
+create table if not exists auth.identities (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  provider text not null,
+  provider_id text not null,
+  identity_data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  unique (provider, provider_id)
+);

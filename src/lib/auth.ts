@@ -25,7 +25,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const [{ data: profile }, { data: isMember }, { data: access }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, email, full_name, phone, onboarded")
+      .select("id, email, full_name, phone, food_preference, onboarded")
       .eq("id", user.id)
       .single<Profile>(),
     supabase.rpc("current_user_is_member"),
