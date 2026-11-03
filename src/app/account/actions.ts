@@ -73,7 +73,8 @@ export async function linkGoogle() {
   redirect(data.url);
 }
 
-export type EmailChangeState = { step: "email" | "code"; email?: string; error?: string; info?: string };
+/** step "code": waiting for the code sent to `codeFor` (first the new address, then, if Supabase also asks, the current one). */
+export type EmailChangeState = { step: "email" | "code"; email?: string; current?: string; codeFor?: string; error?: string; info?: string };
 
 /** Change the email you log in with by code (e.g. from your Gmail to your UST email). Sends a code to the new address. */
 export async function startEmailChange(_prev: EmailChangeState, formData: FormData): Promise<EmailChangeState> {
@@ -97,20 +98,28 @@ export async function startEmailChange(_prev: EmailChangeState, formData: FormDa
           : "Couldn't send the code. Check the address and try again.",
     };
   }
-  return { step: "code", email, info: `We sent a code to ${email}.` };
+  return { step: "code", email, current: session.email, codeFor: email, info: `We sent a 6-digit code to ${email}. Check your inbox and junk folder.` };
 }
 
 export async function verifyEmailChange(_prev: EmailChangeState, formData: FormData): Promise<EmailChangeState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase(); // the new address
+  const current = String(formData.get("current") ?? "").trim().toLowerCase();
+  const codeFor = String(formData.get("code_for") ?? email).trim().toLowerCase();
   const token = String(formData.get("code") ?? "").replace(/\s/g, "");
-  if (!/^\d{6,10}$/.test(token)) return { step: "code", email, error: "Enter the code from the email." };
+  const keep = { step: "code" as const, email, current, codeFor };
+  if (!/^\d{6,10}$/.test(token)) return { ...keep, error: "Enter the 6-digit code from the email." };
   const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ email, token, type: "email_change" });
-  if (error) return { step: "code", email, error: "That code is wrong or has expired. Try again, or start over." };
+  const { error } = await supabase.auth.verifyOtp({ email: codeFor, token, type: "email_change" });
+  if (error) return { ...keep, error: `That code is wrong or has expired. Use the latest code sent to ${codeFor}, or start over.` };
   const { data } = await supabase.auth.getUser();
   revalidatePath("/", "layout");
-  if (data.user?.email?.toLowerCase() !== email) {
-    return { step: "code", email, info: "Almost done: also confirm the change from the email we sent to your old address." };
+  if (data.user?.email?.toLowerCase() === email) {
+    redirect(`/account?ok=${encodeURIComponent(`Done. You now log in with ${email}.`)}`);
   }
-  redirect(`/account?ok=${encodeURIComponent(`You now log in with ${email}.`)}`);
+  // Supabase also wants the code it sent to the other address (secure email change).
+  const other = codeFor === email ? current : email;
+  return {
+    step: "code", email, current, codeFor: other,
+    info: `${codeFor} confirmed. One more: enter the code we sent to ${other} (check junk too).`,
+  };
 }
