@@ -12,13 +12,15 @@ export type GalleryPhoto = {
 
 export type GalleryItem = { id: string; src: string; alt: string };
 
-/** Visible gallery photos, newest first, with their public URLs. */
-export async function galleryItems(limit = 24): Promise<GalleryItem[]> {
+/** Visible gallery photos, newest first, with their public URLs. Optionally only one event's. */
+export async function galleryItems(limit = 24, eventId?: string): Promise<GalleryItem[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  let query = supabase
     .from("gallery_photos")
     .select("id, path, caption, event_id, created_at, hidden_at, event:events(title)")
-    .is("hidden_at", null)
+    .is("hidden_at", null);
+  if (eventId) query = query.eq("event_id", eventId);
+  const { data } = await query
     .order("created_at", { ascending: false })
     .limit(limit)
     .returns<(GalleryPhoto & { event: { title: string } | null })[]>();

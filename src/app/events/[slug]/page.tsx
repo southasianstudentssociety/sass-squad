@@ -9,6 +9,9 @@ import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { claimTeamTicket, claimTicket } from "./actions";
 import { AddToCalendar } from "@/components/add-to-calendar";
+import { GalleryStrip } from "@/components/gallery-strip";
+import { galleryItems } from "@/lib/gallery";
+import { SITE } from "@/lib/site";
 
 export default async function EventPage({
   params,
@@ -50,6 +53,7 @@ export default async function EventPage({
   const sales = salesStateFor(event, isMember);
   const yourPrice = priceFor(event, isMember);
   const over = eventIsOver(event);
+  const photos = over ? await galleryItems(24, event.id) : [];
 
   return (
     <article className="grid gap-8 lg:grid-cols-[1fr_360px] lg:gap-12">
@@ -68,6 +72,15 @@ export default async function EventPage({
         {event.venue && <p className="mt-3 text-muted">{event.venue}</p>}
         {!over && <AddToCalendar event={event} className="mt-5" />}
         {event.description && <div className="mt-8 max-w-prose whitespace-pre-line text-[15px] leading-relaxed text-ink/85">{event.description}</div>}
+        {photos.length > 0 && (
+          <section className="mt-12 pb-12">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <h2 className="font-display text-2xl">Photos</h2>
+              <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">View all photos</a>
+            </div>
+            <GalleryStrip items={photos} />
+          </section>
+        )}
       </div>
 
       <aside className="order-1 h-fit animate-fade-up space-y-5 rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-lift)] sm:p-6 lg:sticky lg:top-24 lg:order-2">
