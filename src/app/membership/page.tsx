@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeCheck, Clock, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -10,7 +10,7 @@ import { CopyButton } from "@/components/copy-button";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { applyForMembership, cancelMyApplication } from "./actions";
 import { NEXT_MEMBERSHIP_YEAR } from "@/lib/membership-content";
-import { BenefitGrid, MembershipHero, NotTheTeam, PaysForItself, PriceTiers } from "./showcase";
+import { MemberPass, MembershipHero, NotTheTeam, PaysForItself, PerkRibbon, PerkTickets, PriceTiers, type MemberPlan } from "./showcase";
 
 export const metadata = { title: "Membership" };
 
@@ -24,11 +24,12 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
     session
       ? supabase.from("membership_applications").select("*").eq("user_id", session.userId).neq("status", "cancelled").order("created_at", { ascending: false }).returns<MembershipApplication[]>()
       : Promise.resolve({ data: [] as MembershipApplication[] }),
-    session ? supabase.rpc("my_membership") : Promise.resolve({ data: null }),
+    session ? supabase.rpc("my_membership_plan") : Promise.resolve({ data: null }),
   ]);
   const open = offers ?? [];
   const pending = (apps.data ?? []).find((a) => a.status === "awaiting_payment");
-  const memberUntil = session?.isMember ? ((membership.data as string | null) ?? null) : null;
+  const plan = session?.isMember ? ((membership.data as MemberPlan) ?? null) : null;
+  const memberUntil = plan?.valid_until ?? null;
   const isTeam = session?.access.isTeam ?? false;
   const offerFor = (id: string) => open.find((o) => o.id === id);
 
@@ -37,24 +38,11 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   // Membership status / payment / buy / closed, depending on who's looking.
   const status = (
     memberUntil ? (
-        <div className="card animate-fade-up space-y-4 border-ok/30 p-6">
-          <div className="flex items-center gap-4">
-            <BadgeCheck className="size-11 shrink-0 text-ok" aria-hidden />
-            <div>
-              <p className="text-lg font-medium">You&apos;ve got your membership</p>
-              <p className="text-sm text-muted">Member prices apply to your tickets automatically.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl bg-page px-3.5 py-2.5 text-sm">
-            <Clock className="size-4 shrink-0 text-muted" aria-hidden />
-            Your membership expires on <strong>{formatDate(memberUntil)}</strong>.
-          </div>
-          {session && !session.profile.phone && (
-            <Link href="/account" className="flex items-center gap-2 rounded-xl bg-ok/10 px-3.5 py-2.5 text-sm text-ok hover:bg-ok/15">
-              <MessageCircle className="size-4 shrink-0" aria-hidden />Add your WhatsApp number in Settings so we can add you to the members&apos; group chat →
-            </Link>
-          )}
-        </div>
+        session && !session.profile.phone ? (
+          <Link href="/account" className="mx-auto flex max-w-md items-center gap-2 rounded-xl bg-ok/10 px-3.5 py-2.5 text-sm text-ok hover:bg-ok/15">
+            <MessageCircle className="size-4 shrink-0" aria-hidden />Add your WhatsApp number in Settings so we can add you to the members&apos; group chat →
+          </Link>
+        ) : null
       ) : pending ? (
         <div className="card animate-fade-up space-y-4 p-6 text-sm">
           <div className="flex items-center gap-2">
@@ -127,27 +115,31 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   return (
     <div className="space-y-16 sm:space-y-24">
       {pending && <AutoRefresh seconds={15} />}
-      <MembershipHero memberUntil={memberUntil} joinable={joinable} />
+      <MembershipHero member={!!memberUntil} joinable={joinable} />
       <FormMessage error={sp.error} success={sp.ok} />
 
       {memberUntil ? (
         <>
-          <div className="mx-auto max-w-xl">
+          <div className="space-y-4">
+            <MemberPass name={session?.profile.full_name ?? session?.email ?? "Member"} plan={plan} />
             {status}
-
           </div>
-          <BenefitGrid title="What you enjoy" />
+          <PerkRibbon />
+          <PerkTickets owned />
+          <PaysForItself member />
+          <PriceTiers salesOpen={open.length > 0} nextYear={NEXT_MEMBERSHIP_YEAR} plan={plan} />
+          <NotTheTeam />
         </>
       ) : (
         <>
-          <PaysForItself />
-          <BenefitGrid title="Members get more" />
+          <PerkRibbon />
+          <PaysForItself member={false} />
+          <PerkTickets owned={false} />
           <PriceTiers salesOpen={open.length > 0} nextYear={NEXT_MEMBERSHIP_YEAR} />
           <NotTheTeam />
           <section id="join" className="mx-auto max-w-xl scroll-mt-24 space-y-4">
             <h2 className="text-center font-display text-3xl">{open.length > 0 || pending ? "Join SASS" : "Get your membership"}</h2>
             {status}
-
           </section>
         </>
       )}
