@@ -23,6 +23,7 @@ export function NavBar({ user }: { user: User | null }) {
   const signOutRef = useRef<HTMLFormElement>(null);
 
   const primary = [
+    { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
     ...(user ? [{ href: "/tickets", label: "Tickets" }] : []),
     // Door staff need Scan one tap away, not inside a menu.
@@ -40,7 +41,7 @@ export function NavBar({ user }: { user: User | null }) {
         ...(user.isAdmin ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : []),
       ]
     : [];
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
   const teamActive = team.some((t) => isActive(t.href));
 
   return (
