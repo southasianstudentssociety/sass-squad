@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FilterForm } from "@/components/filter-form";
 import { requireTeam } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { formatDate, todayInHongKong } from "@/lib/format";
+import { formatDate, formatShortDate, todayInHongKong } from "@/lib/format";
 import { CONDITIONS, teamNames } from "@/lib/inventory";
 import type { InventoryItem, InventoryLoan } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
@@ -10,7 +10,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { createItem } from "./actions";
 import { EmptyState } from "@/components/illustrations";
 import { Modal, ModalFormDone } from "@/components/modal";
-import { Plus } from "lucide-react";
+import { History, Plus } from "lucide-react";
 
 export const metadata = { title: "Inventory" };
 
@@ -56,6 +56,8 @@ export default async function InventoryPage({
             {overdue.length > 0 && <span className="text-bad"> · {overdue.length} overdue</span>}
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Link href="/inventory/history" className="btn-ghost"><History className="size-4" aria-hidden />History</Link>
         {session.access.isTeam && (
           <Modal label="Add item" title="Add an item" icon={<Plus className="size-4" aria-hidden />}>
             <form action={createItem} className="grid gap-3 sm:grid-cols-2">
@@ -98,6 +100,7 @@ export default async function InventoryPage({
           </form>
           </Modal>
         )}
+        </div>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />
 
@@ -158,7 +161,7 @@ export default async function InventoryPage({
             : <p className="py-6 text-center text-sm text-muted">No items match.</p>}</div>
         ) : (
           <div className="card max-h-[75vh] overflow-auto p-0">
-            <table className="sheet min-w-[52rem]">
+            <table className="sheet min-w-[58rem]">
               <thead>
                 <tr>
                   <th className="num">#</th>
@@ -170,6 +173,7 @@ export default async function InventoryPage({
                   <th className="text-right">Owned</th>
                   <th className="text-right">Out</th>
                   <th className="text-right">Available</th>
+                  <th>Last updated</th>
                 </tr>
               </thead>
               <tbody>
@@ -184,6 +188,7 @@ export default async function InventoryPage({
                     <td className="text-right tabular-nums">{i.quantity}</td>
                     <td className="text-right tabular-nums">{i.on_loan > 0 ? i.on_loan : <span className="text-muted">0</span>}</td>
                     <td className={`text-right font-semibold tabular-nums ${i.available === 0 && !i.retired_at ? "text-bad" : ""}`}>{i.available}</td>
+                    <td className="whitespace-nowrap tabular-nums text-muted">{formatShortDate(i.last_activity_at ?? i.updated_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -194,6 +199,7 @@ export default async function InventoryPage({
                   <td className="text-right tabular-nums">{items.reduce((a, i) => a + i.quantity, 0)}</td>
                   <td className="text-right tabular-nums">{items.reduce((a, i) => a + i.on_loan, 0)}</td>
                   <td className="text-right tabular-nums">{items.reduce((a, i) => a + i.available, 0)}</td>
+                  <td />
                 </tr>
               </tfoot>
             </table>

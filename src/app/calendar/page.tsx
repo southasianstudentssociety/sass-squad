@@ -37,6 +37,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       .gte("due_on", rangeStart)
       .lte("due_on", rangeEnd)
       .neq("status", "cancelled")
+      .is("archived_at", null)
       .order("due_on")
       .order("due_time", { nullsFirst: true })
       .returns<Task[]>(),
