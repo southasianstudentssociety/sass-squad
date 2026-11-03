@@ -12,6 +12,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   if (!session) redirect(`/login?next=${encodeURIComponent(next)}`);
   const editing = sp.edit === "1";
   if (session.profile.onboarded && !editing) redirect(next);
+  if (editing) redirect("/account");
 
   return (
     <div className="mx-auto max-w-sm pt-2 sm:pt-6">
@@ -32,6 +33,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           email={session.email}
           fullName={session.profile.full_name ?? session.providerName ?? ""}
           phone={session.profile.phone ?? ""}
+          phoneRequired={session.isMember}
         />
       </div>
     </div>

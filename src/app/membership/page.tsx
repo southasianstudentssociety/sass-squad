@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeCheck, CalendarCheck, Sparkles, Ticket } from "lucide-react";
+import { BadgeCheck, Clock, MessageCircle } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -10,14 +10,10 @@ import { CopyButton } from "@/components/copy-button";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { Reveal } from "@/components/motion";
 import { applyForMembership, cancelMyApplication } from "./actions";
+import { LAST_PRICE_NOTE, MEMBERSHIP_BENEFITS, NEXT_MEMBERSHIP_YEAR } from "@/lib/membership-content";
 
 export const metadata = { title: "Membership" };
 
-const PERKS = [
-  { icon: Ticket, text: "Member prices on every event, applied automatically" },
-  { icon: CalendarCheck, text: "Early access when tickets open" },
-  { icon: Sparkles, text: "Members-only nights" },
-];
 
 export default async function MembershipPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
   const sp = await searchParams;
@@ -28,20 +24,12 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
     session
       ? supabase.from("membership_applications").select("*").eq("user_id", session.userId).neq("status", "cancelled").order("created_at", { ascending: false }).returns<MembershipApplication[]>()
       : Promise.resolve({ data: [] as MembershipApplication[] }),
-    session
-      ? supabase
-          .from("members")
-          .select("valid_until")
-          // Filter to this person explicitly: ExCo can read the whole member list.
-          .or(`email.eq."${session.email}",alt_email.eq."${session.email}"`)
-          .order("valid_until", { ascending: false })
-          .limit(1)
-          .maybeSingle<{ valid_until: string }>()
-      : Promise.resolve({ data: null }),
+    session ? supabase.rpc("my_membership") : Promise.resolve({ data: null }),
   ]);
   const open = offers ?? [];
   const pending = (apps.data ?? []).find((a) => a.status === "awaiting_payment");
-  const memberUntil = session?.isMember ? membership.data?.valid_until : null;
+  const memberUntil = session?.isMember ? ((membership.data as string | null) ?? null) : null;
+  const isTeam = session?.access.isTeam ?? false;
   const offerFor = (id: string) => open.find((o) => o.id === id);
 
   return (
@@ -50,21 +38,32 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
       <Reveal className="text-center">
         <p className="eyebrow">South Asian Student Society</p>
         <h1 className="mt-3 font-display text-4xl">Membership</h1>
-        <ul className="mx-auto mt-6 max-w-sm space-y-2.5 text-left text-sm">
-          {PERKS.map((p) => (
-            <li key={p.text} className="flex items-center gap-3"><p.icon className="size-4 shrink-0 text-brand" aria-hidden />{p.text}</li>
-          ))}
-        </ul>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
+          {memberUntil ? "Thanks for being part of SASS. Here's what your membership gets you." : "One membership, a whole year of SASS. Here's what members get."}
+        </p>
       </Reveal>
       <FormMessage error={sp.error} success={sp.ok} />
 
+      {!memberUntil && <Benefits title="What members get" />}
+
       {memberUntil ? (
-        <div className="card flex animate-fade-up items-center gap-4 p-6">
-          <BadgeCheck className="size-10 shrink-0 text-ok" aria-hidden />
-          <div>
-            <p className="font-medium">You&apos;re a member</p>
-            <p className="text-sm text-muted">Until {formatDate(memberUntil)}. Member prices apply to your tickets automatically.</p>
+        <div className="card animate-fade-up space-y-4 border-ok/30 p-6">
+          <div className="flex items-center gap-4">
+            <BadgeCheck className="size-11 shrink-0 text-ok" aria-hidden />
+            <div>
+              <p className="text-lg font-medium">You&apos;ve got your membership</p>
+              <p className="text-sm text-muted">Member prices apply to your tickets automatically.</p>
+            </div>
           </div>
+          <div className="flex items-center gap-2 rounded-xl bg-page px-3.5 py-2.5 text-sm">
+            <Clock className="size-4 shrink-0 text-muted" aria-hidden />
+            Your membership expires on <strong>{formatDate(memberUntil)}</strong>.
+          </div>
+          {session && !session.profile.phone && (
+            <Link href="/account" className="flex items-center gap-2 rounded-xl bg-ok/10 px-3.5 py-2.5 text-sm text-ok hover:bg-ok/15">
+              <MessageCircle className="size-4 shrink-0" aria-hidden />Add your WhatsApp number in Settings so we can add you to the members&apos; group chat →
+            </Link>
+          )}
         </div>
       ) : pending ? (
         <div className="card animate-fade-up space-y-4 p-6 text-sm">
@@ -89,7 +88,22 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
           </form>
         </div>
       ) : open.length === 0 ? (
-        <p className="card py-10 text-center text-sm text-muted">Membership sales aren&apos;t open right now. Watch our Instagram.</p>
+        <div className="card space-y-2 py-8 text-center">
+          {isTeam ? (
+            <>
+              <p className="font-medium">Get your membership</p>
+              <p className="mx-auto max-w-sm text-sm text-muted">
+                As part of the team you can join any time, but the team membership isn&apos;t open right now. Ask an ExCo to open it on <strong>Admin → Memberships</strong> (tick &ldquo;Team only&rdquo;).
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-medium">Membership sales are closed for now</p>
+              <p className="mx-auto max-w-sm text-sm text-muted">Stay tuned for the {NEXT_MEMBERSHIP_YEAR} membership. We&apos;ll announce it on our Instagram{session ? "" : ", and you can buy it right here"}.</p>
+              {LAST_PRICE_NOTE && <p className="text-sm">Last time: <strong>{LAST_PRICE_NOTE}</strong></p>}
+            </>
+          )}
+        </div>
       ) : (
         open.map((o) => (
           <form key={o.id} action={applyForMembership} className="card animate-fade-up space-y-4 p-6">
@@ -119,6 +133,27 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
           </form>
         ))
       )}
+
+      {memberUntil && <Benefits title="What you enjoy" />}
     </div>
+  );
+}
+
+function Benefits({ title }: { title: string }) {
+  return (
+    <section className="space-y-3">
+      <h2 className="eyebrow text-center">{title}</h2>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {MEMBERSHIP_BENEFITS.map((b) => (
+          <li key={b.title} className="card flex gap-3 p-4">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand"><b.icon className="size-[18px]" aria-hidden /></span>
+            <span>
+              <span className="block font-medium">{b.title}</span>
+              <span className="text-sm text-muted">{b.text}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

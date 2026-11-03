@@ -20,6 +20,21 @@ export async function GET(request: NextRequest) {
     ok = !(await supabase.auth.exchangeCodeForSession(code)).error;
   }
 
+  // Linking a Google account from Settings comes back here too.
+  if (url.searchParams.get("via") === "link") {
+    const reason = url.searchParams.get("error_description") ?? "";
+    const msg = ok
+      ? "ok=" + encodeURIComponent("Google account linked. You can now log in with either.")
+      : "error=" + encodeURIComponent(
+          /already/i.test(reason)
+            ? "That Google account already has its own SASS account. Log in with it, or ask a hub owner to merge them."
+            : /manual linking/i.test(reason)
+              ? "Linking Google accounts isn't switched on yet. Ask a hub owner."
+              : "Couldn't link that Google account. Try again.",
+        );
+    return NextResponse.redirect(new URL(`/account?${msg}`, url.origin));
+  }
+
   // OAuth providers (Google) come back with ?code=, or ?error= if the user cancelled.
   const failReason = url.searchParams.get("via") === "google" ? "google" : "link";
   const dest = ok ? `/onboarding?next=${encodeURIComponent(next)}` : `/login?error=${failReason}&next=${encodeURIComponent(next)}`;

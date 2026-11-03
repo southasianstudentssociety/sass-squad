@@ -44,7 +44,7 @@ export default async function TicketsPage() {
             {session.isMember ? <span className="badge bg-accent text-accent-ink">Member</span> : <span className="badge bg-line text-muted">Not a member</span>}
           </p>
         </div>
-        <Link href="/onboarding?edit=1&next=/tickets" className="btn-ghost">Edit my details</Link>
+        <Link href="/account" className="btn-ghost">Settings</Link>
       </div>
 
       {tickets.length === 0 ? (

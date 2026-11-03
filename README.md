@@ -11,6 +11,7 @@ Built for Hong Kong: prices in HK$, times in Hong Kong time (`TIME_ZONE` in `src
 | Who | Can do |
 |---|---|
 | Anyone | Browse events, log in with Google or an emailed one-time code (uni or Gmail), set their name |
+| Anyone logged in (Settings) | Gear icon left of their initials: full name, WhatsApp number (required for members, with country code), food preference; link a Google account (Gmail) so Google and email-code login open the same account; change the email they get login codes at (confirmed by a code). Membership and team access match any email on the account. Members without a phone number get a pop-up once per visit |
 | Anyone logged in (membership) | Join at **/membership**: pay the offer by FPS with a `MEM-` reference; once ExCo confirms, they're added to (or renewed on) the member list and member prices apply immediately. Free offers confirm instantly |
 | People who came to an event | Rate it 1–5 with an optional comment, anonymously if they like, for 30 days after it starts |
 | Members (email is on the member list and not expired) | Member price, early access, members-only events, one free ticket per event |

@@ -59,7 +59,7 @@ export default async function EventPage({
     <article className="grid gap-8 lg:grid-cols-[1fr_360px] lg:gap-12">
       <div className="order-2 lg:order-1">
         {!event.is_published && (
-          <p className="mb-5 rounded-xl border border-warn/20 bg-warn/[0.06] px-3.5 py-2.5 text-sm font-medium text-warn">Draft: only staff can see this page.</p>
+          <p className="mb-5 rounded-xl border border-warn/20 bg-warn/[0.06] px-3.5 py-2.5 text-sm font-medium text-warn">Draft: only the team can see this page. Tickets go on sale when it&apos;s published.</p>
         )}
         {event.cover_image_url && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -124,6 +124,8 @@ export default async function EventPage({
               </form>
             )}
           </div>
+        ) : !event.is_published ? (
+          <p className="rounded-xl bg-page px-3.5 py-3 text-center text-sm text-muted">Tickets go on sale when this event is published.</p>
         ) : over ? (
           <p className="rounded-xl bg-page px-3.5 py-3 text-center text-sm text-muted">This event has finished.</p>
         ) : !session ? (

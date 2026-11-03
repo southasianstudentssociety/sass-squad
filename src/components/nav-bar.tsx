@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRef } from "react";
 import { motion } from "motion/react";
 import { Menu } from "@base-ui/react/menu";
-import { BadgeCheck, Boxes, CalendarCog, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
+import { BadgeCheck, Boxes, CalendarCog, Settings, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, LogOut, Receipt, Settings2, ShieldCheck, UserRound, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -25,6 +25,7 @@ export function NavBar({ user }: { user: User | null }) {
   const primary = [
     { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
+    { href: "/membership", label: "Membership" },
     ...(user ? [{ href: "/tickets", label: "Tickets" }] : []),
     // Door staff need Scan one tap away, not inside a menu.
     ...(user?.isStaff ? [{ href: "/scan", label: "Scan" }] : []),
@@ -98,6 +99,16 @@ export function NavBar({ user }: { user: User | null }) {
               </Menu.Root>
             )}
 
+          {user && (
+            <Link
+              href="/account"
+              aria-label="Settings"
+              aria-current={isActive("/account") ? "page" : undefined}
+              className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-ink/60 transition-colors hover:bg-ink/[0.06] hover:text-ink", isActive("/account") && "bg-ink/[0.06] text-ink")}
+            >
+              <Settings className="size-[18px]" aria-hidden />
+            </Link>
+          )}
           {user ? (
             <Menu.Root>
               <Menu.Trigger
@@ -123,8 +134,8 @@ export function NavBar({ user }: { user: User | null }) {
                 <MenuLink href="/tickets">
                   <UserRound className="size-4 opacity-60" aria-hidden />My tickets
                 </MenuLink>
-                <MenuLink href="/onboarding?edit=1&next=/tickets">
-                  <Settings2 className="size-4 opacity-60" aria-hidden />Edit my details
+                <MenuLink href="/account">
+                  <Settings2 className="size-4 opacity-60" aria-hidden />Settings
                 </MenuLink>
                 <Menu.Item
                   onClick={() => signOutRef.current?.requestSubmit()}

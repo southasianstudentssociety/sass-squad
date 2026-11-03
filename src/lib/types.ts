@@ -8,6 +8,7 @@ export type Profile = {
   email: string;
   full_name: string | null;
   phone: string | null;
+  food_preference?: string | null;
   onboarded: boolean;
 };
 
