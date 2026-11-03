@@ -224,10 +224,12 @@ export async function saveDepartment(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   if (!name || name.length > 60) back(TEAM, { error: "Department name must be 1–60 characters." });
   const handlesFinance = formData.get("handles_finance") === "on";
+  const financeAccess = formData.get("finance_access") === "on";
   const supabase = await createClient();
+  const row = { name, handles_finance: handlesFinance, finance_access: financeAccess && !handlesFinance };
   const { error } = id
-    ? await supabase.from("departments").update({ name, handles_finance: handlesFinance }).eq("id", id)
-    : await supabase.from("departments").insert({ name, handles_finance: handlesFinance });
+    ? await supabase.from("departments").update(row).eq("id", id)
+    : await supabase.from("departments").insert(row);
   if (error) back(TEAM, { error: error.code === "23505" ? "There's already a department with that name." : "Couldn't save the department." });
   revalidatePath(TEAM);
   back(TEAM, { ok: id ? `Saved ${name}.` : `Added ${name}.` });

@@ -29,7 +29,7 @@ export type Access = {
   termEnd: string;
 };
 
-export type Department = { id: string; name: string; handles_finance: boolean };
+export type Department = { id: string; name: string; handles_finance: boolean; finance_access?: boolean };
 
 export type TeamMembership = {
   id: string;

@@ -27,7 +27,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const session = await getSession();
   const supabase = await createClient();
   const [{ data: departments }, { data: memberships }, { data: inviteData }, { data: profileData }] = await Promise.all([
-    supabase.from("departments").select("id, name, handles_finance").order("name").returns<Department[]>(),
+    supabase.from("departments").select("id, name, handles_finance, finance_access").order("name").returns<Department[]>(),
     supabase
       .from("team_memberships")
       .select("id, user_id, department_id, position, title, starts_on, ends_on, person:profiles!team_memberships_user_id_fkey(full_name, email)")
@@ -184,7 +184,8 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Departments</h2>
         <p className="text-sm text-muted">
-          ExCo in a department that <strong>handles finance</strong> (and hub owners) can see every reimbursement claim, receipt and payment detail, and approve and pay claims.
+          ExCo in a department that <strong>handles finance</strong> (and hub owners) can see every reimbursement claim, receipt and payment detail, approve and pay claims, and use Accounts; the Finance department&apos;s ExCo may also approve their own claims (always flagged).
+          <strong> Finance access</strong> gives a department&apos;s ExCo the same, except approving their own claims (e.g. the Presidents).
           {!(departments ?? []).some((d) => d.handles_finance) && " No department handles finance yet, so nobody can approve claims."}
         </p>
         {!owner ? (
@@ -197,11 +198,14 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         <div className="card space-y-3">
           {(departments ?? []).map((d) => (
             <div key={d.id} className="flex flex-wrap items-center gap-2">
-              <form action={saveDepartment} className="flex flex-1 gap-2">
+              <form action={saveDepartment} className="flex flex-1 flex-wrap items-center gap-2">
                 <input type="hidden" name="id" value={d.id} />
-                <input name="name" defaultValue={d.name} required maxLength={60} aria-label={`Rename ${d.name}`} className="input" />
+                <input name="name" defaultValue={d.name} required maxLength={60} aria-label={`Rename ${d.name}`} className="input min-w-40 flex-1" />
                 <label className="flex items-center gap-1.5 whitespace-nowrap text-sm">
                   <input type="checkbox" name="handles_finance" defaultChecked={d.handles_finance} /> Handles finance
+                </label>
+                <label className="flex items-center gap-1.5 whitespace-nowrap text-sm">
+                  <input type="checkbox" name="finance_access" defaultChecked={d.finance_access ?? false} /> Finance access
                 </label>
                 <SubmitButton className="btn-ghost" pendingText="Saving…">Save</SubmitButton>
               </form>
