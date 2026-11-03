@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { FilterForm } from "@/components/filter-form";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/format";
 import type { MembershipApplication, MembershipOffer } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
@@ -34,7 +35,7 @@ export default async function MembershipsAdmin({ searchParams }: { searchParams:
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 className="text-lg font-medium">Waiting for payment ({waiting.length})</h2>
-          <form className="w-full sm:w-64"><input name="q" defaultValue={sp.q} placeholder="Search name, email or MEM-…" className="input py-2 text-sm" /></form>
+          <FilterForm className="w-full sm:w-64"><input name="q" defaultValue={sp.q} placeholder="Search name, email or MEM-…" className="input py-2 text-sm" /></FilterForm>
         </div>
         {waiting.length === 0 ? <p className="card py-6 text-center text-sm text-muted">Nothing waiting.</p> : (
           <ul className="grid gap-3 sm:grid-cols-2">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FilterForm } from "@/components/filter-form";
 import { LayoutGrid, Plus, Table2 } from "lucide-react";
 import { requireTeam } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -150,7 +151,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         />
       </div>
 
-      <form className="flex flex-wrap items-end gap-2">
+      <FilterForm className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="view" value={view} />
         <input type="hidden" name="layout" value={layout} />
         <div>
@@ -170,8 +171,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <label className="flex items-center gap-1.5 pb-2 text-sm">
           <input type="checkbox" name="done" value="1" defaultChecked={showDone} /> Include done
         </label>
-        <button className="btn-ghost">Apply</button>
-      </form>
+      </FilterForm>
 
       {all.length === 0 ? (
         <div className="card">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FilterForm } from "@/components/filter-form";
 import { requireTeam } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, todayInHongKong } from "@/lib/format";
@@ -124,7 +125,7 @@ export default async function InventoryPage({
       )}
 
       <section className="space-y-3">
-        <form className="flex flex-wrap items-end gap-2">
+        <FilterForm className="flex flex-wrap items-end gap-2">
           <div className="min-w-48 flex-1">
             <label className="label" htmlFor="inv-q">Search</label>
             <input id="inv-q" name="q" defaultValue={sp.q} placeholder="Name, location, notes" className="input" />
@@ -149,8 +150,7 @@ export default async function InventoryPage({
           <label className="flex items-center gap-1.5 pb-2 text-sm">
             <input type="checkbox" name="retired" value="1" defaultChecked={sp.retired === "1"} /> Show retired
           </label>
-          <button className="btn-ghost">Filter</button>
-        </form>
+        </FilterForm>
 
         {items.length === 0 ? (
           <div className="card">{allItems.length === 0

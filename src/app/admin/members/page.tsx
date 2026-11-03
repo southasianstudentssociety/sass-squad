@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { FilterForm } from "@/components/filter-form";
 import { formatDate } from "@/lib/format";
 import type { Member } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
@@ -68,10 +69,9 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
         </form>
       </div>
 
-      <form className="flex gap-2">
+      <FilterForm className="flex gap-2">
         <input name="q" defaultValue={sp.q} placeholder="Search name, email, student ID" className="input max-w-sm" />
-        <button className="btn-ghost">Search</button>
-      </form>
+      </FilterForm>
 
       <div className="card overflow-x-auto p-0">
         <table className="table">
