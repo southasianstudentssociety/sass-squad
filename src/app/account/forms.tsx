@@ -38,15 +38,19 @@ export function EmailChangeForm({ current, suggested }: { current: string; sugge
   const [start, startAction] = useActionState<EmailChangeState, FormData>(startEmailChange, { step: "email" });
   const [verify, verifyAction] = useActionState<EmailChangeState, FormData>(verifyEmailChange, { step: "code" });
   if (start.step === "code" && start.email) {
+    const codeFor = verify.codeFor ?? start.codeFor ?? start.email;
     return (
-      <form action={verifyAction} className="space-y-2">
+      <form action={verifyAction} className="space-y-2" key={codeFor}>
         <input type="hidden" name="email" value={start.email} />
+        <input type="hidden" name="current" value={start.current ?? current} />
+        <input type="hidden" name="code_for" value={codeFor} />
         <FormMessage success={verify.info ?? start.info} error={verify.error} />
-        <label className="label text-xs" htmlFor="ec-code">Code from the email to {start.email}</label>
+        <label className="label text-xs" htmlFor="ec-code">6-digit code sent to {codeFor}</label>
         <div className="flex gap-2">
           <input id="ec-code" name="code" inputMode="numeric" autoComplete="one-time-code" required className="input max-w-44 tracking-[0.3em]" />
           <SubmitButton pendingText="Checking…">Confirm</SubmitButton>
         </div>
+        <p className="hint">Not there? Check junk/spam. If the email has a link instead of a code, don&apos;t use the link: ask a hub owner (the email template needs switching to codes).</p>
       </form>
     );
   }

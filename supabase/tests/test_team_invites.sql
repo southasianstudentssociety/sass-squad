@@ -36,6 +36,15 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
 select pg_temp.fails($$select public.invite_team_member('X', 'x@connect.ust.hk', null, '10000000-0000-0000-0000-000000000001', 'subcommittee')$$, 'Only hub owners');
 select pg_temp.check((select count(*) = 0 from public.team_invites), 'non-admin cannot read invites');
 
+-- an ExCo who isn't an owner can't read the waiting list either
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-000000000099', 'otherexco@test');
+insert into public.team_memberships (user_id, department_id, position, starts_on, ends_on) values
+  ('00000000-0000-0000-0000-000000000099', '10000000-0000-0000-0000-000000000001', 'exco', current_date - 1, current_date + 300);
+select pg_temp.as_user('00000000-0000-0000-0000-000000000099');
+select pg_temp.check((select count(*) = 0 from public.team_invites), 'non-owner exco cannot read invites (none yet)');
+reset role;
+
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 -- someone who has never logged in: UST + Gmail
 select pg_temp.check((select (r->>'added_now')::int = 0 from public.invite_team_member('Log Sub', 'logsub@connect.ust.hk', 'logsub@gmail.com', '10000000-0000-0000-0000-000000000001', 'subcommittee') r), 'not added yet');
@@ -48,6 +57,9 @@ select public.invite_team_member('Owner', 'owner@gmail.com', null, '10000000-000
 select pg_temp.check((select count(*) = 1 from public.team_memberships where user_id = '00000000-0000-0000-0000-00000000000a'), 'no duplicate for owner');
 select pg_temp.fails($$select public.invite_team_member('Log Sub', 'logsub@connect.ust.hk', null, '10000000-0000-0000-0000-000000000001', 'subcommittee')$$, 'already invited');
 select pg_temp.fails($$select public.invite_team_member('Bad', 'not-an-email', null, '10000000-0000-0000-0000-000000000001', 'subcommittee')$$, 'valid email');
+select pg_temp.check((select count(*) >= 3 from public.team_invites), 'owner reads invites');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000099');
+select pg_temp.check((select count(*) = 0 from public.team_invites), 'non-owner exco still cannot read invites');
 reset role;
 
 -- first login with the GMAIL claims the Logistics invite; email stored lowercase/trimmed

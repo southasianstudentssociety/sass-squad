@@ -46,6 +46,17 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // An old-style email-change LINK (Settings uses codes; this is the fallback).
+  // With secure email change, one link only confirms half: say so.
+  if (ok && next === "/account") {
+    const { data } = await supabase.auth.getUser();
+    const pending = (data.user as { new_email?: string } | null)?.new_email;
+    const msg = pending
+      ? `ok=${encodeURIComponent(`Half done: also confirm from the email we sent to the other address. Your login email changes to ${pending} after that.`)}`
+      : `ok=${encodeURIComponent(`Confirmed. You log in with ${data.user?.email ?? "your new email"}.`)}`;
+    return NextResponse.redirect(new URL(`/account?${msg}`, url.origin));
+  }
+
   // OAuth providers (Google) come back with ?code=, or ?error= if the user cancelled.
   const failReason = url.searchParams.get("via") === "google" ? "google" : "link";
   const dest = ok ? `/onboarding?next=${encodeURIComponent(next)}` : `/login?error=${failReason}&next=${encodeURIComponent(next)}`;

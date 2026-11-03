@@ -83,7 +83,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       <FormMessage error={sp.error} success={sp.ok} />
       {!owner && (
         <p className="rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-muted">
-          You can see the team here. Only hub owners{ownerNames && ` (${ownerNames})`} can add or remove people, or change departments.
+          You can see the team here. Only hub owners{ownerNames && ` (${ownerNames})`} can add or remove people, see who&apos;s waiting to log in, or change departments and owners.
         </p>
       )}
 
@@ -145,7 +145,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         )}
       </section>}
 
-      {waiting.length > 0 && (
+      {owner && waiting.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-lg font-bold">Waiting for first login ({waiting.length})</h2>
           <p className="text-sm text-muted">On the team list, but they haven&apos;t logged in yet. Access starts automatically when they do.</p>
@@ -181,6 +181,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
 
       {ended.length > 0 && <MembershipTable title="Past team" rows={ended} deptName={deptName} muted />}
 
+      {owner && (
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Departments</h2>
         <p className="text-sm text-muted">
@@ -188,13 +189,6 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           <strong> Finance access</strong> gives a department&apos;s ExCo the same, except approving their own claims (e.g. the Presidents).
           {!(departments ?? []).some((d) => d.handles_finance) && " No department handles finance yet, so nobody can approve claims."}
         </p>
-        {!owner ? (
-          <ul className="card flex flex-wrap gap-2">
-            {(departments ?? []).map((d) => (
-              <li key={d.id} className="badge bg-ink/[0.06] py-1 text-sm text-ink">{d.name}{d.handles_finance && " · finance"}</li>
-            ))}
-          </ul>
-        ) : (
         <div className="card space-y-3">
           {(departments ?? []).map((d) => (
             <div key={d.id} className="flex flex-wrap items-center gap-2">
@@ -220,9 +214,10 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             <SubmitButton pendingText="Adding…">Add</SubmitButton>
           </form>
         </div>
-        )}
       </section>
+      )}
 
+      {owner && (
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Hub owners</h2>
         <p className="text-sm text-muted">
@@ -255,6 +250,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           </form>
         )}
       </section>
+      )}
     </div>
   );
 }
