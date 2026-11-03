@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FilterForm } from "@/components/filter-form";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EVENT_COLUMNS } from "@/lib/events";
@@ -94,10 +95,10 @@ export default async function ManageEvent({
             </Link>
           ))}
         </div>
-        <form className="flex gap-2">
+        <FilterForm className="flex gap-2">
           <input type="hidden" name="filter" value={filter} />
           <input name="q" defaultValue={sp.q} placeholder="Search name, email or reference" className="input" />
-        </form>
+        </FilterForm>
       </div>
 
       <div className="flex gap-3 text-sm">

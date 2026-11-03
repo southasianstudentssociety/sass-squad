@@ -5,23 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { addDays, formatDate, formatDateTime, todayInHongKong } from "@/lib/format";
 import { claimableEvents } from "@/lib/claim-data";
 import { CONDITIONS, teamNames } from "@/lib/inventory";
-import type { InventoryAction, InventoryItem, InventoryLoan, InventoryLogEntry } from "@/lib/types";
+import type { InventoryItem, InventoryLoan, InventoryLogEntry } from "@/lib/types";
+import { LogText, logPeople } from "@/lib/inventory-log";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
-import { adjustItem, checkOut, retireItem, returnLoan, transferItem, updateItem } from "../actions";
+import { adjustItem, checkOut, moveItem, retireItem, returnLoan, transferItem, updateItem } from "../actions";
 
 export const metadata = { title: "Inventory item" };
 
-const ACTION_LABEL: Record<InventoryAction, string> = {
-  created: "Added",
-  edited: "Edited",
-  adjusted: "Count changed",
-  checked_out: "Checked out",
-  returned: "Returned",
-  lost: "Lost",
-  retired: "Retired",
-  transferred: "Handed on",
-};
 
 export default async function ItemPage({
   params,
@@ -47,13 +38,7 @@ export default async function ItemPage({
   const loans = loansData ?? [];
   const log = logData ?? [];
   const directory = (team ?? []) as { user_id: string; full_name: string | null; email: string }[];
-  const str = (v: unknown) => (typeof v === "string" ? v : null);
-  const names = await teamNames([
-    item.keeper_id,
-    ...log.flatMap((e) => [str(e.details?.from), str(e.details?.to), str(e.details?.keeper_id)]),
-    ...loans.flatMap((l) => [l.borrower_id, l.checked_out_by]),
-    ...log.flatMap((e) => [e.actor_id, typeof e.details?.borrower_id === "string" ? e.details.borrower_id : null]),
-  ]);
+  const names = await teamNames([item.keeper_id, ...logPeople(log), ...loans.flatMap((l) => [l.borrower_id, l.checked_out_by])]);
   const name = (uid: string | null | undefined) => (uid ? (names.get(uid) ?? "Former team member") : "-");
   const today = todayInHongKong();
   const retired = Boolean(item.retired_at);
@@ -77,29 +62,55 @@ export default async function ItemPage({
       {item.notes && <p className="card whitespace-pre-wrap text-sm">{item.notes}</p>}
 
       <section className="card space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-bold">Person in charge</h2>
-          <p className="text-sm">{item.keeper_id ? <strong>{name(item.keeper_id)}</strong> : <span className="text-muted">Nobody yet</span>}</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">Person in charge</h2>
+            <p className="mt-1">{item.keeper_id ? <strong>{name(item.keeper_id)}</strong> : <span className="text-muted">Nobody yet</span>}</p>
+          </div>
+          <div>
+            <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">Where it&apos;s kept</h2>
+            <p className="mt-1">{item.location ?? <span className="text-muted">Not set</span>}</p>
+          </div>
         </div>
-        <p className="text-xs text-muted">The person who answers for this item and knows where it is. Handing it on is logged in the history below.</p>
+        <p className="text-xs text-muted">The person in charge answers for this item and knows where it is. Handovers and moves are logged in the history below.</p>
         {canTransfer ? (
-          <form action={transferItem} className="grid gap-2 border-t border-line pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <form action={transferItem} className="grid gap-2 border-t border-line pt-3 sm:grid-cols-[1fr_auto] sm:items-end">
             <input type="hidden" name="item_id" value={id} />
-            <div>
-              <label className="label text-xs" htmlFor="tr-to">Hand it to</label>
-              <select id="tr-to" name="keeper_id" required defaultValue="" className="input">
-                <option value="" disabled>Choose a person</option>
-                {directory.filter((p) => p.user_id !== item.keeper_id).map((p) => <option key={p.user_id} value={p.user_id}>{p.full_name ?? p.email}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label text-xs" htmlFor="tr-note">Note (optional)</label>
-              <input id="tr-note" name="note" maxLength={500} placeholder="e.g. Handed over after Diwali" className="input" />
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+              <div>
+                <label className="label text-xs" htmlFor="tr-to">Hand it to</label>
+                <select id="tr-to" name="keeper_id" required defaultValue="" className="input">
+                  <option value="" disabled>Choose a person</option>
+                  {directory.filter((p) => p.user_id !== item.keeper_id).map((p) => <option key={p.user_id} value={p.user_id}>{p.full_name ?? p.email}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label text-xs" htmlFor="tr-on">Handed over on</label>
+                <input id="tr-on" name="handed_on" type="date" required max={today} defaultValue={today} className="input" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label text-xs" htmlFor="tr-note">Note (optional)</label>
+                <input id="tr-note" name="note" maxLength={500} placeholder="e.g. Handed over after Diwali" className="input" />
+              </div>
             </div>
             <SubmitButton pendingText="Saving…">Transfer</SubmitButton>
           </form>
         ) : !retired && (
-          <p className="text-xs text-muted">Only {item.keeper_id ? name(item.keeper_id) : "an ExCo"}{item.keeper_id && " or an ExCo"} can hand it on.</p>
+          <p className="border-t border-line pt-3 text-xs text-muted">Only {item.keeper_id ? name(item.keeper_id) : "an ExCo"}{item.keeper_id && " or an ExCo"} can hand it on.</p>
+        )}
+        {!retired && (
+          <form action={moveItem} className="grid gap-2 border-t border-line pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <input type="hidden" name="item_id" value={id} />
+            <div>
+              <label className="label text-xs" htmlFor="mv-loc">Moved it? Where it&apos;s kept now</label>
+              <input id="mv-loc" name="location" maxLength={200} defaultValue={item.location ?? ""} placeholder="e.g. LG7 storage, shelf 2" className="input" />
+            </div>
+            <div>
+              <label className="label text-xs" htmlFor="mv-note">Note (optional)</label>
+              <input id="mv-note" name="note" maxLength={500} className="input" />
+            </div>
+            <SubmitButton className="btn-ghost" pendingText="Saving…">Update location</SubmitButton>
+          </form>
         )}
       </section>
 
@@ -141,9 +152,12 @@ export default async function ItemPage({
       )}
 
       {!retired && item.available > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold">Check out</h2>
-          <form action={checkOut} className="card grid gap-3 sm:grid-cols-2">
+        <details className="card group">
+          <summary className="flex cursor-pointer list-none items-center justify-between font-bold">
+            Check out
+            <span className="text-xs font-normal text-muted group-open:hidden">Lend it to someone</span>
+          </summary>
+          <form action={checkOut} className="mt-4 grid gap-3 sm:grid-cols-2">
             <input type="hidden" name="item_id" value={id} />
             <div>
               <label className="label" htmlFor="co-who">Who&apos;s taking it</label>
@@ -172,13 +186,16 @@ export default async function ItemPage({
             </div>
             <div className="sm:col-span-2"><SubmitButton pendingText="Saving…">Check out</SubmitButton></div>
           </form>
-        </section>
+        </details>
       )}
 
-      {isExco && !retired && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold">Manage (ExCo)</h2>
-          <form action={adjustItem} className="card flex flex-wrap items-end gap-2">
+      {!retired && (
+        <details className="card group">
+          <summary className="flex cursor-pointer list-none items-center justify-between font-bold">
+            Manage
+            <span className="text-xs font-normal text-muted group-open:hidden">Count, details{isExco ? ", retire" : ""}</span>
+          </summary>
+          <form action={adjustItem} className="mt-4 flex flex-wrap items-end gap-2">
             <input type="hidden" name="item_id" value={id} />
             <div>
               <label className="label text-xs" htmlFor="adj-dir">Change count</label>
@@ -195,7 +212,7 @@ export default async function ItemPage({
             <SubmitButton className="btn-ghost" pendingText="Saving…">Update count</SubmitButton>
           </form>
 
-          <form action={updateItem} className="card grid gap-3 sm:grid-cols-2">
+          <form action={updateItem} className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
             <input type="hidden" name="item_id" value={id} />
             <div><label className="label text-xs" htmlFor="ed-name">Name</label><input id="ed-name" name="name" required maxLength={100} defaultValue={item.name} className="input" /></div>
             <div><label className="label text-xs" htmlFor="ed-cat">Category</label><input id="ed-cat" name="category" maxLength={50} defaultValue={item.category ?? ""} className="input" /></div>
@@ -210,8 +227,8 @@ export default async function ItemPage({
             <div className="sm:col-span-2"><SubmitButton className="btn-ghost" pendingText="Saving…">Save details</SubmitButton></div>
           </form>
 
-          {item.on_loan === 0 && (
-            <form action={retireItem} className="card flex flex-wrap items-end gap-2">
+          {isExco && item.on_loan === 0 && (
+            <form action={retireItem} className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
               <input type="hidden" name="item_id" value={id} />
               <div className="min-w-48 flex-1">
                 <label className="label text-xs" htmlFor="ret-why">Retire (thrown away, sold, given away)</label>
@@ -220,7 +237,7 @@ export default async function ItemPage({
               <SubmitButton className="btn-danger" pendingText="Retiring…">Retire item</SubmitButton>
             </form>
           )}
-        </section>
+        </details>
       )}
 
       <section className="space-y-2">
@@ -230,13 +247,7 @@ export default async function ItemPage({
             <li key={e.id} className="flex flex-wrap gap-x-2">
               <span className="text-muted">{formatDateTime(e.created_at)}</span>
               <span>
-                <strong>{ACTION_LABEL[e.action]}</strong>
-                {e.quantity_delta !== 0 && ` (${e.quantity_delta > 0 ? "+" : ""}${e.quantity_delta})`}
-                {e.action === "checked_out" && typeof e.details?.borrower_id === "string" && ` to ${name(e.details.borrower_id)}`}
-                {e.action === "edited" && e.details && `: ${Object.keys(e.details).join(", ")}`}
-                {e.action === "transferred" && ` from ${str(e.details?.from) ? name(str(e.details?.from)) : "nobody"} to ${str(e.details?.to) ? name(str(e.details?.to)) : "nobody"}`}
-                {e.action === "created" && str(e.details?.keeper_id) && `, in charge: ${name(str(e.details?.keeper_id))}`}
-                {" "}by {name(e.actor_id)}{e.note && `: ${e.note}`}
+                <LogText e={e} name={name} />
               </span>
             </li>
           ))}

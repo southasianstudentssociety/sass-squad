@@ -26,6 +26,12 @@ export function formatTime(iso: string | null | undefined): string {
   }).format(new Date(iso));
 }
 
+/** "03/11/26": day/month/year, Hong Kong time. For compact tables. */
+export function formatShortDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, day: "2-digit", month: "2-digit", year: "2-digit" }).format(new Date(iso));
+}
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "";
   return new Intl.DateTimeFormat("en-HK", {

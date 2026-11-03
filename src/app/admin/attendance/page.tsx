@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FilterForm } from "@/components/filter-form";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, todayInHongKong } from "@/lib/format";
 import { hoursAgoIso } from "@/lib/events";
@@ -68,7 +69,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
         <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h2 className="text-lg font-medium">Regulars</h2>
-            <form className="w-full sm:w-56"><input name="q" defaultValue={sp.q} placeholder="Search" className="input py-2 text-sm" /></form>
+            <FilterForm className="w-full sm:w-56"><input name="q" defaultValue={sp.q} placeholder="Search" className="input py-2 text-sm" /></FilterForm>
           </div>
           <ul className="card divide-y divide-line p-0 text-sm">
             {regulars.slice(0, 50).map((p, i) => (

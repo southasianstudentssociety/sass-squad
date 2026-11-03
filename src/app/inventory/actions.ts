@@ -27,7 +27,7 @@ function refresh(id?: string) {
 }
 
 export async function createItem(formData: FormData) {
-  await requireAdmin("/inventory");
+  await requireTeam("/inventory");
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_inventory_item", {
     p_name: str(formData, "name"),
@@ -45,7 +45,7 @@ export async function createItem(formData: FormData) {
 
 export async function updateItem(formData: FormData) {
   const id = str(formData, "item_id");
-  await requireAdmin(`/inventory/${id}`);
+  await requireTeam(`/inventory/${id}`);
   const supabase = await createClient();
   const { error } = await supabase.rpc("update_inventory_item", {
     p_item_id: id,
@@ -62,7 +62,7 @@ export async function updateItem(formData: FormData) {
 
 export async function adjustItem(formData: FormData) {
   const id = str(formData, "item_id");
-  await requireAdmin(`/inventory/${id}`);
+  await requireTeam(`/inventory/${id}`);
   const amount = int(formData, "amount") ?? 0;
   const delta = str(formData, "direction") === "remove" ? -Math.abs(amount) : Math.abs(amount);
   const supabase = await createClient();
@@ -90,10 +90,25 @@ export async function transferItem(formData: FormData) {
     p_item_id: id,
     p_keeper_id: optional(formData, "keeper_id"),
     p_note: optional(formData, "note"),
+    p_handed_on: /^\d{4}-\d{2}-\d{2}$/.test(str(formData, "handed_on")) ? str(formData, "handed_on") : null,
   });
   if (error) back(`/inventory/${id}`, { error: rpcError(error, "Couldn't hand it on.") });
   refresh(id);
   back(`/inventory/${id}`, { ok: "Person in charge updated." });
+}
+
+export async function moveItem(formData: FormData) {
+  const id = str(formData, "item_id");
+  await requireTeam(`/inventory/${id}`);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_inventory_location", {
+    p_item_id: id,
+    p_location: optional(formData, "location"),
+    p_note: optional(formData, "note"),
+  });
+  if (error) back(`/inventory/${id}`, { error: rpcError(error, "Couldn't update where it's kept.") });
+  refresh(id);
+  back(`/inventory/${id}`, { ok: "Location updated." });
 }
 
 export async function checkOut(formData: FormData) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FilterForm } from "@/components/filter-form";
 import { notFound } from "next/navigation";
 import { Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -119,7 +120,7 @@ export default async function LivePage({ params, searchParams }: { params: Promi
           <section className="card space-y-3 p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-medium">Not arrived yet ({waiting.length})</h2>
-              <form className="w-full sm:w-64"><input name="q" defaultValue={sp.q} placeholder="Search name or reference" className="input py-2 text-sm" /></form>
+              <FilterForm className="w-full sm:w-64"><input name="q" defaultValue={sp.q} placeholder="Search name or reference" className="input py-2 text-sm" /></FilterForm>
             </div>
             <ul className="max-h-80 divide-y divide-line overflow-y-auto text-sm">
               {waitingShown.slice(0, 200).map((t) => (

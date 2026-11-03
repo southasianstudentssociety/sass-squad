@@ -9,7 +9,7 @@ import { OPEN_STATUSES, TASK_KIND, TASK_STATUS, formatTaskTime } from "@/lib/tas
 import type { Department, Task, TaskLogEntry, TaskStatus } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
-import { setTaskStatus, updateTask } from "../actions";
+import { setTaskArchived, setTaskStatus, updateTask } from "../actions";
 
 export const metadata = { title: "Task" };
 
@@ -71,6 +71,28 @@ export default async function TaskPage({
         <p className="rounded-lg border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad"><strong>Blocked:</strong> {lastBlocked.note}</p>
       )}
       {task.description && <p className="card whitespace-pre-wrap text-sm">{task.description}</p>}
+
+      {task.archived_at ? (
+        <div className="card flex flex-wrap items-center justify-between gap-3 bg-page">
+          <p className="text-sm">Archived {formatDateTime(task.archived_at)}. It&apos;s off the board and calendar; it stays here and under Tasks → Archive.</p>
+          {canSetStatus && (
+            <form action={setTaskArchived}>
+              <input type="hidden" name="task_id" value={id} />
+              <input type="hidden" name="archive" value="0" />
+              <SubmitButton className="btn-ghost" pendingText="Restoring…">Restore</SubmitButton>
+            </form>
+          )}
+        </div>
+      ) : canSetStatus && (task.status === "done" || task.status === "cancelled") ? (
+        <div className="card flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted">{task.status === "done" ? "Finished?" : "Not needed any more?"} Archive it to clear it off the board and calendar. You can restore it any time.</p>
+          <form action={setTaskArchived}>
+            <input type="hidden" name="task_id" value={id} />
+            <input type="hidden" name="archive" value="1" />
+            <SubmitButton className="btn-ghost" pendingText="Archiving…">Archive</SubmitButton>
+          </form>
+        </div>
+      ) : null}
 
       {canSetStatus && (
         <form action={setTaskStatus} className="card flex flex-wrap items-end gap-2">
@@ -154,6 +176,8 @@ export default async function TaskPage({
                 {e.action === "created" && <>Created</>}
                 {e.action === "status" && <>Moved to <strong>{TASK_STATUS[(e.details?.to as TaskStatus) ?? "todo"]?.label}</strong></>}
                 {e.action === "edited" && <>Changed {Object.keys(e.details ?? {}).map((k) => FIELD_LABEL[k] ?? k).join(", ")}</>}
+                {e.action === "archived" && <>Archived</>}
+                {e.action === "unarchived" && <>Restored from the archive</>}
                 {" "}by {name(e.actor_id)}{e.note && `: ${e.note}`}
               </span>
             </li>

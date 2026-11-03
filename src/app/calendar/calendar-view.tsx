@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FilterForm } from "@/components/filter-form";
 import { CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, ScanLine, Settings2 } from "lucide-react";
 import { formatTime } from "@/lib/format";
 import { OPEN_STATUSES, TASK_KIND, TASK_STATUS, formatTaskTime } from "@/lib/tasks";
@@ -79,10 +80,10 @@ export function CalendarView(d: CalendarData) {
           <h1 className="mt-2 font-display text-3xl sm:text-4xl">Calendar</h1>
           <p className="mt-1 text-sm text-muted">{events.length} events · {openCount} open deadlines</p>
         </div>
-        <form className="flex flex-wrap items-center gap-2">
+        <FilterForm className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="month" value={month} />
           <div className="grid grid-cols-2 gap-1 rounded-xl bg-line p-1 text-sm font-medium">
-            <Link href={qs({ mine: "" })} className={cn("rounded-lg px-3 py-1.5 text-center", !mine ? "bg-surface shadow-[var(--shadow-soft)]" : "text-muted")}>Everyone</Link>
+            <Link href={qs({ mine: "" })} className={cn("rounded-lg px-3 py-1.5 text-center", !mine ? "bg-surface shadow-[var(--shadow-soft)]" : "text-muted")}>All</Link>
             <Link href={qs({ mine: "1" })} className={cn("rounded-lg px-3 py-1.5 text-center", mine ? "bg-surface shadow-[var(--shadow-soft)]" : "text-muted")}>Mine</Link>
           </div>
           {mine && <input type="hidden" name="mine" value="1" />}
@@ -90,8 +91,7 @@ export function CalendarView(d: CalendarData) {
             <option value="">All departments</option>
             {(depts ?? []).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
-          <button className="btn-ghost py-2">Apply</button>
-        </form>
+        </FilterForm>
       </div>
 
       {/* Six month tabs */}

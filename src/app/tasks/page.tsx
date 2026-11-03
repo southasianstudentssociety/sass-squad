@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { LayoutGrid, Plus, Table2 } from "lucide-react";
+import { FilterForm } from "@/components/filter-form";
+import { Archive, LayoutGrid, Plus, Table2 } from "lucide-react";
 import { requireTeam } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { claimableEvents } from "@/lib/claim-data";
@@ -9,14 +10,14 @@ import { OPEN_STATUSES, TASK_KIND, TASK_STATUS, formatTaskTime } from "@/lib/tas
 import type { Department, Task, TaskStatus } from "@/lib/types";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
-import { createTask, setTaskStatus } from "./actions";
+import { createTask, setTaskArchived, setTaskStatus } from "./actions";
 import { EmptyState } from "@/components/illustrations";
 import { Modal, ModalFormDone } from "@/components/modal";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Tasks" };
 
-type SP = { view?: string; layout?: string; department?: string; event?: string; done?: string; due?: string; ok?: string; error?: string };
+type SP = { view?: string; layout?: string; archived?: string; department?: string; event?: string; done?: string; due?: string; ok?: string; error?: string };
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<SP> }) {
   const session = await requireTeam("/tasks");
@@ -39,6 +40,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const today = todayInHongKong();
 
   const view = sp.view === "all" ? "all" : "mine";
+  const archiveMode = sp.archived === "1";
   const showDone = sp.done === "1";
   const statuses: TaskStatus[] = showDone ? [...OPEN_STATUSES, "done", "cancelled"] : OPEN_STATUSES;
   const tasks = all.filter(
@@ -46,13 +48,14 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       (view === "all" || t.owner_id === session.userId) &&
       (!sp.department || t.department_id === sp.department) &&
       (!sp.event || t.event_id === sp.event) &&
-      statuses.includes(t.status),
+      (archiveMode ? !!t.archived_at : !t.archived_at && statuses.includes(t.status)),
   );
+  const archivedCount = all.filter((t) => t.archived_at && (view === "all" || t.owner_id === session.userId)).length;
   const myOpen = all.filter((t) => t.owner_id === session.userId && OPEN_STATUSES.includes(t.status));
   const overdueMine = myOpen.filter((t) => t.due_on && t.due_on < today).length;
   const unassigned = all.filter((t) => !t.owner_id && OPEN_STATUSES.includes(t.status)).length;
-  const layout = sp.layout === "table" ? "table" : "board";
-  const keep = { view, layout, department: sp.department ?? "", event: sp.event ?? "", done: sp.done ?? "" };
+  const layout = archiveMode || sp.layout === "table" ? "table" : "board";
+  const keep = { view, layout: sp.layout === "table" ? "table" : "", department: sp.department ?? "", event: sp.event ?? "", done: sp.done ?? "", archived: archiveMode ? "1" : "" };
   const link = (changes: Partial<typeof keep>) =>
     `/tasks?${new URLSearchParams(Object.entries({ ...keep, ...changes }).filter(([, v]) => v)).toString()}`;
   const here = link({});
@@ -138,21 +141,31 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           label="Whose tasks"
           options={[
             { href: link({ view: "mine" }), label: "My tasks", active: view === "mine" },
-            { href: link({ view: "all" }), label: "Everyone's", active: view === "all" },
+            { href: link({ view: "all" }), label: session.access.isAdmin ? "Everyone's" : "My department's", active: view === "all" },
           ]}
         />
-        <Segmented
-          label="Layout"
-          options={[
-            { href: link({ layout: "board" }), label: <><LayoutGrid className="size-4" aria-hidden />Cards</>, active: layout === "board" },
-            { href: link({ layout: "table" }), label: <><Table2 className="size-4" aria-hidden />Table</>, active: layout === "table" },
-          ]}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {!archiveMode && (
+            <Segmented
+              label="Layout"
+              options={[
+                { href: link({ layout: "" }), label: <><LayoutGrid className="size-4" aria-hidden />Cards</>, active: layout === "board" },
+                { href: link({ layout: "table" }), label: <><Table2 className="size-4" aria-hidden />Table</>, active: layout === "table" },
+              ]}
+            />
+          )}
+          <Link href={link({ archived: archiveMode ? "" : "1" })} aria-current={archiveMode ? "page" : undefined}
+            className={cn("btn-ghost px-3 py-2", archiveMode && "border-ink/20 bg-page")}>
+            <Archive className="size-4" aria-hidden />{archiveMode ? "Back to tasks" : `Archive (${archivedCount})`}
+          </Link>
+        </div>
       </div>
+      {archiveMode && <p className="text-sm text-muted">Archived tasks: finished or cancelled, and cleared off the board and calendar. Restore one to bring it back.</p>}
 
-      <form className="flex flex-wrap items-end gap-2">
+      <FilterForm className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="view" value={view} />
-        <input type="hidden" name="layout" value={layout} />
+        {sp.layout === "table" && <input type="hidden" name="layout" value="table" />}
+        {archiveMode && <input type="hidden" name="archived" value="1" />}
         <div>
           <label className="label text-xs" htmlFor="tf-dept">Department</label>
           <select id="tf-dept" name="department" defaultValue={sp.department ?? ""} className="input">
@@ -167,15 +180,16 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             {events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
           </select>
         </div>
-        <label className="flex items-center gap-1.5 pb-2 text-sm">
-          <input type="checkbox" name="done" value="1" defaultChecked={showDone} /> Include done
-        </label>
-        <button className="btn-ghost">Apply</button>
-      </form>
+        {!archiveMode && (
+          <label className="flex items-center gap-1.5 pb-2 text-sm">
+            <input type="checkbox" name="done" value="1" defaultChecked={showDone} /> Include done
+          </label>
+        )}
+      </FilterForm>
 
       {all.length === 0 ? (
         <div className="card">
-          <EmptyState illustration="tasks" title="No tasks yet">Add the first one with <strong>Add task</strong> at the top. Everyone on the team sees every department&apos;s tasks.</EmptyState>
+          <EmptyState illustration="tasks" title="No tasks yet">Add the first one with <strong>Add task</strong> at the top. Subcommittee see their own department&apos;s tasks; ExCo see every department&apos;s.</EmptyState>
         </div>
       ) : layout === "table" ? (
         <div className="card overflow-auto p-0 max-h-[75vh]">
@@ -187,7 +201,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             </thead>
             <tbody>
               {tableRows.length === 0 && (
-                <tr><td colSpan={9} className="py-8 text-center text-muted">No tasks match. Try &ldquo;Everyone&apos;s&rdquo; or another filter.</td></tr>
+                <tr><td colSpan={9} className="py-8 text-center text-muted">{archiveMode ? "Nothing archived yet. Archive a task once it's Done or Cancelled." : "No tasks match. Try the other tab or another filter."}</td></tr>
               )}
               {tableRows.map((t, i) => {
                 const overdue = t.due_on && t.due_on < today && OPEN_STATUSES.includes(t.status);
@@ -214,6 +228,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                           </SubmitButton>
                         </form>
                       )}
+                      {(t.archived_at || t.status === "done" || t.status === "cancelled") && <ArchiveButton task={t} returnTo={here} />}
                     </td>
                   </tr>
                 );
@@ -256,6 +271,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                         </SubmitButton>
                       </form>
                     )}
+                    {(t.status === "done" || t.status === "cancelled") && <ArchiveButton task={t} returnTo={here} />}
                   </article>
                 );
               })}
@@ -266,6 +282,20 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       )}
 
     </div>
+  );
+}
+
+function ArchiveButton({ task, returnTo }: { task: Task; returnTo: string }) {
+  const archived = !!task.archived_at;
+  return (
+    <form action={setTaskArchived}>
+      <input type="hidden" name="task_id" value={task.id} />
+      <input type="hidden" name="return_to" value={returnTo} />
+      <input type="hidden" name="archive" value={archived ? "0" : "1"} />
+      <SubmitButton className="btn-ghost px-2 py-1 text-xs" pendingText="Saving…">
+        <Archive className="size-3.5" aria-hidden />{archived ? "Restore" : "Archive"}
+      </SubmitButton>
+    </form>
   );
 }
 

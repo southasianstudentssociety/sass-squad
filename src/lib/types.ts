@@ -29,7 +29,7 @@ export type Access = {
   termEnd: string;
 };
 
-export type Department = { id: string; name: string; handles_finance: boolean };
+export type Department = { id: string; name: string; handles_finance: boolean; finance_access?: boolean };
 
 export type TeamMembership = {
   id: string;
@@ -174,6 +174,8 @@ export type InventoryItem = {
   updated_at: string;
   on_loan: number;
   available: number;
+  /** Latest change to the item or anything in its history. */
+  last_activity_at?: string;
 };
 
 export type InventoryLoan = {
@@ -220,12 +222,13 @@ export type Task = {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+  archived_at?: string | null;
 };
 
 export type TaskLogEntry = {
   id: number;
   task_id: string;
-  action: "created" | "edited" | "status";
+  action: "created" | "edited" | "status" | "archived" | "unarchived";
   actor_id: string | null;
   details: Record<string, unknown> | null;
   note: string | null;

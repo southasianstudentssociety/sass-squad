@@ -224,10 +224,12 @@ export async function saveDepartment(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   if (!name || name.length > 60) back(TEAM, { error: "Department name must be 1–60 characters." });
   const handlesFinance = formData.get("handles_finance") === "on";
+  const financeAccess = formData.get("finance_access") === "on";
   const supabase = await createClient();
+  const row = { name, handles_finance: handlesFinance, finance_access: financeAccess && !handlesFinance };
   const { error } = id
-    ? await supabase.from("departments").update({ name, handles_finance: handlesFinance }).eq("id", id)
-    : await supabase.from("departments").insert({ name, handles_finance: handlesFinance });
+    ? await supabase.from("departments").update(row).eq("id", id)
+    : await supabase.from("departments").insert(row);
   if (error) back(TEAM, { error: error.code === "23505" ? "There's already a department with that name." : "Couldn't save the department." });
   revalidatePath(TEAM);
   back(TEAM, { ok: id ? `Saved ${name}.` : `Added ${name}.` });
@@ -242,17 +244,23 @@ export async function deleteDepartment(formData: FormData) {
   back(TEAM, { ok: "Department deleted." });
 }
 
-export async function addTeamMember(formData: FormData) {
+// Adds someone to the team by UST email and/or Gmail. If they haven't logged in
+// yet, they get the membership automatically on their first login.
+export async function inviteTeamMember(formData: FormData) {
   await requireOwner();
+  const name = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const altEmail = String(formData.get("alt_email") ?? "").trim().toLowerCase();
   const position = String(formData.get("position"));
   const departmentId = String(formData.get("department_id") ?? "");
-  if (!email) back(TEAM, { error: "Email is required." });
+  if (!name || !email) back(TEAM, { error: "Name and email are required." });
   if (!departmentId) back(TEAM, { error: "Pick a department." });
   if (position !== "exco" && position !== "subcommittee") back(TEAM, { error: "Pick ExCo or subcommittee." });
   const supabase = await createClient();
-  const { error } = await supabase.rpc("add_team_member", {
+  const { data, error } = await supabase.rpc("invite_team_member", {
+    p_full_name: name,
     p_email: email,
+    p_alt_email: altEmail || null,
     p_department_id: departmentId,
     p_position: position,
     p_title: String(formData.get("title") ?? "").trim() || null,
@@ -261,7 +269,17 @@ export async function addTeamMember(formData: FormData) {
   });
   if (error) back(TEAM, { error: rpcError(error, "Couldn't add them to the team.") });
   revalidatePath("/", "layout");
-  back(TEAM, { ok: `Added ${email}.` });
+  const now = (data as { added_now?: number } | null)?.added_now ?? 0;
+  back(TEAM, { ok: now > 0 ? `${name} is on the team now.` : `${name} is added. They get access the first time they log in with ${altEmail ? "either email" : email}.` });
+}
+
+export async function revokeTeamInvite(formData: FormData) {
+  await requireOwner();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("revoke_team_invite", { p_id: String(formData.get("id")) });
+  if (error) back(TEAM, { error: rpcError(error, "Couldn't cancel that invite.") });
+  revalidatePath("/admin/team");
+  back(TEAM, { ok: "Invite cancelled. They won't get access when they log in." });
 }
 
 export async function endTeamMembership(formData: FormData) {

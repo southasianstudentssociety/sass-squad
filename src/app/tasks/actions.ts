@@ -70,6 +70,19 @@ export async function updateTask(formData: FormData) {
   back(formData, `/tasks/${id}`, { ok: "Saved." });
 }
 
+export async function setTaskArchived(formData: FormData) {
+  const id = str(formData, "task_id");
+  await requireTeam(`/tasks/${id}`);
+  const archive = str(formData, "archive") === "1";
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_task_archived", { p_task_id: id, p_archived: archive });
+  if (error) back(formData, `/tasks/${id}`, { error: rpcError(error, archive ? "Couldn't archive it." : "Couldn't restore it.") });
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${id}`);
+  revalidatePath("/calendar");
+  back(formData, `/tasks/${id}`, { ok: archive ? "Archived. Find it under Archive." : "Restored from the archive." });
+}
+
 export async function setTaskStatus(formData: FormData) {
   const id = str(formData, "task_id");
   await requireTeam(`/tasks/${id}`);
