@@ -35,6 +35,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/account?${msg}`, url.origin));
   }
 
+  // First Google login with a Gmail the member/team lists pair with an existing
+  // account: the new empty account is removed (so Google can be linked to the
+  // real one) and they're asked to log in with their existing email instead.
+  if (ok && url.searchParams.get("via") === "google") {
+    const { data: existing } = await supabase.rpc("discard_new_duplicate_login");
+    if (typeof existing === "string" && existing) {
+      await supabase.auth.signOut().catch(() => undefined);
+      return NextResponse.redirect(new URL(`/login?dup=${encodeURIComponent(existing)}&next=${encodeURIComponent(next)}`, url.origin));
+    }
+  }
+
   // OAuth providers (Google) come back with ?code=, or ?error= if the user cancelled.
   const failReason = url.searchParams.get("via") === "google" ? "google" : "link";
   const dest = ok ? `/onboarding?next=${encodeURIComponent(next)}` : `/login?error=${failReason}&next=${encodeURIComponent(next)}`;

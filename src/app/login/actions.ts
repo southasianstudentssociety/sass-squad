@@ -57,6 +57,13 @@ export async function verifyCode(_prev: LoginState, formData: FormData): Promise
   const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
   if (error) return { step: "code", email, error: "That code is wrong or has expired. Try again or request a new one." };
 
+  // First login with an email the member/team lists pair with an existing account: see the RPC.
+  const { data: existing } = await supabase.rpc("discard_new_duplicate_login");
+  if (typeof existing === "string" && existing) {
+    await supabase.auth.signOut().catch(() => undefined);
+    redirect(`/login?dup=${encodeURIComponent(existing)}&next=${encodeURIComponent(next)}`);
+  }
+
   redirect(`/onboarding?next=${encodeURIComponent(next)}`);
 }
 

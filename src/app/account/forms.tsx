@@ -34,7 +34,7 @@ export function DetailsForm({ fullName, phone, food, phoneRequired }: { fullName
   );
 }
 
-export function EmailChangeForm({ current }: { current: string }) {
+export function EmailChangeForm({ current, suggested }: { current: string; suggested?: string }) {
   const [start, startAction] = useActionState<EmailChangeState, FormData>(startEmailChange, { step: "email" });
   const [verify, verifyAction] = useActionState<EmailChangeState, FormData>(verifyEmailChange, { step: "code" });
   if (start.step === "code" && start.email) {
@@ -54,7 +54,7 @@ export function EmailChangeForm({ current }: { current: string }) {
     <form action={startAction} className="space-y-2">
       <label className="label text-xs" htmlFor="ec-email">New login email</label>
       <div className="flex flex-wrap gap-2">
-        <input id="ec-email" name="email" type="email" required defaultValue={start.email} placeholder={current.endsWith("ust.hk") ? "you@gmail.com" : "you@connect.ust.hk"} className="input min-w-56 flex-1" />
+        <input id="ec-email" name="email" type="email" required defaultValue={start.email ?? suggested} placeholder={current.endsWith("ust.hk") ? "you@gmail.com" : "you@connect.ust.hk"} className="input min-w-56 flex-1" />
         <SubmitButton className="btn-ghost" pendingText="Sending…">Send code</SubmitButton>
       </div>
       <FormMessage error={start.error} />

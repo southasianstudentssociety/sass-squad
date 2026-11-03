@@ -14,7 +14,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const session = await requireUser("/account");
   const supabase = await createClient();
-  const [{ data: userData }, { data: memberUntil }] = await Promise.all([supabase.auth.getUser(), supabase.rpc("my_membership")]);
+  const [{ data: userData }, { data: memberUntil }, { data: suggestionData }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.rpc("my_membership"),
+    supabase.rpc("my_link_suggestion"),
+  ]);
+  const suggestion = suggestionData as { kind: "google" | "login_email"; email: string } | null;
   const user = userData.user;
   const google = (user?.identities ?? []).filter((i) => i.provider === "google").map((i) => String(i.identity_data?.email ?? "")).filter(Boolean);
 
@@ -45,7 +50,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         />
       </section>
 
-      <section className="card space-y-4">
+      <section id="login" className="card scroll-mt-24 space-y-4">
         <div>
           <h2 className="font-bold">How you log in</h2>
           <p className="text-sm text-muted">Link your UST email and your Gmail to this one account, so either way of logging in opens the same tickets, membership and team access.</p>
@@ -63,6 +68,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           ))}
         </ul>
 
+        {suggestion && (
+          <p className="rounded-xl border border-sass-blue/20 bg-sass-blue/5 px-3.5 py-2.5 text-sm">
+            {suggestion.kind === "google"
+              ? <>Our lists say you also use <strong className="break-all">{suggestion.email}</strong>. Link it with the button below (pick that Google account).</>
+              : <>Our lists say your UST email is <strong className="break-all">{suggestion.email}</strong>. Make it your login email below, then both your UST email and Google open this account.</>}
+          </p>
+        )}
+
         {google.length === 0 && (
           <form action={linkGoogle} className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
             <p className="text-sm text-muted">Use Gmail too? Link it, then &ldquo;Continue with Google&rdquo; opens this same account.</p>
@@ -70,14 +83,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </form>
         )}
 
-        <details className="border-t border-line pt-4">
+        <details className="border-t border-line pt-4" open={suggestion?.kind === "login_email"}>
           <summary className="cursor-pointer text-sm font-medium">Change the email you get login codes at</summary>
           <div className="mt-3 space-y-3">
             <p className="text-sm text-muted">
               For example, switch from your Gmail to your UST email (<strong>@connect.ust.hk</strong>), which is usually the one on the member list.
               We&apos;ll send a code to the new address to confirm it. {google.length > 0 && "Your linked Google account keeps working."}
             </p>
-            <EmailChangeForm current={session.email} />
+            <EmailChangeForm current={session.email} suggested={suggestion?.kind === "login_email" ? suggestion.email : undefined} />
           </div>
         </details>
       </section>
