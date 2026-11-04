@@ -7,7 +7,7 @@ import { SITE } from "@/lib/site";
 import type { SassEvent } from "@/lib/types";
 import { Illustration } from "@/components/illustrations";
 import { Reveal } from "@/components/motion";
-import { HeroBlobs, NightsRibbon, UpNextTickets, type HomeTicket } from "@/components/home-tickets";
+import { NowShowing, type HomeEvent } from "@/components/home-marquee";
 import { formatPrice, TIME_ZONE, todayInHongKong } from "@/lib/format";
 import { GalleryStrip } from "@/components/gallery-strip";
 import { galleryItems } from "@/lib/gallery";
@@ -29,12 +29,11 @@ export default async function Home() {
   const events = data ?? [];
   const firstName = session?.profile.full_name?.split(" ")[0];
   const today = todayInHongKong();
-  const tickets = events.map((e) => toTicket(e, today));
+  const showing = events.map((e) => toHomeEvent(e, today));
 
   return (
     <div className="space-y-14 sm:space-y-20">
-      <section className="relative isolate grid grid-cols-1 items-center gap-10 overflow-hidden rounded-[2rem] border border-line bg-surface/60 px-5 py-10 sm:px-10 sm:py-14 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
-        <HeroBlobs />
+      <section className="grid grid-cols-1 items-center gap-10 pt-2 sm:pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
         <Reveal>
           <p className="eyebrow">{firstName ? `Welcome back, ${firstName}` : SITE.fullName}</p>
           <h1 className="mt-4 max-w-lg font-display text-[2.6rem] leading-[1.05] text-ink sm:text-[3.6rem]">
@@ -48,13 +47,13 @@ export default async function Home() {
               See events
               <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
             </Link>
-            <Link href={session ? "/tickets" : "/login"} className="btn-ghost bg-surface/70 px-5">
+            <Link href={session ? "/tickets" : "/login"} className="btn-ghost px-5">
               {session ? "My tickets" : "Log in"}
             </Link>
           </div>
         </Reveal>
-        {tickets.length > 0 ? (
-          <UpNextTickets tickets={tickets} />
+        {showing.length > 0 ? (
+          <NowShowing events={showing} />
         ) : (
           <Reveal delay={0.08} className="hidden text-center lg:block">
             <Illustration name="celebration" className="mx-auto w-full max-w-sm" />
@@ -62,8 +61,6 @@ export default async function Home() {
           </Reveal>
         )}
       </section>
-
-      <NightsRibbon />
 
       {photos.length > 0 && (
         <section className="pb-10 sm:pb-12">
@@ -85,14 +82,14 @@ export default async function Home() {
 
 const part = (iso: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-HK", { timeZone: TIME_ZONE, ...o }).format(new Date(iso));
 
-function toTicket(e: SassEvent, today: string): HomeTicket {
+function toHomeEvent(e: SassEvent, today: string): HomeEvent {
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date(e.starts_at)); // YYYY-MM-DD
   const daysAway = Math.round((Date.parse(day) - Date.parse(today)) / 86_400_000);
   const free = e.member_price_cents === 0 && (e.access === "members_only" || e.public_price_cents === 0);
   const price = e.sold_out
     ? null
     : free
-      ? (e.access === "members_only" ? "Free for members" : "Free")
+      ? (e.access === "members_only" ? "Free for members" : null)
       : `${formatPrice(e.member_price_cents).replace(".00", "")} members`;
   return {
     slug: e.slug,
@@ -103,6 +100,6 @@ function toTicket(e: SassEvent, today: string): HomeTicket {
     month: part(e.starts_at, { month: "short" }),
     daysAway,
     price,
-    stamp: e.sold_out ? "sold_out" : e.access === "members_only" ? "members" : free ? "free" : null,
+    label: e.sold_out ? "sold_out" : e.access === "members_only" ? "members" : free ? "free" : null,
   };
 }
