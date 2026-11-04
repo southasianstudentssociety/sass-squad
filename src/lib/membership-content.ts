@@ -6,7 +6,7 @@
 export const MEMBERSHIP_PERKS: { title: string; text: string; stamp: string; stub: "brand" | "purple" | "turquoise" | "teal" }[] = [
   { title: "Free entry", text: "To selected events, like Chaat, Chai & Cards.", stamp: "Free", stub: "purple" },
   { title: "Free food & drinks", text: "At every members-only event.", stamp: "Free", stub: "brand" },
-  { title: "Free mehendi", text: "Get your henna done on us.", stamp: "Free", stub: "teal" },
+  { title: "Early access to tickets", text: "Member sales open before everyone else's, so you get in first.", stamp: "First", stub: "teal" },
   { title: "Cheaper tickets", text: "Member prices on every SASS event, applied automatically.", stamp: "Save", stub: "turquoise" },
 ];
 
