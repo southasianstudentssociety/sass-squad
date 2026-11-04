@@ -107,7 +107,7 @@ export function MemberPass({ name, plan }: { name: string; plan: MemberPlan }) {
 
 /** A scrolling ribbon of the perks. Stays still for reduced motion. */
 export function PerkRibbon() {
-  const words = ["Early bird tickets", "Free food & drinks", "Cheaper tickets", "Members-only nights"];
+  const words = ["Early access", "Free food & drinks", "Cheaper tickets", "Members-only nights"];
   const run = [...words, ...words];
   return (
     <div className="relative -mx-5 -rotate-1 overflow-hidden border-y-2 border-ink bg-sass-yellow py-3 sm:mx-0 sm:rounded-xl" aria-hidden>
