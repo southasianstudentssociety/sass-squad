@@ -64,6 +64,12 @@ export function EventForm({ event, teamPriceCents }: { event?: SassEvent; teamPr
           <textarea name="payment_instructions" rows={3} defaultValue={event?.payment_instructions ?? ""} className="input font-mono text-sm" />
         </Field>
 
+        <div className="sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" name="sold_out" defaultChecked={event?.sold_out ?? false} /> Sold out
+          </label>
+          <p className="hint">Stops online ticket sales and shows a SOLD OUT stamp on the event. Anyone who already has a ticket keeps it. Team places, door tickets and walk-ins still work. Untick to reopen sales.</p>
+        </div>
         <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
           <input type="checkbox" name="is_published" defaultChecked={event?.is_published ?? false} /> Published (visible on the site)
         </label>

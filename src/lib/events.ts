@@ -1,17 +1,20 @@
 import type { SassEvent } from "@/lib/types";
 
 export const EVENT_COLUMNS =
-  "id, slug, title, description, venue, starts_at, ends_at, cover_image_url, is_published, access, member_price_cents, public_price_cents, capacity, member_sales_open_at, public_sales_open_at, sales_close_at, payment_instructions";
+  "id, slug, title, description, venue, starts_at, ends_at, cover_image_url, is_published, access, member_price_cents, public_price_cents, capacity, member_sales_open_at, public_sales_open_at, sales_close_at, payment_instructions, sold_out";
 
 export type SalesState =
   | { state: "open" }
   | { state: "not_yet"; opensAt: string }
   | { state: "closed" }
+  | { state: "sold_out" }
   | { state: "members_only" };
 
 /** Mirrors the rules in claim_ticket() so the UI tells people the same thing the DB will. */
 export function salesStateFor(event: SassEvent, isMember: boolean, now = new Date()): SalesState {
   if (event.access === "members_only" && !isMember) return { state: "members_only" };
+  // Manual switch; enforced by a trigger on tickets (0026). Team places still go through.
+  if (event.sold_out) return { state: "sold_out" };
   const opensAt = isMember ? (event.member_sales_open_at ?? event.public_sales_open_at) : event.public_sales_open_at;
   if (opensAt && now < new Date(opensAt)) return { state: "not_yet", opensAt };
   if (event.sales_close_at && now > new Date(event.sales_close_at)) return { state: "closed" };

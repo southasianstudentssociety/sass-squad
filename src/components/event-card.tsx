@@ -24,7 +24,9 @@ export function EventCard({ event, past = false }: { event: SassEvent; past?: bo
           <span className="mt-0.5 text-[10px] font-medium tracking-wider text-muted uppercase">{month(event.starts_at)}</span>
           {past && <span className="mt-0.5 text-[10px] tabular-nums text-muted">{year(event.starts_at)}</span>}
         </div>
-        {!past && event.access === "members_only" && (
+        {!past && event.sold_out ? (
+          <span className="absolute right-3 top-3 -rotate-6 rounded-md border-2 border-double border-brand bg-surface/90 px-2 py-0.5 text-[11px] font-black tracking-[0.18em] text-brand uppercase shadow-[var(--shadow-soft)] backdrop-blur">Sold out</span>
+        ) : !past && event.access === "members_only" && (
           <span className="badge absolute right-3 top-3 bg-surface/90 text-ink backdrop-blur">Members only</span>
         )}
       </div>
