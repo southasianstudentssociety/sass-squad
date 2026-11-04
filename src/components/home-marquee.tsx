@@ -6,7 +6,8 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Home page: the next events on a Bollywood cinema marquee. A night-purple
-// board, a frame of chasing bulbs, flip-clock dates and neon labels. Bulbs and
+// board, a frame of bulbs (blink a few times, then stay lit), flip-clock
+// dates, and each title as a neon sign that switches on. Bulbs and
 // neon are CSS animations (bulb, neon-flicker in globals.css), so they stop
 // for people who prefer reduced motion; the rows' entrance uses motion, which
 // is off for them too (MotionConfig reducedMotion="user").
@@ -56,6 +57,9 @@ function Bulbs({ count, side }: { count: number; side: "top" | "bottom" | "left"
   );
 }
 
+// Each title is its own neon sign, cycling through the palette.
+const SIGN = ["text-sass-pink", "text-sass-turquoise", "text-sass-yellow"] as const;
+
 export function NowShowing({ events }: { events: HomeEvent[] }) {
   return (
     <motion.div
@@ -81,7 +85,7 @@ export function NowShowing({ events }: { events: HomeEvent[] }) {
         </div>
 
         <motion.ul variants={rows} initial="hidden" animate="show" className="mt-5 divide-y divide-dashed divide-white/15 border-t border-dashed border-white/15">
-          {events.map((e) => {
+          {events.map((e, i) => {
             const neon = e.label ? NEON[e.label] : null;
             return (
               <motion.li key={e.slug} variants={row}>
@@ -91,10 +95,18 @@ export function NowShowing({ events }: { events: HomeEvent[] }) {
                     <span className="relative z-10 mt-1 text-[10px] font-bold tracking-[0.3em] text-sass-turquoise uppercase">{e.month}</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[1.05rem] font-bold leading-snug tracking-[0.06em] uppercase transition-colors group-hover:text-sass-yellow sm:text-lg">{e.title}</p>
-                    <p className="mt-0.5 text-[13px] leading-snug text-white/60">{e.when}{e.venue && ` · ${e.venue}`}</p>
+                    <p
+                      className={cn("neon animate-neon-on font-brand text-[1.75rem] leading-[1.1] transition-[filter] duration-300 group-hover:brightness-125 sm:text-[2rem]", SIGN[i % SIGN.length])}
+                      style={{ animationDelay: `${0.5 + i * 0.35}s` }}
+                    >
+                      {e.title}
+                    </p>
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold tracking-[0.2em] text-white/80 uppercase">
+                      <span>{e.when}</span>
+                      {e.venue && <><span className="text-sass-yellow" aria-hidden>✦</span><span className="font-medium normal-case tracking-normal text-white/60 text-[13px]">{e.venue}</span></>}
+                    </p>
                     <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                      <span className="font-semibold tracking-[0.18em] text-white/45 uppercase">{countdown(e.daysAway)}</span>
+                      <span className="rounded-full border border-white/20 px-2 py-0.5 font-semibold tracking-[0.18em] text-white/70 uppercase">{countdown(e.daysAway)}</span>
                       {neon && <span className={cn("whitespace-nowrap text-sm font-black tracking-[0.2em] uppercase", neon.cls)}>{neon.text}</span>}
                       {e.price && <span className="text-sm font-semibold text-white">{e.price}</span>}
                     </p>
