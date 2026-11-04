@@ -141,7 +141,7 @@ export default async function EventPage({
             <SubmitButton className="btn-primary w-full py-3" pendingText="Getting your ticket…">
               {isExco ? "Get my free ExCo ticket" : myTeamPrice === 0 ? "Get my free team ticket" : `Get team ticket · ${formatPrice(myTeamPrice)}`}
             </SubmitButton>
-            <p className="hint text-center">Your place is reserved as part of the team.{myTeamPrice > 0 && " You'll get FPS payment details and a reference on the next screen."}</p>
+            <p className="hint text-center">{event.sold_out ? "Sold out to everyone else, but your team place is still reserved." : "Your place is reserved as part of the team."}{myTeamPrice > 0 && " You'll get FPS payment details and a reference on the next screen."}</p>
           </form>
         ) : sales.state === "members_only" ? (
           <p className="text-sm leading-relaxed text-muted">
