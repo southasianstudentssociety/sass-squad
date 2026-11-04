@@ -7,6 +7,7 @@ import type { SassEvent, Ticket } from "@/lib/types";
 import { TicketStubs, type StubTicket } from "@/components/ticket-stub";
 import { feedbackOpen } from "@/lib/feedback";
 import { EmptyState } from "@/components/illustrations";
+import { GradientBackdrop } from "@/components/gradient-backdrop";
 
 export const metadata = { title: "My tickets" };
 
@@ -33,6 +34,7 @@ export default async function TicketsPage() {
 
   return (
     <div className="space-y-10">
+      <GradientBackdrop />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow">{session.profile.full_name}</p>

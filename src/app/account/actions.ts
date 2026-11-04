@@ -16,6 +16,12 @@ async function siteOrigin() {
 
 export type DetailsState = { error?: string; ok?: string };
 
+/** The blue link banner: X = quiet for 14 days; forever = "I'm not at HKUST" / "I don't use Gmail". */
+export async function snoozeLinkNudge(forever: boolean) {
+  const supabase = await createClient();
+  await supabase.rpc("snooze_link_nudge", { p_forever: forever });
+}
+
 export async function saveDetails(_prev: DetailsState, formData: FormData): Promise<DetailsState> {
   const session = await getSession();
   if (!session) redirect("/login?next=/account");

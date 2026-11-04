@@ -10,7 +10,11 @@ export type LoginState = {
   email?: string;
   error?: string;
   info?: string;
+  /** The email is someone's linked Google login: no code was sent, use Google instead. */
+  useGoogle?: boolean;
 };
+
+export type DuplicateLogin = { existing: string; use_google: boolean };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,6 +29,18 @@ export async function sendCode(_prev: LoginState, formData: FormData): Promise<L
   if (!EMAIL_RE.test(email)) return { step: "email", error: "Enter a valid email address." };
 
   const supabase = await createClient();
+  // A Gmail that's already an account's "Continue with Google" login would get a
+  // brand-new second account from a code (Supabase only matches main emails).
+  const { data: hint } = await supabase.rpc("login_email_hint", { p_email: email });
+  if (hint === "google") {
+    return {
+      step: "email",
+      email,
+      useGoogle: true,
+      error: "This Gmail is already linked to a SASS account. Tap “Continue with Google” above to log in. No code needed.",
+    };
+  }
+
   const origin = await siteOrigin();
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -57,11 +73,13 @@ export async function verifyCode(_prev: LoginState, formData: FormData): Promise
   const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
   if (error) return { step: "code", email, error: "That code is wrong or has expired. Try again or request a new one." };
 
-  // First login with an email the member/team lists pair with an existing account: see the RPC.
-  const { data: existing } = await supabase.rpc("discard_new_duplicate_login");
-  if (typeof existing === "string" && existing) {
+  // A brand-new empty account that duplicates an existing one (linked Gmail, or
+  // the member/team lists pair the emails) is removed: see the RPC.
+  const { data: dup } = await supabase.rpc("discard_duplicate_login");
+  const existing = (dup as DuplicateLogin | null)?.existing;
+  if (existing) {
     await supabase.auth.signOut().catch(() => undefined);
-    redirect(`/login?dup=${encodeURIComponent(existing)}&next=${encodeURIComponent(next)}`);
+    redirect(`/login?dup=${encodeURIComponent(existing)}${(dup as DuplicateLogin).use_google ? "&g=1" : ""}&next=${encodeURIComponent(next)}`);
   }
 
   redirect(`/onboarding?next=${encodeURIComponent(next)}`);

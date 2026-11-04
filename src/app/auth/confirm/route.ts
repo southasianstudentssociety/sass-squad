@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/auth";
+import type { DuplicateLogin } from "@/app/login/actions";
 
 // Handles email login links and the Google sign-in callback. Supports the token_hash template
 // (works across devices) and the default PKCE ?code= link (same browser only).
@@ -39,8 +40,9 @@ export async function GET(request: NextRequest) {
   // account: the new empty account is removed (so Google can be linked to the
   // real one) and they're asked to log in with their existing email instead.
   if (ok && url.searchParams.get("via") === "google") {
-    const { data: existing } = await supabase.rpc("discard_new_duplicate_login");
-    if (typeof existing === "string" && existing) {
+    const { data: dup } = await supabase.rpc("discard_duplicate_login");
+    const existing = (dup as DuplicateLogin | null)?.existing;
+    if (existing) {
       await supabase.auth.signOut().catch(() => undefined);
       return NextResponse.redirect(new URL(`/login?dup=${encodeURIComponent(existing)}&next=${encodeURIComponent(next)}`, url.origin));
     }

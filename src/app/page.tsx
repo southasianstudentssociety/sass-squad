@@ -11,6 +11,7 @@ import { NowShowing, type HomeEvent } from "@/components/home-marquee";
 import { formatPrice, TIME_ZONE, todayInHongKong } from "@/lib/format";
 import { GalleryStrip } from "@/components/gallery-strip";
 import { galleryItems } from "@/lib/gallery";
+import { GradientBackdrop } from "@/components/gradient-backdrop";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -33,6 +34,7 @@ export default async function Home() {
 
   return (
     <div className="space-y-14 sm:space-y-20">
+      <GradientBackdrop />
       <section className="grid grid-cols-1 items-center gap-10 pt-2 sm:pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
         <Reveal>
           <p className="eyebrow">{firstName ? `Welcome back, ${firstName}` : SITE.fullName}</p>

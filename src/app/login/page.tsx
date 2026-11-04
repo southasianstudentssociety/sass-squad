@@ -11,7 +11,7 @@ const ERRORS: Record<string, string> = {
   google: "Google sign-in didn't work. Try again, or use your email below.",
 };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; dup?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; dup?: string; g?: string }> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
   if (await getSession()) redirect(next);
@@ -23,7 +23,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <h1 className="mt-4 font-display text-3xl">Log in or sign up</h1>
         <p className="mt-2 text-sm text-muted">No password needed. Use Google, or we&apos;ll email you a code.</p>
       </div>
-      {sp.dup && (
+      {sp.dup && sp.g === "1" ? (
+        <div role="status" className="mb-5 rounded-2xl border border-sass-blue/20 bg-sass-blue/5 px-4 py-3 text-sm leading-relaxed">
+          <p className="font-medium">That Gmail is already linked to your SASS account (<span className="whitespace-nowrap">{sp.dup}</span>).</p>
+          <p className="mt-1 text-muted">Tap &ldquo;Continue with Google&rdquo; below to open it. We didn&apos;t make a second account.</p>
+        </div>
+      ) : sp.dup && (
         <div role="status" className="mb-5 rounded-2xl border border-sass-blue/20 bg-sass-blue/5 px-4 py-3 text-sm leading-relaxed">
           <p className="font-medium">You already have a SASS account under <span className="whitespace-nowrap">{sp.dup}</span>.</p>
           <p className="mt-1 text-muted">

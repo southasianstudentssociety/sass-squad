@@ -10,7 +10,7 @@ export async function SiteHeader() {
   let suggestion: LinkSuggestion | null = null;
   if (session?.profile.onboarded) {
     const supabase = await createClient();
-    const { data } = await supabase.rpc("my_link_suggestion");
+    const { data } = await supabase.rpc("my_link_nudge");
     suggestion = (data as LinkSuggestion | null) ?? null;
   }
   return (
