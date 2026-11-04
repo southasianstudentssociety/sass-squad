@@ -12,6 +12,7 @@ import { AddToCalendar } from "@/components/add-to-calendar";
 import { GalleryStrip } from "@/components/gallery-strip";
 import { galleryItems } from "@/lib/gallery";
 import { SITE } from "@/lib/site";
+import { SoldOutStamp } from "@/components/sold-out-stamp";
 
 export default async function EventPage({
   params,
@@ -84,7 +85,8 @@ export default async function EventPage({
       </div>
 
       <aside className="order-1 h-fit animate-fade-up space-y-5 rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-lift)] sm:p-6 lg:sticky lg:top-24 lg:order-2">
-        <div className="space-y-1.5 text-sm">
+        <div className="relative space-y-1.5 text-sm">
+          {event.sold_out && !over && <SoldOutStamp />}
           {isExco && <PriceRow label="ExCo" value="Free" highlight note="only the team sees this" />}
           {teamPrice !== null && (
             isExco
@@ -139,7 +141,7 @@ export default async function EventPage({
             <SubmitButton className="btn-primary w-full py-3" pendingText="Getting your ticket…">
               {isExco ? "Get my free ExCo ticket" : myTeamPrice === 0 ? "Get my free team ticket" : `Get team ticket · ${formatPrice(myTeamPrice)}`}
             </SubmitButton>
-            <p className="hint text-center">Your place is reserved as part of the team.{myTeamPrice > 0 && " You'll get FPS payment details and a reference on the next screen."}</p>
+            <p className="hint text-center">{event.sold_out ? "Sold out to everyone else, but your team place is still reserved." : "Your place is reserved as part of the team."}{myTeamPrice > 0 && " You'll get FPS payment details and a reference on the next screen."}</p>
           </form>
         ) : sales.state === "members_only" ? (
           <p className="text-sm leading-relaxed text-muted">
@@ -148,6 +150,8 @@ export default async function EventPage({
           </p>
         ) : sales.state === "not_yet" ? (
           <p className="rounded-xl bg-page px-3.5 py-3 text-center text-sm font-medium">Tickets open for you {formatDateTime(sales.opensAt)}.</p>
+        ) : sales.state === "sold_out" ? (
+          <p className="rounded-xl bg-page px-3.5 py-3 text-center text-sm text-muted">Every ticket has gone. See you at the next one.</p>
         ) : sales.state === "closed" ? (
           <p className="rounded-xl bg-page px-3.5 py-3 text-center text-sm text-muted">Sales have closed.</p>
         ) : (

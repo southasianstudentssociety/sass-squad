@@ -61,6 +61,7 @@ export async function saveEvent(formData: FormData) {
     public_sales_open_at: localToIso(String(formData.get("public_sales_open_at") ?? "")),
     sales_close_at: closesAt,
     payment_instructions: String(formData.get("payment_instructions") ?? "").trim() || null,
+    sold_out: formData.get("sold_out") === "on",
   };
 
   const supabase = await createClient();

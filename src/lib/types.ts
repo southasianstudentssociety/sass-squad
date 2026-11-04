@@ -73,6 +73,7 @@ export type SassEvent = {
   public_sales_open_at: string | null;
   sales_close_at: string | null;
   payment_instructions: string | null;
+  sold_out: boolean;
 };
 
 export type Ticket = {

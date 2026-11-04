@@ -22,6 +22,11 @@ type Invite = { id: string; full_name: string; email: string; alt_email: string 
 
 const POSITION_LABEL = { exco: "ExCo", subcommittee: "Subcommittee" } as const;
 
+/** A set title (e.g. President) wins; otherwise "{Department} ExCo" / "{Department} Subcommittee". */
+function roleTitle(position: keyof typeof POSITION_LABEL, title: string | null, department: string | undefined) {
+  return title?.trim() || (department ? `${department} ${POSITION_LABEL[position]}` : null);
+}
+
 export default async function TeamPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
   const sp = await searchParams;
   const session = await getSession();
@@ -129,6 +134,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             <div>
               <label className="label" htmlFor="tm-title">Title (optional)</label>
               <input id="tm-title" name="title" maxLength={60} placeholder="e.g. Treasurer" className="input" />
+              <p className="hint">Only for special roles, e.g. President. Blank shows &ldquo;Marketing ExCo&rdquo; or &ldquo;Marketing Subcommittee&rdquo; from the department.</p>
             </div>
             <div>
               <label className="label" htmlFor="tm-start">From</label>
@@ -158,7 +164,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                     <td className="font-medium">{i.full_name}</td>
                     <td className="text-xs">{i.email}{i.alt_email && <><br />{i.alt_email}</>}</td>
                     <td className="whitespace-nowrap">{deptName.get(i.department_id)}</td>
-                    <td className="whitespace-nowrap">{POSITION_LABEL[i.position]}{i.title && ` · ${i.title}`}</td>
+                    <td className="whitespace-nowrap">{POSITION_LABEL[i.position]}<span className="block text-xs text-muted">{roleTitle(i.position, i.title, deptName.get(i.department_id))}</span></td>
                     <td className="whitespace-nowrap">{formatDate(i.ends_on)}</td>
                     {owner && (
                       <td>
@@ -291,7 +297,7 @@ function MembershipTable({
                     <span className={`badge ${m.position === "exco" ? "bg-brand text-brand-ink" : "bg-accent text-accent-ink"}`}>
                       {POSITION_LABEL[m.position]}
                     </span>
-                    {m.title && <span className="block text-xs text-muted">{m.title}</span>}
+                    <span className="block text-xs text-muted">{roleTitle(m.position, m.title, deptName.get(m.department_id))}</span>
                   </td>
                   <td className="whitespace-nowrap text-sm">{formatDate(m.starts_on)} – {formatDate(m.ends_on)}</td>
                   {endable && (
