@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { sendCode, verifyCode, type LoginState } from "./actions";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
+import { GoogleButton } from "./google-button";
 
 export function LoginForm({ next, initialError, codeArt }: { next: string; initialError?: string; codeArt?: React.ReactNode }) {
   const [sendState, sendAction] = useActionState<LoginState, FormData>(sendCode, {
@@ -18,6 +19,9 @@ export function LoginForm({ next, initialError, codeArt }: { next: string; initi
 
   if (!onCodeStep) {
     return (
+      <div className="space-y-3">
+      {/* Linked Gmail: no code was sent; Google is the way in. */}
+      {sendState.useGoogle && <GoogleButton next={next} />}
       <form action={(fd) => { setEditing(false); return sendAction(fd); }} className="space-y-4">
         <input type="hidden" name="next" value={next} />
         <div>
@@ -28,8 +32,11 @@ export function LoginForm({ next, initialError, codeArt }: { next: string; initi
           />
         </div>
         <FormMessage error={sendState.error} />
-        <SubmitButton className="btn-primary w-full" pendingText="Sending…">Email me a login code</SubmitButton>
+        <SubmitButton className={sendState.useGoogle ? "btn-ghost w-full" : "btn-primary w-full"} pendingText="Sending…">
+          {sendState.useGoogle ? "Send a code to a different email" : "Email me a login code"}
+        </SubmitButton>
       </form>
+      </div>
     );
   }
 

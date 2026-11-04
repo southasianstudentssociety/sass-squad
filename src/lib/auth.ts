@@ -97,7 +97,7 @@ export async function requireFinance(next?: string): Promise<Session> {
 }
 
 /** Only allow same-site relative redirects. */
-export function safeNext(next: unknown, fallback = "/tickets"): string {
+export function safeNext(next: unknown, fallback = "/"): string {
   if (typeof next !== "string") return fallback;
   if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return fallback;
   return next;

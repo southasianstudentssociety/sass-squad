@@ -17,9 +17,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const [{ data: userData }, { data: memberUntil }, { data: suggestionData }] = await Promise.all([
     supabase.auth.getUser(),
     supabase.rpc("my_membership"),
-    supabase.rpc("my_link_suggestion"),
+    supabase.rpc("my_link_nudge", { p_ignore_snooze: true }),
   ]);
-  const suggestion = suggestionData as { kind: "google" | "login_email"; email: string } | null;
+  // Settings only spells out the list-based suggestions (with a specific email).
+  const nudge = suggestionData as { kind: "google" | "login_email" | "add_google" | "add_ust"; email: string | null } | null;
+  const suggestion = nudge && (nudge.kind === "google" || nudge.kind === "login_email") && nudge.email ? { kind: nudge.kind, email: nudge.email } : null;
   const user = userData.user;
   const google = (user?.identities ?? []).filter((i) => i.provider === "google").map((i) => String(i.identity_data?.email ?? "")).filter(Boolean);
 
@@ -83,7 +85,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </form>
         )}
 
-        <details className="border-t border-line pt-4" open={suggestion?.kind === "login_email"}>
+        <details className="border-t border-line pt-4" open={suggestion?.kind === "login_email" || nudge?.kind === "add_ust"}>
           <summary className="cursor-pointer text-sm font-medium">Change the email you get login codes at</summary>
           <div className="mt-3 space-y-3">
             <p className="text-sm text-muted">
