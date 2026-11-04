@@ -4,10 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDateTime, formatPrice, TIME_ZONE } from "@/lib/format";
 import { hoursAgoIso } from "@/lib/events";
 import type { SassEvent, Ticket } from "@/lib/types";
-import { StatusBadge } from "@/components/status-badge";
+import { TicketStubs, type StubTicket } from "@/components/ticket-stub";
 import { feedbackOpen } from "@/lib/feedback";
 import { EmptyState } from "@/components/illustrations";
-import { Stagger, StaggerItem } from "@/components/motion";
 
 export const metadata = { title: "My tickets" };
 
@@ -64,31 +63,26 @@ export default async function TicketsPage() {
 }
 
 function TicketList({ title, tickets, empty, muted, rateable }: { title: string; tickets: Row[]; empty?: string; muted?: boolean; rateable?: Set<string> }) {
+  const stubs: StubTicket[] = tickets.map((t) => ({
+    id: t.id,
+    title: t.event.title,
+    day: dayOf(t.event.starts_at),
+    month: monthOf(t.event.starts_at),
+    when: formatDateTime(t.event.starts_at),
+    venue: t.event.venue,
+    price: formatPrice(t.price_cents),
+    status: t.checked_in_at ? "used" : t.status === "awaiting_payment" ? "pending" : t.status,
+    rate: !!rateable && !!t.checked_in_at && !rateable.has(t.event_id) && feedbackOpen(t.event.starts_at),
+  }));
   return (
     <section>
       <h2 className="eyebrow mb-3">{title}</h2>
       {tickets.length === 0 ? (
         <p className="text-sm text-muted">{empty}</p>
       ) : (
-        <Stagger as="ul" className={`grid gap-3 sm:grid-cols-2 ${muted ? "opacity-70" : ""}`}>
-          {tickets.map((t) => (
-            <StaggerItem as="li" key={t.id}>
-              <Link href={`/tickets/${t.id}`} className="card-link flex items-center gap-4 p-4">
-                <div className="flex w-12 shrink-0 flex-col items-center rounded-xl bg-page py-2 leading-none">
-                  <span className="text-lg font-semibold tabular-nums">{dayOf(t.event.starts_at)}</span>
-                  <span className="mt-1 text-[10px] font-medium tracking-wider text-muted uppercase">{monthOf(t.event.starts_at)}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{t.event.title}</p>
-                  <p className="truncate text-sm text-muted">{formatDateTime(t.event.starts_at)} · {formatPrice(t.price_cents)}</p>
-                </div>
-                {rateable && t.checked_in_at && !rateable.has(t.event_id) && feedbackOpen(t.event.starts_at)
-                  ? <span className="badge bg-accent text-accent-ink">Rate it</span>
-                  : <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />}
-              </Link>
-            </StaggerItem>
-          ))}
-        </Stagger>
+        <div className={muted ? "opacity-75" : ""}>
+          <TicketStubs tickets={stubs} />
+        </div>
       )}
     </section>
   );
