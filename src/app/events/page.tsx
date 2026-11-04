@@ -4,6 +4,7 @@ import type { SassEvent } from "@/lib/types";
 import { EventCard } from "@/components/event-card";
 import { EmptyState } from "@/components/illustrations";
 import { Stagger, StaggerItem } from "@/components/motion";
+import { GradientBackdrop } from "@/components/gradient-backdrop";
 
 export const metadata = { title: "Events" };
 
@@ -29,6 +30,7 @@ export default async function EventsPage() {
 
   return (
     <div className="space-y-14">
+      <GradientBackdrop />
       <section className="space-y-8">
         <div>
           <p className="eyebrow">What&apos;s on</p>
@@ -46,7 +48,7 @@ export default async function EventsPage() {
       </section>
 
       {past.length > 0 && (
-        <section className="space-y-6 border-t border-line pt-10">
+        <section className="space-y-6 border-t border-ink/10 pt-10">
           <div>
             <h2 className="font-display text-2xl">Previous events</h2>
             <p className="mt-1 text-sm text-muted">What we&apos;ve been up to.</p>

@@ -37,7 +37,7 @@ export function EventCard({ event, past = false }: { event: SassEvent; past?: bo
           <p className="mt-auto pt-3 text-sm text-muted">See details{" "}<span aria-hidden className="inline-block transition-transform group-hover:translate-x-0.5">→</span></p>
         ) : (
           <p className="mt-auto pt-3 text-sm text-ink">
-            {formatPrice(event.member_price_cents)} <span className="text-muted">members</span>
+            {event.member_price_cents === 0 ? <>Free <span className="text-muted">for members</span></> : <>{formatPrice(event.member_price_cents)} <span className="text-muted">members</span></>}
             {event.access === "everyone" && <span className="text-muted"> · {formatPrice(event.public_price_cents)} others</span>}
           </p>
         )}
