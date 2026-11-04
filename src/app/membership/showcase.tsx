@@ -107,7 +107,7 @@ export function MemberPass({ name, plan }: { name: string; plan: MemberPlan }) {
 
 /** A scrolling ribbon of the perks. Stays still for reduced motion. */
 export function PerkRibbon() {
-  const words = ["Free entry", "Free food & drinks", "Free mehendi", "Cheaper tickets", "Members-only nights"];
+  const words = ["Early bird tickets", "Free food & drinks", "Free mehendi", "Cheaper tickets", "Members-only nights"];
   const run = [...words, ...words];
   return (
     <div className="relative -mx-5 -rotate-1 overflow-hidden border-y-2 border-ink bg-sass-yellow py-3 sm:mx-0 sm:rounded-xl" aria-hidden>
@@ -255,7 +255,7 @@ export function PriceTiers({ salesOpen, nextYear, plan }: { salesOpen: boolean; 
         <h2 className="font-display text-3xl">{plan ? "Your plan" : "Open to everyone"}</h2>
         <p className="mt-2 text-sm text-muted">
           {plan?.exco
-            ? "You're ExCo, so your membership is on us until you graduate."
+            ? "You're ExCo, so your membership runs until you graduate."
             : mine
               ? `You're on the ${mine}-year plan, valid until ${fmtDate(plan!.valid_until)}.`
               : salesOpen
