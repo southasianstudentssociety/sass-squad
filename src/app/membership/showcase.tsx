@@ -52,7 +52,7 @@ export function MembershipHero({ member, joinable }: { member: boolean; joinable
         </motion.h1>
         <motion.p variants={rise} className="mx-auto mt-5 max-w-md text-base leading-relaxed text-ink/75">
           {member
-            ? "Free entry to selected events, free food & drinks, free mehendi and cheaper tickets. Here's everything that's yours."
+            ? "Free entry to selected events, free food & drinks, early access to tickets and cheaper prices. Here's everything that's yours."
             : `Come to just ${PAYBACK_EVENTS} flagship events and you've earned your fee back. Every event after that? Pure profit.`}
         </motion.p>
         <motion.a variants={rise} href={member ? "#perks" : joinable ? "#join" : "#prices"} className="btn-primary mt-8 px-6 py-3 text-base">
@@ -107,7 +107,7 @@ export function MemberPass({ name, plan }: { name: string; plan: MemberPlan }) {
 
 /** A scrolling ribbon of the perks. Stays still for reduced motion. */
 export function PerkRibbon() {
-  const words = ["Early bird tickets", "Free food & drinks", "Free mehendi", "Cheaper tickets", "Members-only nights"];
+  const words = ["Early access", "Free food & drinks", "Cheaper tickets", "Members-only nights"];
   const run = [...words, ...words];
   return (
     <div className="relative -mx-5 -rotate-1 overflow-hidden border-y-2 border-ink bg-sass-yellow py-3 sm:mx-0 sm:rounded-xl" aria-hidden>
