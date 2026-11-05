@@ -28,7 +28,7 @@ export function MealEditor({ enabled, options }: { enabled: boolean; options: { 
       <label className="flex items-center gap-2 text-sm font-semibold">
         <input type="checkbox" name="meals_enabled" checked={on} onChange={(e) => setOn(e.target.checked)} /> Meal choice
       </label>
-      <p className="hint -mt-2">When on, everyone picks a meal when they get a ticket. It&apos;s saved on their ticket, shown on the guest list and counted on the event page. Holders can change it until the event starts.</p>
+      <p className="hint -mt-2">When on, everyone picks a meal when they get a ticket. It&apos;s saved on their ticket, shown on the guest list and counted on the event page. Once picked, only ExCo can change it (on the event page, per ticket).</p>
       <input type="hidden" name="meal_options" value={payload} />
       {on && (
         <div className="space-y-2 rounded-xl border border-line p-3">

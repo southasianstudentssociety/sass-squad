@@ -68,9 +68,15 @@ select pg_temp.fails($$select public.claim_ticket_with_meal('20000000-0000-0000-
 create temp table t1 on commit drop as
   select * from public.claim_ticket_with_meal('20000000-0000-0000-0000-000000000001', (select id from opt where label = 'Vegetarian (Jain)'));
 select pg_temp.check((select price_cents = 29000 and status = 'awaiting_payment' and meal_option_id = (select id from opt where label = 'Vegetarian (Jain)') from t1), 'ticket with meal');
--- Holder changes their mind before the event
-select pg_temp.check((select meal_option_id = (select id from opt where label = 'Non-Vegetarian') from public.set_ticket_meal((select id from t1), (select id from opt where label = 'Non-Vegetarian'))), 'holder changes meal');
-select pg_temp.fails($$select public.set_ticket_meal((select id from t1), null)$$, 'Pick your meal');
+-- Once set, the holder can't change it (0030): not directly, not by buying again
+select pg_temp.fails($$select public.set_ticket_meal((select id from t1), (select id from opt where label = 'Non-Vegetarian'))$$, 'contact an ExCo');
+select pg_temp.fails($$select public.set_ticket_meal((select id from t1), null)$$, 'contact an ExCo');
+select pg_temp.check((select meal_option_id = (select id from opt where label = 'Vegetarian (Jain)')
+  from public.claim_ticket_with_meal('20000000-0000-0000-0000-000000000001', (select id from opt where label = 'Non-Vegetarian'))), 'buying again keeps the first meal');
+-- ExCo can change it
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select meal_option_id = (select id from opt where label = 'Non-Vegetarian') from public.set_ticket_meal((select id from t1), (select id from opt where label = 'Non-Vegetarian'))), 'exco changes meal');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 
 -- Someone else can't touch it
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
@@ -95,9 +101,15 @@ select pg_temp.check((select string_agg(label, ',' order by sort_order) from pub
 select pg_temp.check((select archived_at is not null from public.event_meal_options where id = (select id from opt where label = 'Non-Vegetarian')), 'used option hidden, not deleted');
 select pg_temp.check((select count(*) = 0 from public.event_meal_options where id = (select id from opt where label = 'Vegetarian (Jain)')), 'unused option deleted');
 select pg_temp.check((select meal_option_id = (select id from opt where label = 'Non-Vegetarian') from public.tickets where id = (select id from t1)), 'ticket keeps its choice');
--- A hidden option can't be picked again
-select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+-- A hidden option can't be picked again (even by ExCo)
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select pg_temp.fails($$select public.set_ticket_meal((select id from t1), (select id from opt where label = 'Non-Vegetarian'))$$, 'isn''t available');
+-- A holder whose ticket has no meal yet can set it once
+reset role;
+update public.tickets set meal_option_id = null where id = (select id from t1);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select meal_option_id is not null from public.set_ticket_meal((select id from t1), (select id from public.event_meal_options where event_id = '20000000-0000-0000-0000-000000000001' and label = 'Veg'))), 'holder sets a missing meal once');
+select pg_temp.fails($$select public.set_ticket_meal((select id from t1), (select id from public.event_meal_options where event_id = '20000000-0000-0000-0000-000000000001' and label = 'Vegan'))$$, 'contact an ExCo');
 -- Duplicate names refused
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select pg_temp.fails($$select public.set_event_meals('20000000-0000-0000-0000-000000000001', true, '[{"label":"Veg","color":"green"},{"label":"veg ","color":"red"}]')$$, 'same name');

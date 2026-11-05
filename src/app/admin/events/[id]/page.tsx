@@ -9,7 +9,7 @@ import { FormMessage } from "@/components/form-message";
 import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
-import { cancelTicket, confirmPayment, undoCheckIn } from "../../actions";
+import { cancelTicket, confirmPayment, setTicketMealAdmin, undoCheckIn } from "../../actions";
 import { MealChip } from "@/components/meal-picker";
 import { ReferralBoard, tallyReferrals } from "@/components/referral-board";
 import { MEAL_COLORS, MEAL_COLUMNS, type MealOption } from "@/lib/meals";
@@ -50,6 +50,7 @@ export default async function ManageEvent({
     ? await supabase.from("event_meal_options").select(MEAL_COLUMNS).eq("event_id", id).order("sort_order").returns<MealOption[]>()
     : { data: null };
   const mealById = new Map((mealData ?? []).map((o) => [o.id, o]));
+  const activeMeals = (mealData ?? []).filter((o) => !o.archived_at);
   // Counts over tickets that aren't cancelled (what the caterer needs).
   const live = all.filter((t) => t.status !== "cancelled");
   const mealCounts = (mealData ?? [])
@@ -166,7 +167,7 @@ export default async function ManageEvent({
               <span className="font-mono text-sm tracking-wide">{t.payment_reference}</span>
               <CopyButton value={t.payment_reference} />
             </div>
-            {event.meals_enabled && <MealChip option={t.meal_option_id ? mealById.get(t.meal_option_id) : null} />}
+            {event.meals_enabled && t.status !== "cancelled" && <MealEdit ticketId={t.id} eventId={id} filter={filter} current={t.meal_option_id ?? null} options={activeMeals} chip={<MealChip option={t.meal_option_id ? mealById.get(t.meal_option_id) : null} />} />}
             <p className="text-xs text-muted">
               {t.team_rate ? "Team" : t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}
               {t.source !== "online" && ` · ${t.source === "comp" ? "Comp" : "Walk-in"}`}
@@ -214,7 +215,13 @@ export default async function ManageEvent({
                   {t.source !== "online" && <><br />{t.source === "comp" ? "Comp" : "Walk-in"}</>}
                 </td>
                 <td>{formatPrice(t.price_cents)}</td>
-                {event.meals_enabled && <td className="whitespace-nowrap"><MealChip option={t.meal_option_id ? mealById.get(t.meal_option_id) : null} /></td>}
+                {event.meals_enabled && (
+                  <td className="whitespace-nowrap">
+                    {t.status === "cancelled"
+                      ? <MealChip option={t.meal_option_id ? mealById.get(t.meal_option_id) : null} />
+                      : <MealEdit ticketId={t.id} eventId={id} filter={filter} current={t.meal_option_id ?? null} options={activeMeals} chip={<MealChip option={t.meal_option_id ? mealById.get(t.meal_option_id) : null} />} />}
+                  </td>
+                )}
                 <td className="whitespace-nowrap">
                   <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />
                   {t.checked_in_at && <p className="text-xs text-muted">{formatTime(t.checked_in_at)}</p>}
@@ -260,5 +267,26 @@ function RowAction(props: { action: (fd: FormData) => Promise<void>; ticketId: s
       <input type="hidden" name="filter" value={props.filter} />
       <SubmitButton className={`${props.className} whitespace-nowrap`} pendingText="…">{props.label}</SubmitButton>
     </form>
+  );
+}
+
+/** ExCo: the ticket's meal, with a small "change" form underneath. */
+function MealEdit({ ticketId, eventId, filter, current, options, chip }: { ticketId: string; eventId: string; filter: string; current: string | null; options: MealOption[]; chip: React.ReactNode }) {
+  return (
+    <details className="group">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
+        {chip}<span className="text-xs text-muted underline-offset-2 group-open:hidden hover:underline">change</span>
+      </summary>
+      <form action={setTicketMealAdmin} className="mt-2 flex items-center gap-2">
+        <input type="hidden" name="ticket_id" value={ticketId} />
+        <input type="hidden" name="event_id" value={eventId} />
+        <input type="hidden" name="filter" value={filter} />
+        <select name="meal_option_id" defaultValue={current ?? ""} className="input py-1.5 text-xs" aria-label="Meal">
+          <option value="">Not chosen</option>
+          {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
+        <SubmitButton className="btn-ghost px-2.5 py-1.5 text-xs" pendingText="…">Save</SubmitButton>
+      </form>
+    </details>
   );
 }
