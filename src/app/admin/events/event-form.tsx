@@ -70,6 +70,13 @@ export function EventForm({ event, teamPriceCents, mealOptions = [] }: { event?:
 
         <div className="sm:col-span-2">
           <label className="flex items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" name="referrals_enabled" defaultChecked={event?.referrals_enabled ?? false} /> Referrals
+          </label>
+          <p className="hint">People who aren&apos;t on the team can (optionally) pick the subcommittee member who referred them when they get a ticket. The event page shows who referred the most.</p>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm font-semibold">
             <input type="checkbox" name="sold_out" defaultChecked={event?.sold_out ?? false} /> Sold out
           </label>
           <p className="hint">Stops online ticket sales and shows a SOLD OUT stamp on the event. Anyone who already has a ticket keeps it. Team places, door tickets and walk-ins still work. Untick to reopen sales.</p>

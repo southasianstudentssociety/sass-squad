@@ -62,6 +62,7 @@ export async function saveEvent(formData: FormData) {
     sales_close_at: closesAt,
     payment_instructions: String(formData.get("payment_instructions") ?? "").trim() || null,
     sold_out: formData.get("sold_out") === "on",
+    referrals_enabled: formData.get("referrals_enabled") === "on",
   };
 
   const supabase = await createClient();

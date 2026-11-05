@@ -75,6 +75,8 @@ export type SassEvent = {
   payment_instructions: string | null;
   sold_out: boolean;
   meals_enabled: boolean;
+  /** Non-team buyers can say which subcommittee member referred them. */
+  referrals_enabled: boolean;
 };
 
 export type Ticket = {
@@ -98,6 +100,8 @@ export type Ticket = {
   created_at: string;
   /** Meal chosen for this ticket, when the event takes meal choices. */
   meal_option_id?: string | null;
+  /** Team-list entry of the subcommittee member who referred them. */
+  referrer_invite_id?: string | null;
 };
 
 export type ScanResult =
@@ -250,6 +254,8 @@ export type MembershipOffer = {
   /** Only current team members see it and can buy it. */
   team_only: boolean;
   payment_instructions: string | null;
+  /** Non-team buyers can say which subcommittee member referred them. */
+  referrals_enabled: boolean;
 };
 
 export type MembershipApplication = {
@@ -264,6 +270,7 @@ export type MembershipApplication = {
   payment_reference: string;
   created_at: string;
   confirmed_at: string | null;
+  referrer_invite_id?: string | null;
 };
 
 export type Feedback = { event_id: string; rating: number; comment: string | null; anonymous: boolean };

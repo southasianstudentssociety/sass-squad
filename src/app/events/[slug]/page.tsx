@@ -14,6 +14,7 @@ import { galleryItems } from "@/lib/gallery";
 import { SITE } from "@/lib/site";
 import { SoldOutStamp } from "@/components/sold-out-stamp";
 import { MealPicker } from "@/components/meal-picker";
+import { ReferralPicker, type Referrer } from "@/components/referral-picker";
 import { MEAL_COLUMNS, type MealOption } from "@/lib/meals";
 
 export default async function EventPage({
@@ -49,6 +50,11 @@ export default async function EventPage({
       : Promise.resolve({ data: null }),
   ]);
   const meals = event.meals_enabled ? (mealData ?? []) : [];
+  // Referrals: only for people who aren't on the team.
+  const { data: referrerData } = event.referrals_enabled && session && !isTeam
+    ? await supabase.rpc("referral_options")
+    : { data: null };
+  const referrers = (referrerData as Referrer[] | null) ?? [];
   const existingTicketId = existing?.id ?? null;
   const isExco = isTeam && (session?.access.isAdmin ?? false);
   // Subcommittee pay the team price (if set); ExCo are always free. Both are reserved places.
@@ -169,6 +175,7 @@ export default async function EventPage({
             <input type="hidden" name="event_id" value={event.id} />
             <input type="hidden" name="slug" value={event.slug} />
             {meals.length > 0 && <MealPicker options={meals} />}
+            {referrers.length > 0 && <ReferralPicker options={referrers} />}
             <SubmitButton className="btn-primary w-full py-3" pendingText="Getting your ticket…">
               {yourPrice === 0 ? (isMember ? "Claim my free member ticket" : "Get free ticket") : `Get ticket · ${formatPrice(yourPrice)}`}
             </SubmitButton>

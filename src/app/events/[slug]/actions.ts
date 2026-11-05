@@ -14,7 +14,9 @@ export async function claimTicket(formData: FormData) {
   const supabase = await createClient();
   // The *_with_meal RPCs check the meal (when the event takes one) and then call
   // claim_ticket / claim_team_ticket unchanged.
-  const { data, error } = await supabase.rpc("claim_ticket_with_meal", { p_event_id: eventId, p_meal_option_id: meal(formData) }).single<{ id: string }>();
+  const { data, error } = await supabase
+    .rpc("claim_ticket_with_meal", { p_event_id: eventId, p_meal_option_id: meal(formData), p_referrer_id: String(formData.get("referrer_id") ?? "").trim() || null })
+    .single<{ id: string }>();
   if (error || !data) {
     const msg = error?.code === "P0001" ? error.message : "Something went wrong. Try again.";
     redirect(`/events/${slug}?error=${encodeURIComponent(msg)}`);

@@ -11,6 +11,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
 import { cancelTicket, confirmPayment, undoCheckIn } from "../../actions";
 import { MealChip } from "@/components/meal-picker";
+import { ReferralBoard, tallyReferrals } from "@/components/referral-board";
 import { MEAL_COLORS, MEAL_COLUMNS, type MealOption } from "@/lib/meals";
 
 export const metadata = { title: "Manage event" };
@@ -55,6 +56,18 @@ export default async function ManageEvent({
     .map((o) => ({ option: o, count: live.filter((t) => t.meal_option_id === o.id).length }))
     .filter((m) => !m.option.archived_at || m.count > 0);
   const noMeal = live.filter((t) => !t.meal_option_id || !mealById.has(t.meal_option_id)).length;
+  // Referrals (names come from the team list via an ExCo-only RPC).
+  const { data: refData } = event.referrals_enabled || all.some((t) => t.referrer_invite_id)
+    ? await supabase.rpc("event_referrals", { p_event_id: id })
+    : { data: null };
+  const referredBy = new Map(((refData as { ticket_id: string; referrer_id: string; referrer: string }[] | null) ?? []).map((r) => [r.ticket_id, r]));
+  const referralRows = tallyReferrals(
+    live.flatMap((t) => {
+      const r = referredBy.get(t.id);
+      return r ? [{ referrerId: r.referrer_id, name: r.referrer, confirmed: t.status === "confirmed" }] : [];
+    }),
+  );
+  const showReferrals = event.referrals_enabled || referredBy.size > 0;
 
   const q = (sp.q ?? "").trim().toLowerCase();
   const tickets = all.filter((t) => {
@@ -111,6 +124,8 @@ export default async function ManageEvent({
         </div>
       )}
 
+      {showReferrals && <ReferralBoard title="Referrals" rows={referralRows} unreferred={live.filter((t) => !t.team_rate && !referredBy.has(t.id)).length} />}
+
       <FormMessage error={sp.error} success={sp.ok} />
 
       <div className="space-y-3">
@@ -159,6 +174,7 @@ export default async function ManageEvent({
               {" · booked "}{formatDateTime(t.created_at)}
             </p>
             {t.notes && <p className="text-xs text-muted">📝 {t.notes}</p>}
+            {referredBy.get(t.id) && <p className="text-xs text-muted">Referred by <strong className="text-ink">{referredBy.get(t.id)!.referrer}</strong></p>}
             {t.status === "awaiting_payment" && (
               <RowAction action={confirmPayment} ticketId={t.id} eventId={id} filter={filter}
                 label={`Mark ${formatPrice(t.price_cents)} paid`} className="btn-primary w-full py-3" />
@@ -190,6 +206,7 @@ export default async function ManageEvent({
                   <p className="font-semibold">{t.holder_name}</p>
                   <p className="text-xs text-muted">{t.holder_email}</p>
                   {t.notes && <p className="text-xs text-muted">📝 {t.notes}</p>}
+                  {referredBy.get(t.id) && <p className="text-xs text-muted">Referred by <strong className="text-ink">{referredBy.get(t.id)!.referrer}</strong></p>}
                 </td>
                 <td className="font-mono text-xs">{t.payment_reference}</td>
                 <td className="whitespace-nowrap text-xs">

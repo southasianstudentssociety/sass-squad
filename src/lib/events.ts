@@ -1,7 +1,7 @@
 import type { SassEvent } from "@/lib/types";
 
 export const EVENT_COLUMNS =
-  "id, slug, title, description, venue, starts_at, ends_at, cover_image_url, is_published, access, member_price_cents, public_price_cents, capacity, member_sales_open_at, public_sales_open_at, sales_close_at, payment_instructions, sold_out, meals_enabled";
+  "id, slug, title, description, venue, starts_at, ends_at, cover_image_url, is_published, access, member_price_cents, public_price_cents, capacity, member_sales_open_at, public_sales_open_at, sales_close_at, payment_instructions, sold_out, meals_enabled, referrals_enabled";
 
 export type SalesState =
   | { state: "open" }
