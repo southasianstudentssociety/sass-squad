@@ -81,6 +81,17 @@ export async function saveEvent(formData: FormData) {
   if (teamError) {
     back(`/admin/events/${data.id}/edit`, { error: teamError.code === "P0001" ? `Event saved, but not the team price: ${teamError.message}` : "Event saved, but not the team price." });
   }
+  // Meal choice: switch + options, saved by the RPC (keeps options people already picked).
+  let mealOptions: unknown = [];
+  try { mealOptions = JSON.parse(String(formData.get("meal_options") ?? "[]")); } catch { mealOptions = []; }
+  const { error: mealError } = await supabase.rpc("set_event_meals", {
+    p_event_id: data.id,
+    p_enabled: formData.get("meals_enabled") === "on",
+    p_options: Array.isArray(mealOptions) ? mealOptions : [],
+  });
+  if (mealError) {
+    back(`/admin/events/${data.id}/edit`, { error: mealError.code === "P0001" ? `Event saved, but not the meals: ${mealError.message}` : "Event saved, but not the meals." });
+  }
   revalidatePath("/", "layout");
   redirect(`/admin/events/${data.id}?ok=${encodeURIComponent("Event saved.")}`);
 }

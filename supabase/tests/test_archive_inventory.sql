@@ -69,7 +69,7 @@ select pg_temp.fails($$select public.set_inventory_location((select id from it),
 reset role;
 update public.inventory_items set created_at = now() - interval '10 days' where id = (select id from it);
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
-select pg_temp.fails($$select public.transfer_inventory_item((select id from it), '00000000-0000-0000-0000-00000000000c', null, current_date + 1)$$, 'future');
+select pg_temp.fails($$select public.transfer_inventory_item((select id from it), '00000000-0000-0000-0000-00000000000c', null, private.hk_today() + 1)$$, 'future');
 select pg_temp.fails($$select public.transfer_inventory_item((select id from it), '00000000-0000-0000-0000-00000000000c', null, current_date - 30)$$, 'before the item was added');
 select public.transfer_inventory_item((select id from it), '00000000-0000-0000-0000-00000000000c', 'after Diwali', current_date - 3);
 select pg_temp.check((select details->>'on' = (current_date - 3)::text from public.inventory_log where item_id = (select id from it) and action = 'transferred'), 'handover date stored');

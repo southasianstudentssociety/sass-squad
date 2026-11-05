@@ -91,6 +91,7 @@ Import the repo in Vercel and set the three env vars from `.env.example` (`NEXT_
 ## Running an event
 
 1. **Admin → New event.** Set prices (member HK$0 = free member ticket), access, capacity, sales windows, and FPS details for paid tickets. Tick **Published**.
+   - Need meal numbers? Tick **Meal choice** in Edit event. It starts with Vegetarian (Non-Jain) green, Vegetarian (Jain) light green and Non-Vegetarian red; rename, recolour, add or remove options. Everyone then picks a meal when they get a ticket (saved on the ticket, changeable until the event starts). The event page shows the counts; the CSV and printable list have a Meal column.
    - Sold out somewhere else (e.g. a form) or just full? Tick **Sold out** in Edit event. Online sales stop (enforced in the database), the event shows a red SOLD OUT stamp, and existing tickets, team places, walk-ins and comps still work. Untick to reopen.
 2. Paid tickets: the attendee sees the amount and a unique reference like `SASS-7K3QX`. Finance checks the FPS transfers in their banking app and clicks **Mark paid** on the event page. Their QR code then appears.
 3. **On the night:** print the guest list beforehand (**Admin → event → Printable guest list**). Staff open **Scan** on their phones.

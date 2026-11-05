@@ -12,13 +12,19 @@ import { LiveTicket } from "./live-ticket";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { feedbackOpen } from "@/lib/feedback";
 import { FeedbackForm } from "./feedback-form";
+import { FormMessage } from "@/components/form-message";
+import { SubmitButton } from "@/components/submit-button";
+import { MealChip, MealPicker } from "@/components/meal-picker";
+import { MEAL_COLUMNS, type MealOption } from "@/lib/meals";
+import { setTicketMeal } from "@/app/events/[slug]/actions";
+import { eventHasStarted } from "@/lib/events";
 
 export const metadata = { title: "Ticket" };
 
 type Row = Ticket & { event: SassEvent };
 
-export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function TicketPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string }> }) {
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
   const session = await requireUser(`/tickets/${id}`);
   const supabase = await createClient();
   const { data: t } = await supabase
@@ -28,6 +34,15 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     .eq("user_id", session.userId)
     .maybeSingle<Row>();
   if (!t) notFound();
+
+  // Meal choice (when the event takes one). All options, so a hidden one this ticket chose still shows.
+  const { data: mealData } = t.event.meals_enabled
+    ? await supabase.from("event_meal_options").select(MEAL_COLUMNS).eq("event_id", t.event_id).order("sort_order").returns<MealOption[]>()
+    : { data: null };
+  const mealOptions = (mealData ?? []).filter((o) => !o.archived_at);
+  const myMeal = (mealData ?? []).find((o) => o.id === t.meal_option_id) ?? null;
+  const showMeal = t.event.meals_enabled && t.status !== "cancelled";
+  const canChangeMeal = showMeal && !eventHasStarted(t.event) && !t.checked_in_at && mealOptions.length > 0;
 
   const canRate = !!t.checked_in_at && feedbackOpen(t.event.starts_at);
   const { data: myFeedback } = canRate
@@ -49,6 +64,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       <dd className="text-right font-mono text-[13px]">{t.payment_reference}</dd>
       <dt className="text-muted">Status</dt>
       <dd className="text-right"><StatusBadge status={t.status} checkedIn={!!t.checked_in_at} /></dd>
+      {t.event.meals_enabled && <><dt className="text-muted">Meal</dt><dd className="text-right"><MealChip option={myMeal} /></dd></>}
     </dl>
   );
 
@@ -91,6 +107,28 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           />
         )}
       </div>
+
+      <FormMessage error={sp.error} success={sp.ok} />
+
+      {showMeal && !myMeal && mealOptions.length > 0 && !eventHasStarted(t.event) && (
+        <form action={setTicketMeal} className="card space-y-4 border-warn/30">
+          <input type="hidden" name="ticket_id" value={t.id} />
+          <p className="text-sm font-medium text-warn">Pick your meal for {t.event.title}.</p>
+          <MealPicker options={mealOptions} />
+          <SubmitButton className="btn-primary w-full" pendingText="Saving…">Save my meal</SubmitButton>
+        </form>
+      )}
+      {showMeal && myMeal && canChangeMeal && (
+        <details className="card">
+          <summary className="cursor-pointer text-sm font-medium">Change my meal</summary>
+          <form action={setTicketMeal} className="mt-4 space-y-4">
+            <input type="hidden" name="ticket_id" value={t.id} />
+            <MealPicker options={mealOptions} selected={myMeal.id} />
+            <SubmitButton className="btn-ghost w-full" pendingText="Saving…">Save</SubmitButton>
+          </form>
+          <p className="hint mt-2">You can change it until the event starts.</p>
+        </details>
+      )}
 
       {canRate && <FeedbackForm eventId={t.event_id} initial={myFeedback} />}
 

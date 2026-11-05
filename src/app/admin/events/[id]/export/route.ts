@@ -10,17 +10,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!session?.access.isAdmin) return new NextResponse("Forbidden", { status: 403 });
 
   const supabase = await createClient();
-  const [{ data: event }, { data: tickets }] = await Promise.all([
+  const [{ data: event }, { data: tickets }, { data: meals }] = await Promise.all([
     supabase.from("events").select("slug").eq("id", id).maybeSingle<{ slug: string }>(),
     supabase.from("tickets").select("*").eq("event_id", id).neq("status", "cancelled").order("holder_name").returns<Ticket[]>(),
+    supabase.from("event_meal_options").select("id, label").eq("event_id", id).returns<{ id: string; label: string }[]>(),
   ]);
   if (!event) return new NextResponse("Not found", { status: 404 });
+  const mealName = new Map((meals ?? []).map((m) => [m.id, m.label]));
 
   const csv = toCsv([
-    ["Name", "Email", "Member", "Status", "Price (HK$)", "Reference", "Source", "Checked in at", "Notes"],
+    ["Name", "Email", "Member", "Status", "Price (HK$)", "Meal", "Reference", "Source", "Checked in at", "Notes"],
     ...(tickets ?? []).map((t) => [
       t.holder_name, t.holder_email, t.team_rate ? "team" : t.is_member ? "yes" : "no", t.status, (t.price_cents / 100).toFixed(2),
-      t.payment_reference, t.source, t.checked_in_at ?? "", t.notes ?? "",
+      t.meal_option_id ? mealName.get(t.meal_option_id) ?? "" : "", t.payment_reference, t.source, t.checked_in_at ?? "", t.notes ?? "",
     ]),
   ]);
 

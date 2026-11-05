@@ -74,6 +74,7 @@ export type SassEvent = {
   sales_close_at: string | null;
   payment_instructions: string | null;
   sold_out: boolean;
+  meals_enabled: boolean;
 };
 
 export type Ticket = {
@@ -95,6 +96,8 @@ export type Ticket = {
   checked_in_by?: string | null;
   notes: string | null;
   created_at: string;
+  /** Meal chosen for this ticket, when the event takes meal choices. */
+  meal_option_id?: string | null;
 };
 
 export type ScanResult =
