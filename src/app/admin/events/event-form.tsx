@@ -2,10 +2,12 @@ import { saveEvent, deleteEvent } from "../actions";
 import { isoToLocal } from "@/lib/format";
 import type { SassEvent } from "@/lib/types";
 import { SubmitButton } from "@/components/submit-button";
+import type { MealColor } from "@/lib/meals";
+import { MealEditor } from "./meal-editor";
 
 const dollars = (p?: number) => (p == null ? "0" : (p / 100).toFixed(2));
 
-export function EventForm({ event, teamPriceCents }: { event?: SassEvent; teamPriceCents?: number | null }) {
+export function EventForm({ event, teamPriceCents, mealOptions = [] }: { event?: SassEvent; teamPriceCents?: number | null; mealOptions?: { id: string; label: string; color: MealColor }[] }) {
   return (
     <div className="space-y-6">
       <form action={saveEvent} className="card grid gap-4 sm:grid-cols-2">
@@ -63,6 +65,8 @@ export function EventForm({ event, teamPriceCents }: { event?: SassEvent; teamPr
         <Field label="FPS payment instructions" className="sm:col-span-2" hint="Shown to people with unpaid tickets: FPS ID or phone number, account name, and to put the reference in the remarks.">
           <textarea name="payment_instructions" rows={3} defaultValue={event?.payment_instructions ?? ""} className="input font-mono text-sm" />
         </Field>
+
+        <MealEditor enabled={event?.meals_enabled ?? false} options={mealOptions} />
 
         <div className="sm:col-span-2">
           <label className="flex items-center gap-2 text-sm font-semibold">

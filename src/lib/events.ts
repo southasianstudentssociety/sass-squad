@@ -1,7 +1,7 @@
 import type { SassEvent } from "@/lib/types";
 
 export const EVENT_COLUMNS =
-  "id, slug, title, description, venue, starts_at, ends_at, cover_image_url, is_published, access, member_price_cents, public_price_cents, capacity, member_sales_open_at, public_sales_open_at, sales_close_at, payment_instructions, sold_out";
+  "id, slug, title, description, venue, starts_at, ends_at, cover_image_url, is_published, access, member_price_cents, public_price_cents, capacity, member_sales_open_at, public_sales_open_at, sales_close_at, payment_instructions, sold_out, meals_enabled";
 
 export type SalesState =
   | { state: "open" }
@@ -23,6 +23,11 @@ export function salesStateFor(event: SassEvent, isMember: boolean, now = new Dat
 
 export function priceFor(event: SassEvent, isMember: boolean): number {
   return isMember ? event.member_price_cents : event.public_price_cents;
+}
+
+/** True once the event's start time has passed (meal changes stop then; mirrors set_ticket_meal). */
+export function eventHasStarted(event: Pick<SassEvent, "starts_at">, now = new Date()): boolean {
+  return now >= new Date(event.starts_at);
 }
 
 export function eventIsOver(event: SassEvent, now = new Date()): boolean {

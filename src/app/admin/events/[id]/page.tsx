@@ -10,6 +10,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
 import { cancelTicket, confirmPayment, undoCheckIn } from "../../actions";
+import { MealChip } from "@/components/meal-picker";
+import { MEAL_COLORS, MEAL_COLUMNS, type MealOption } from "@/lib/meals";
 
 export const metadata = { title: "Manage event" };
 
@@ -43,6 +45,16 @@ export default async function ManageEvent({
     .order("created_at", { ascending: true })
     .returns<Ticket[]>();
   const all = data ?? [];
+  const { data: mealData } = event.meals_enabled
+    ? await supabase.from("event_meal_options").select(MEAL_COLUMNS).eq("event_id", id).order("sort_order").returns<MealOption[]>()
+    : { data: null };
+  const mealById = new Map((mealData ?? []).map((o) => [o.id, o]));
+  // Counts over tickets that aren't cancelled (what the caterer needs).
+  const live = all.filter((t) => t.status !== "cancelled");
+  const mealCounts = (mealData ?? [])
+    .map((o) => ({ option: o, count: live.filter((t) => t.meal_option_id === o.id).length }))
+    .filter((m) => !m.option.archived_at || m.count > 0);
+  const noMeal = live.filter((t) => !t.meal_option_id || !mealById.has(t.meal_option_id)).length;
 
   const q = (sp.q ?? "").trim().toLowerCase();
   const tickets = all.filter((t) => {
@@ -80,6 +92,24 @@ export default async function ManageEvent({
         <Stat label="Confirmed revenue" value={formatPrice(revenue).replace("Free", "HK$0.00")} />
         <Stat label="Awaiting payment" value={formatPrice(owed).replace("Free", "HK$0.00")} warn={owed > 0} />
       </div>
+
+      {event.meals_enabled && (
+        <div className="card space-y-3 p-4">
+          <p className="text-xs text-muted">Meals (tickets not cancelled)</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {mealCounts.map(({ option, count }) => (
+              <span key={option.id} className="flex items-center gap-2 text-sm">
+                <span className="size-3 rounded-full" style={{ background: MEAL_COLORS[option.color].swatch }} aria-hidden />
+                {option.label}{option.archived_at && <span className="text-xs text-muted">(removed)</span>}
+                <strong className="tabular-nums">{count}</strong>
+              </span>
+            ))}
+            <span className={`flex items-center gap-2 text-sm ${noMeal > 0 ? "text-warn" : "text-muted"}`}>
+              <span className="size-3 rounded-full bg-line" aria-hidden />Not chosen <strong className="tabular-nums">{noMeal}</strong>
+            </span>
+          </div>
+        </div>
+      )}
 
       <FormMessage error={sp.error} success={sp.ok} />
 
@@ -121,6 +151,7 @@ export default async function ManageEvent({
               <span className="font-mono text-sm tracking-wide">{t.payment_reference}</span>
               <CopyButton value={t.payment_reference} />
             </div>
+            {event.meals_enabled && <MealChip option={t.meal_option_id ? mealById.get(t.meal_option_id) : null} />}
             <p className="text-xs text-muted">
               {t.team_rate ? "Team" : t.is_member ? "Member" : "Non-member"} · {formatPrice(t.price_cents)}
               {t.source !== "online" && ` · ${t.source === "comp" ? "Comp" : "Walk-in"}`}
@@ -150,7 +181,7 @@ export default async function ManageEvent({
       <div className="card hidden overflow-x-auto p-0 sm:block">
         <table className="table">
           <thead>
-            <tr><th>Name</th><th>Reference</th><th>Type</th><th>Price</th><th>Status</th><th>Booked</th><th></th></tr>
+            <tr><th>Name</th><th>Reference</th><th>Type</th><th>Price</th>{event.meals_enabled && <th>Meal</th>}<th>Status</th><th>Booked</th><th></th></tr>
           </thead>
           <tbody>
             {tickets.map((t) => (
@@ -166,6 +197,7 @@ export default async function ManageEvent({
                   {t.source !== "online" && <><br />{t.source === "comp" ? "Comp" : "Walk-in"}</>}
                 </td>
                 <td>{formatPrice(t.price_cents)}</td>
+                {event.meals_enabled && <td className="whitespace-nowrap"><MealChip option={t.meal_option_id ? mealById.get(t.meal_option_id) : null} /></td>}
                 <td className="whitespace-nowrap">
                   <StatusBadge status={t.status} checkedIn={!!t.checked_in_at} />
                   {t.checked_in_at && <p className="text-xs text-muted">{formatTime(t.checked_in_at)}</p>}
@@ -186,7 +218,7 @@ export default async function ManageEvent({
                 </td>
               </tr>
             ))}
-            {tickets.length === 0 && <tr><td colSpan={7} className="text-muted">No tickets.</td></tr>}
+            {tickets.length === 0 && <tr><td colSpan={event.meals_enabled ? 8 : 7} className="text-muted">No tickets.</td></tr>}
           </tbody>
         </table>
       </div>

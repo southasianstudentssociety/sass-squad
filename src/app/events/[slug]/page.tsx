@@ -13,6 +13,8 @@ import { GalleryStrip } from "@/components/gallery-strip";
 import { galleryItems } from "@/lib/gallery";
 import { SITE } from "@/lib/site";
 import { SoldOutStamp } from "@/components/sold-out-stamp";
+import { MealPicker } from "@/components/meal-picker";
+import { MEAL_COLUMNS, type MealOption } from "@/lib/meals";
 
 export default async function EventPage({
   params,
@@ -28,21 +30,25 @@ export default async function EventPage({
 
   const session = await getSession();
   const isTeam = session?.access.isTeam ?? false;
-  const [{ data: existing }, { data: team }] = await Promise.all([
+  const [{ data: existing }, { data: team }, { data: mealData }] = await Promise.all([
     session
       ? supabase
           .from("tickets")
-          .select("id, status, team_rate")
+          .select("id, status, team_rate, meal_option_id")
           .eq("event_id", event.id)
           .eq("user_id", session.userId)
           .neq("status", "cancelled")
-          .maybeSingle<{ id: string; status: string; team_rate: boolean }>()
+          .maybeSingle<{ id: string; status: string; team_rate: boolean; meal_option_id: string | null }>()
       : Promise.resolve({ data: null }),
     // Only current team members can read team prices; everyone else gets nothing back.
     isTeam
       ? supabase.from("event_team_prices").select("price_cents").eq("event_id", event.id).maybeSingle<{ price_cents: number }>()
       : Promise.resolve({ data: null }),
+    event.meals_enabled
+      ? supabase.from("event_meal_options").select(MEAL_COLUMNS).eq("event_id", event.id).is("archived_at", null).order("sort_order").returns<MealOption[]>()
+      : Promise.resolve({ data: null }),
   ]);
+  const meals = event.meals_enabled ? (mealData ?? []) : [];
   const existingTicketId = existing?.id ?? null;
   const isExco = isTeam && (session?.access.isAdmin ?? false);
   // Subcommittee pay the team price (if set); ExCo are always free. Both are reserved places.
@@ -121,6 +127,9 @@ export default async function EventPage({
               <form action={claimTeamTicket}>
                 <input type="hidden" name="event_id" value={event.id} />
                 <input type="hidden" name="slug" value={event.slug} />
+                {meals.length > 0 && (existing?.meal_option_id
+                  ? <input type="hidden" name="meal_option_id" value={existing.meal_option_id} />
+                  : <div className="mb-3"><MealPicker options={meals} /></div>)}
                 <SubmitButton className="btn-ghost w-full" pendingText="Switching…">{isExco ? "Switch to my free ExCo ticket" : `Switch to the team price · ${formatPrice(myTeamPrice!)}`}</SubmitButton>
                 <p className="hint text-center">Your ticket isn&apos;t paid yet, so it can move to the {isExco ? "ExCo" : "team"} price. Same reference.</p>
               </form>
@@ -135,9 +144,10 @@ export default async function EventPage({
             Log in to get a ticket
           </Link>
         ) : myTeamPrice !== null ? (
-          <form action={claimTeamTicket}>
+          <form action={claimTeamTicket} className="space-y-4">
             <input type="hidden" name="event_id" value={event.id} />
             <input type="hidden" name="slug" value={event.slug} />
+            {meals.length > 0 && <MealPicker options={meals} />}
             <SubmitButton className="btn-primary w-full py-3" pendingText="Getting your ticket…">
               {isExco ? "Get my free ExCo ticket" : myTeamPrice === 0 ? "Get my free team ticket" : `Get team ticket · ${formatPrice(myTeamPrice)}`}
             </SubmitButton>
@@ -155,9 +165,10 @@ export default async function EventPage({
         ) : sales.state === "closed" ? (
           <p className="rounded-xl bg-page px-3.5 py-3 text-center text-sm text-muted">Sales have closed.</p>
         ) : (
-          <form action={claimTicket}>
+          <form action={claimTicket} className="space-y-4">
             <input type="hidden" name="event_id" value={event.id} />
             <input type="hidden" name="slug" value={event.slug} />
+            {meals.length > 0 && <MealPicker options={meals} />}
             <SubmitButton className="btn-primary w-full py-3" pendingText="Getting your ticket…">
               {yourPrice === 0 ? (isMember ? "Claim my free member ticket" : "Get free ticket") : `Get ticket · ${formatPrice(yourPrice)}`}
             </SubmitButton>
