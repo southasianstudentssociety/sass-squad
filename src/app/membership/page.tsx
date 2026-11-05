@@ -8,6 +8,7 @@ import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { ReferralPicker, type Referrer } from "@/components/referral-picker";
 import { applyForMembership, cancelMyApplication } from "./actions";
 import { NEXT_MEMBERSHIP_YEAR } from "@/lib/membership-content";
 import { MemberPass, MembershipHero, NotTheTeam, PaysForItself, PerkRibbon, PerkTickets, PriceTiers, type MemberPlan } from "./showcase";
@@ -32,6 +33,11 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   const memberUntil = plan?.valid_until ?? null;
   const isTeam = session?.access.isTeam ?? false;
   const offerFor = (id: string) => open.find((o) => o.id === id);
+  // Referrals: only for people who aren't on the team, and only on offers that take them.
+  const { data: referrerData } = session && !isTeam && open.some((o) => o.referrals_enabled)
+    ? await supabase.rpc("referral_options")
+    : { data: null };
+  const referrers = (referrerData as Referrer[] | null) ?? [];
 
   const joinable = !memberUntil && (open.length > 0 || !!pending);
 
@@ -99,6 +105,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
                   <label className="label" htmlFor={`sid-${o.id}`}>Student ID (optional)</label>
                   <input id={`sid-${o.id}`} name="student_id" maxLength={30} className="input" />
                 </div>
+                {o.referrals_enabled && referrers.length > 0 && <ReferralPicker options={referrers} />}
                 <SubmitButton className="btn-primary w-full py-3" pendingText="One moment…">
                   {o.price_cents === 0 ? "Join for free" : `Become a member · ${formatPrice(o.price_cents)}`}
                 </SubmitButton>

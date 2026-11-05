@@ -23,7 +23,12 @@ function refresh() {
 export async function applyForMembership(formData: FormData) {
   await requireUser("/membership");
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("apply_for_membership", { p_offer_id: str(formData, "offer_id"), p_student_id: str(formData, "student_id") || null });
+  // Same as apply_for_membership, plus the (optional) subcommittee referrer when the offer takes referrals.
+  const { data, error } = await supabase.rpc("apply_for_membership_with_referral", {
+    p_offer_id: str(formData, "offer_id"),
+    p_student_id: str(formData, "student_id") || null,
+    p_referrer_id: str(formData, "referrer_id") || null,
+  });
   if (error) go("/membership", { error: rpcError(error, "Couldn't start your membership. Try again.") });
   refresh();
   const done = (data as { status: string }).status === "confirmed";
@@ -52,6 +57,7 @@ export async function saveOffer(formData: FormData) {
     valid_until: str(formData, "valid_until"),
     is_open: formData.get("is_open") === "on",
     team_only: formData.get("team_only") === "on",
+    referrals_enabled: formData.get("referrals_enabled") === "on",
     payment_instructions: str(formData, "payment_instructions") || null,
     updated_at: new Date().toISOString(),
   };

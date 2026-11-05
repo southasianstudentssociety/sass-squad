@@ -6,6 +6,7 @@ import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
 import { cancelApplication, confirmMembership, saveOffer } from "../../membership/actions";
+import { ReferralBoard, tallyReferrals } from "@/components/referral-board";
 
 export const metadata = { title: "Memberships" };
 
@@ -23,6 +24,20 @@ export default async function MembershipsAdmin({ searchParams }: { searchParams:
   const waiting = apps.filter((a) => a.status === "awaiting_payment" && match(a));
   const confirmed = apps.filter((a) => a.status === "confirmed" && match(a));
   const offerName = new Map(offers.map((o) => [o.id, o.name]));
+  // Referrals across offers that take them (names via an ExCo-only RPC).
+  const referralOffers = new Set(offers.filter((o) => o.referrals_enabled).map((o) => o.id));
+  const { data: refData } = referralOffers.size > 0 || apps.some((a) => a.referrer_invite_id)
+    ? await supabase.rpc("membership_referrals")
+    : { data: null };
+  const referredBy = new Map(((refData as { application_id: string; referrer_id: string; referrer: string }[] | null) ?? []).map((r) => [r.application_id, r]));
+  const referralRows = tallyReferrals(
+    apps.flatMap((a) => {
+      const r = referredBy.get(a.id);
+      return r ? [{ referrerId: r.referrer_id, name: r.referrer, confirmed: a.status === "confirmed" }] : [];
+    }),
+  );
+  const unreferred = apps.filter((a) => referralOffers.has(a.offer_id) && !referredBy.has(a.id)).length;
+  const referrerOf = (id: string) => referredBy.get(id)?.referrer;
 
   return (
     <div className="space-y-8">
@@ -31,6 +46,8 @@ export default async function MembershipsAdmin({ searchParams }: { searchParams:
         <p className="text-sm text-muted">People join at <strong>/membership</strong>. Confirming a payment adds or renews them on the member list straight away.</p>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />
+
+      {(referralOffers.size > 0 || referredBy.size > 0) && <ReferralBoard title="Membership referrals" rows={referralRows} unreferred={unreferred} />}
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
@@ -44,6 +61,7 @@ export default async function MembershipsAdmin({ searchParams }: { searchParams:
                 <div>
                   <p className="font-medium">{a.full_name}</p>
                   <p className="text-xs text-muted">{a.email}{a.student_id && ` · ${a.student_id}`} · {offerName.get(a.offer_id)} · {formatDateTime(a.created_at)}</p>
+                  {referrerOf(a.id) && <p className="text-xs text-muted">Referred by <strong className="text-ink">{referrerOf(a.id)}</strong></p>}
                 </div>
                 <div className="flex items-center justify-between gap-2 rounded-xl bg-page px-3 py-2">
                   <span className="font-mono text-sm tracking-wide">{a.payment_reference}</span>
@@ -78,7 +96,7 @@ export default async function MembershipsAdmin({ searchParams }: { searchParams:
           <ul className="card divide-y divide-line p-0 text-sm">
             {confirmed.slice(0, 100).map((a) => (
               <li key={a.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <span className="min-w-0 truncate">{a.full_name} <span className="text-xs text-muted">· {a.email}</span></span>
+                <span className="min-w-0 truncate">{a.full_name} <span className="text-xs text-muted">· {a.email}{referrerOf(a.id) && ` · referred by ${referrerOf(a.id)}`}</span></span>
                 <span className="shrink-0 text-xs text-muted">{a.confirmed_at ? formatDate(a.confirmed_at) : ""} · {formatPrice(a.price_cents)}</span>
               </li>
             ))}
@@ -118,6 +136,7 @@ function OfferForm({ offer }: { offer?: MembershipOffer }) {
       <div className="space-y-1.5">
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_open" defaultChecked={offer?.is_open ?? true} /> On sale</label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="team_only" defaultChecked={offer?.team_only ?? false} /> Team only (only ExCo and subcommittee see and can buy it)</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="referrals_enabled" defaultChecked={offer?.referrals_enabled ?? false} /> Referrals (buyers not on the team can pick the subcommittee member who referred them)</label>
       </div>
       <div className="sm:text-right"><SubmitButton className="btn-ghost" pendingText="Saving…">{offer ? "Save" : "Create offer"}</SubmitButton></div>
     </form>
