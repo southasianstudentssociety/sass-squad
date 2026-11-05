@@ -42,7 +42,6 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
   const mealOptions = (mealData ?? []).filter((o) => !o.archived_at);
   const myMeal = (mealData ?? []).find((o) => o.id === t.meal_option_id) ?? null;
   const showMeal = t.event.meals_enabled && t.status !== "cancelled";
-  const canChangeMeal = showMeal && !eventHasStarted(t.event) && !t.checked_in_at && mealOptions.length > 0;
 
   const canRate = !!t.checked_in_at && feedbackOpen(t.event.starts_at);
   const { data: myFeedback } = canRate
@@ -118,16 +117,8 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
           <SubmitButton className="btn-primary w-full" pendingText="Saving…">Save my meal</SubmitButton>
         </form>
       )}
-      {showMeal && myMeal && canChangeMeal && (
-        <details className="card">
-          <summary className="cursor-pointer text-sm font-medium">Change my meal</summary>
-          <form action={setTicketMeal} className="mt-4 space-y-4">
-            <input type="hidden" name="ticket_id" value={t.id} />
-            <MealPicker options={mealOptions} selected={myMeal.id} />
-            <SubmitButton className="btn-ghost w-full" pendingText="Saving…">Save</SubmitButton>
-          </form>
-          <p className="hint mt-2">You can change it until the event starts.</p>
-        </details>
+      {showMeal && myMeal && (
+        <p className="px-4 text-center text-xs leading-relaxed text-muted">Your meal is <strong className="text-ink">{myMeal.label}</strong>. To change it, contact an ExCo.</p>
       )}
 
       {canRate && <FeedbackForm eventId={t.event_id} initial={myFeedback} />}

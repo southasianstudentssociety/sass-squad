@@ -132,6 +132,21 @@ export async function undoCheckIn(formData: FormData) {
   return ticketRpc("undo_check_in", formData, "Check-in undone.");
 }
 
+/** ExCo: change (or clear) the meal on a ticket. Holders can only set it once themselves. */
+export async function setTicketMealAdmin(formData: FormData) {
+  await requireAdmin();
+  const ticketId = String(formData.get("ticket_id"));
+  const eventId = String(formData.get("event_id"));
+  const filter = String(formData.get("filter") ?? "");
+  const mealId = String(formData.get("meal_option_id") ?? "").trim() || null;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_ticket_meal", { p_ticket_id: ticketId, p_meal_option_id: mealId });
+  revalidatePath(`/admin/events/${eventId}`);
+  const base = `/admin/events/${eventId}${filter ? `?filter=${filter}` : ""}`;
+  if (error) back(base, { error: rpcError(error, "Couldn't change the meal.") });
+  back(base, { ok: "Meal changed." });
+}
+
 // ---------------------------------------------------------------- members
 export async function saveMember(formData: FormData) {
   await requireAdmin();

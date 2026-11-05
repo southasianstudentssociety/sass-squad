@@ -5,7 +5,7 @@ import { MEAL_COLORS, type MealOption } from "@/lib/meals";
 export function MealPicker({ options, selected }: { options: MealOption[]; selected?: string | null }) {
   return (
     <fieldset className="space-y-2">
-      <legend className="mb-2 text-sm font-semibold">Your meal</legend>
+      <legend className="mb-2 text-sm font-semibold">Your meal <span className="font-normal text-muted">· can&apos;t be changed later, only by an ExCo</span></legend>
       {options.map((o) => (
         <label
           key={o.id}
