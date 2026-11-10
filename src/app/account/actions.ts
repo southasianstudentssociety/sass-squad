@@ -104,7 +104,7 @@ export async function startEmailChange(_prev: EmailChangeState, formData: FormDa
           : "Couldn't send the code. Check the address and try again.",
     };
   }
-  return { step: "code", email, current: session.email, codeFor: email, info: `We sent a 6-digit code to ${email}. Check your inbox and junk folder.` };
+  return { step: "code", email, current: session.email, codeFor: email, info: `We sent a code to ${email}. Check your inbox and junk folder.` };
 }
 
 export async function verifyEmailChange(_prev: EmailChangeState, formData: FormData): Promise<EmailChangeState> {
@@ -113,7 +113,7 @@ export async function verifyEmailChange(_prev: EmailChangeState, formData: FormD
   const codeFor = String(formData.get("code_for") ?? email).trim().toLowerCase();
   const token = String(formData.get("code") ?? "").replace(/\s/g, "");
   const keep = { step: "code" as const, email, current, codeFor };
-  if (!/^\d{6,10}$/.test(token)) return { ...keep, error: "Enter the 6-digit code from the email." };
+  if (!/^\d{6,10}$/.test(token)) return { ...keep, error: "Enter the code from the email." };
   const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({ email: codeFor, token, type: "email_change" });
   if (error) return { ...keep, error: `That code is wrong or has expired. Use the latest code sent to ${codeFor}, or start over.` };
