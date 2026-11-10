@@ -126,6 +126,14 @@ html {
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
+/* Never let a page scroll sideways on phones. iOS Safari doesn't always clip
+   animated, blurred or tilted decorations (ribbons, blobs, stamps) inside
+   overflow-hidden boxes, which let /membership slide right. `clip` (not
+   `hidden`) so the sticky header keeps working. */
+html,
+body {
+  overflow-x: clip;
+}
 body {
   background: var(--page);
   color: var(--ink);
