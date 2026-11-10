@@ -50,10 +50,10 @@ export function LoginForm({ next, initialError, codeArt }: { next: string; initi
         <input type="hidden" name="next" value={next} />
         <input type="hidden" name="email" value={email} />
         <div>
-          <label className="label" htmlFor="code">Login code</label>
+          <label className="label" htmlFor="code">The code from the email</label>
           <input
             id="code" name="code" required autoFocus autoComplete="one-time-code" inputMode="numeric"
-            pattern="[0-9 ]{6,12}" placeholder="12345678" className="input py-3.5 text-center font-mono text-2xl tracking-[0.35em] tabular-nums"
+            pattern="[0-9 ]{6,12}" className="input py-3.5 text-center font-mono text-2xl tracking-[0.35em] tabular-nums"
           />
           <p className="hint">It can take a minute. If it hasn&apos;t arrived, check Junk or Spam.</p>
         </div>

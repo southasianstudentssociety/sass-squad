@@ -28,7 +28,7 @@ function Blobs() {
     { c: "bg-sass-purple/60", s: "size-40 sm:size-56", p: "right-1/4 -bottom-16", d: 16 },
   ];
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[2rem]" aria-hidden>
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[2rem] [contain:paint]" aria-hidden>
       {blobs.map((b, i) => (
         <motion.div
           key={i}
@@ -43,7 +43,7 @@ function Blobs() {
 
 export function MembershipHero({ member, joinable }: { member: boolean; joinable: boolean }) {
   return (
-    <section className="relative isolate overflow-hidden rounded-[2rem] border border-line bg-surface/60 px-6 py-14 text-center sm:px-10 sm:py-20">
+    <section className="relative isolate overflow-hidden rounded-[2rem] border border-line bg-surface/60 px-6 py-14 text-center [contain:paint] sm:px-10 sm:py-20">
       <Blobs />
       <motion.div variants={list} initial="hidden" animate="show" className="relative">
         <motion.p variants={rise} className="eyebrow">South Asian Student Society · Membership</motion.p>
@@ -75,7 +75,7 @@ export function MemberPass({ name, plan }: { name: string; plan: MemberPlan }) {
       animate={{ opacity: 1, y: 0, rotate: -1.5 }}
       whileHover={{ rotate: 0, y: -4 }}
       transition={{ duration: 0.8, ease: EASE }}
-      className="relative mx-auto w-full max-w-md overflow-hidden rounded-[1.75rem] bg-brand p-6 text-brand-ink shadow-[var(--shadow-lift)] sm:p-7"
+      className="relative mx-auto w-full max-w-md overflow-hidden rounded-[1.75rem] bg-brand p-6 [contain:paint] text-brand-ink shadow-[var(--shadow-lift)] sm:p-7"
     >
       {/* paper pattern + a slow shine */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:radial-gradient(circle_at_20%_20%,#fff_0_2px,transparent_3px),radial-gradient(circle_at_70%_60%,#fff_0_1.5px,transparent_2.5px)] [background-size:28px_28px,22px_22px]" aria-hidden />
@@ -110,7 +110,7 @@ export function PerkRibbon() {
   const words = ["Early access", "Free food & drinks", "Cheaper tickets", "Members-only nights"];
   const run = [...words, ...words];
   return (
-    <div className="relative -mx-5 -rotate-1 overflow-hidden border-y-2 border-ink bg-sass-yellow py-3 sm:mx-0 sm:rounded-xl" aria-hidden>
+    <div className="relative -mx-5 -rotate-1 overflow-hidden border-y-2 border-ink bg-sass-yellow py-3 [contain:paint] sm:mx-0 sm:rounded-xl" aria-hidden>
       <div className="flex w-max animate-marquee gap-8 whitespace-nowrap motion-reduce:animate-none">
         {[0, 1].map((copy) => (
           <div key={copy} className="flex gap-8">

@@ -27,7 +27,7 @@ export function GradientBackdrop() {
   const mounted = useSyncExternalStore(noop, () => true, () => false);
   if (!mounted) return null;
   return createPortal(
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden [contain:paint]" aria-hidden>
       {BLOBS.map((b, i) => (
         <motion.div
           key={i}

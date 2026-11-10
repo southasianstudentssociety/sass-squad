@@ -45,7 +45,7 @@ export function EmailChangeForm({ current, suggested }: { current: string; sugge
         <input type="hidden" name="current" value={start.current ?? current} />
         <input type="hidden" name="code_for" value={codeFor} />
         <FormMessage success={verify.info ?? start.info} error={verify.error} />
-        <label className="label text-xs" htmlFor="ec-code">6-digit code sent to {codeFor}</label>
+        <label className="label text-xs" htmlFor="ec-code">Code sent to {codeFor}</label>
         <div className="flex gap-2">
           <input id="ec-code" name="code" inputMode="numeric" autoComplete="one-time-code" required className="input max-w-44 tracking-[0.3em]" />
           <SubmitButton pendingText="Checking…">Confirm</SubmitButton>

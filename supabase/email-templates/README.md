@@ -1,7 +1,7 @@
 # Supabase email templates
 
 Paste these into **Supabase → Authentication → Emails → Templates**. All
-emails carry a 6-digit **code** (`{{ .Token }}`), never a link: links from
+emails carry a **code** (`{{ .Token }}`), never a link: links from
 the society Gmail land in HKUST junk, and codes work on any device.
 
 | Supabase template | File | Subject |
