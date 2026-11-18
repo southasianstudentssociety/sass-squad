@@ -4,7 +4,6 @@ export const FOOD_PREFERENCES = [
   { value: "non_veg", label: "Non-vegetarian" },
   { value: "veg", label: "Vegetarian (non-Jain)" },
   { value: "veg_jain", label: "Vegetarian (Jain)" },
-  { value: "vegan", label: "Vegan" },
 ] as const;
 export type FoodPreference = (typeof FOOD_PREFERENCES)[number]["value"];
 

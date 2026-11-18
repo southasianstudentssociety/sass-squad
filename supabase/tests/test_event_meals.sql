@@ -94,10 +94,10 @@ select pg_temp.check((select price_cents = 15000 and team_rate and meal_option_i
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select public.set_event_meals('20000000-0000-0000-0000-000000000001', true, jsonb_build_array(
   jsonb_build_object('id', (select id from opt where label = 'Vegetarian (Non-Jain)'), 'label', 'Veg', 'color', 'green'),
-  jsonb_build_object('label', 'Vegan', 'color', 'amber')
+  jsonb_build_object('label', 'Halal', 'color', 'amber')
 ));
 reset role;
-select pg_temp.check((select string_agg(label, ',' order by sort_order) from public.event_meal_options where event_id = '20000000-0000-0000-0000-000000000001' and archived_at is null) = 'Veg,Vegan', 'edited list');
+select pg_temp.check((select string_agg(label, ',' order by sort_order) from public.event_meal_options where event_id = '20000000-0000-0000-0000-000000000001' and archived_at is null) = 'Veg,Halal', 'edited list');
 select pg_temp.check((select archived_at is not null from public.event_meal_options where id = (select id from opt where label = 'Non-Vegetarian')), 'used option hidden, not deleted');
 select pg_temp.check((select count(*) = 0 from public.event_meal_options where id = (select id from opt where label = 'Vegetarian (Jain)')), 'unused option deleted');
 select pg_temp.check((select meal_option_id = (select id from opt where label = 'Non-Vegetarian') from public.tickets where id = (select id from t1)), 'ticket keeps its choice');
@@ -109,7 +109,7 @@ reset role;
 update public.tickets set meal_option_id = null where id = (select id from t1);
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select pg_temp.check((select meal_option_id is not null from public.set_ticket_meal((select id from t1), (select id from public.event_meal_options where event_id = '20000000-0000-0000-0000-000000000001' and label = 'Veg'))), 'holder sets a missing meal once');
-select pg_temp.fails($$select public.set_ticket_meal((select id from t1), (select id from public.event_meal_options where event_id = '20000000-0000-0000-0000-000000000001' and label = 'Vegan'))$$, 'contact an ExCo');
+select pg_temp.fails($$select public.set_ticket_meal((select id from t1), (select id from public.event_meal_options where event_id = '20000000-0000-0000-0000-000000000001' and label = 'Halal'))$$, 'contact an ExCo');
 -- Duplicate names refused
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select pg_temp.fails($$select public.set_event_meals('20000000-0000-0000-0000-000000000001', true, '[{"label":"Veg","color":"green"},{"label":"veg ","color":"red"}]')$$, 'same name');

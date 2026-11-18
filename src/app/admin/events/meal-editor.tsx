@@ -39,7 +39,7 @@ export function MealEditor({ enabled, options }: { enabled: boolean; options: { 
                 value={r.label}
                 onChange={(e) => update(r.key, { label: e.target.value })}
                 maxLength={40}
-                placeholder="e.g. Vegan"
+                placeholder="e.g. Jain"
                 aria-label="Meal name"
                 className="input min-w-0 flex-1 basis-[calc(100%-1.5rem)] sm:basis-auto"
               />
