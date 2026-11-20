@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import localFont from "next/font/local";
 import "@fontsource/berkshire-swash/400.css";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { MotionProvider } from "@/components/motion";
 import { SITE } from "@/lib/site";
+
+// Amoresa Aged: textured script for section headings (Gallery, Upcoming events…).
+// Subset to Latin from the source OTF to keep it ~290 KB instead of ~950 KB.
+const amoresa = localFont({
+  src: "./fonts/amoresa-aged.woff2",
+  variable: "--font-amoresa",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: `${SITE.name} Hub`, template: `%s · ${SITE.name}` },
@@ -21,7 +30,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-HK" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en-HK" className={`${GeistSans.variable} ${GeistMono.variable} ${amoresa.variable}`}>
       <body className="flex min-h-dvh flex-col antialiased">
         <MotionProvider>
           <SiteHeader />
