@@ -1,8 +1,26 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// The site's old address. Old links (WhatsApp, Instagram, calendar invites)
+// still point here, so it permanently redirects to NEXT_PUBLIC_SITE_URL.
+// Only this exact host: Vercel's per-deployment preview URLs are left alone.
+const OLD_HOST = "sass-hub.vercel.app";
+
+function oldAddressRedirect(request: NextRequest) {
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!site || request.nextUrl.hostname !== OLD_HOST) return null;
+  const target = new URL(site);
+  if (target.hostname === OLD_HOST) return null;
+  target.pathname = request.nextUrl.pathname;
+  target.search = request.nextUrl.search;
+  return NextResponse.redirect(target, 308);
+}
+
 // Refreshes the Supabase session cookie on every request.
 export async function proxy(request: NextRequest) {
+  const moved = oldAddressRedirect(request);
+  if (moved) return moved;
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
