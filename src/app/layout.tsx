@@ -1,20 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import localFont from "next/font/local";
 import "@fontsource/berkshire-swash/400.css";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { MotionProvider } from "@/components/motion";
 import { SITE } from "@/lib/site";
-
-// Maragsa Display: serif display face for section headings and the header wordmark.
-// Latin subset of the source OTF (~29 KB).
-const maragsa = localFont({
-  src: "./fonts/maragsa-display.woff2",
-  variable: "--font-maragsa",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: { default: `${SITE.name} Hub`, template: `%s · ${SITE.name}` },
@@ -30,7 +21,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-HK" className={`${GeistSans.variable} ${GeistMono.variable} ${maragsa.variable}`}>
+    <html lang="en-HK" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="flex min-h-dvh flex-col antialiased">
         <MotionProvider>
           <SiteHeader />

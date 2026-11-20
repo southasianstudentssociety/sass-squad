@@ -38,7 +38,7 @@ export default async function Home() {
       <section className="grid grid-cols-1 items-center gap-10 pt-2 sm:pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
         <Reveal>
           <p className="eyebrow">{firstName ? `Welcome back, ${firstName}` : SITE.fullName}</p>
-          <h1 className="mt-4 max-w-lg font-heading text-[2.6rem] leading-[1.05] text-ink sm:text-[3.6rem]">
+          <h1 className="mt-4 max-w-lg font-display text-[2.6rem] leading-[1.05] text-ink sm:text-[3.6rem]">
             Every SASS night, <span className="font-brand text-brand">one tap away.</span>
           </h1>
           <p className="mt-5 max-w-md text-base leading-relaxed text-ink/70">
@@ -68,7 +68,7 @@ export default async function Home() {
         <section className="pb-10 sm:pb-12">
           <div className="mb-6 flex items-end justify-between gap-3">
             <div>
-              <h2 className="font-heading text-2xl text-ink sm:text-3xl">Gallery</h2>
+              <h2 className="font-display text-2xl text-ink sm:text-3xl">Gallery</h2>
               <p className="mt-1 text-sm text-muted">Moments from past SASS nights.</p>
             </div>
             <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="btn-ghost shrink-0">

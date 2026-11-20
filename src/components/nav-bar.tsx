@@ -50,7 +50,7 @@ export function NavBar({ user }: { user: User | null }) {
       <div className="sass-stripe h-[3px]" aria-hidden />
       <div className="border-b border-line/80 bg-page/80 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-1.5 px-4 sm:gap-6 sm:px-5">
-          <Link href="/" className="mr-1 shrink-0 font-heading text-[1.4rem] leading-none text-brand transition-opacity hover:opacity-80 sm:text-2xl" aria-label="SASS home">
+          <Link href="/" className="mr-1 shrink-0 font-brand text-[1.4rem] leading-none text-brand transition-opacity hover:opacity-80 sm:text-2xl" aria-label="SASS home">
             SASS
           </Link>
 
