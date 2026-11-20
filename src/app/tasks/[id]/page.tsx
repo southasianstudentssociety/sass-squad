@@ -60,7 +60,7 @@ export default async function TaskPage({
           <span className={`badge ${TASK_STATUS[task.status].cls}`}>{TASK_STATUS[task.status].label}</span>
           <span className={`badge ${TASK_KIND[task.kind].chip}`}>{TASK_KIND[task.kind].short}</span>
         </div>
-        <h1 className="text-3xl font-display font-normal">{task.title}</h1>
+        <h1 className="text-3xl ops-heading font-normal">{task.title}</h1>
         <p className="text-sm text-muted">
           {deptName.get(task.department_id)}{eventTitle && ` · ${eventTitle}`} · {task.owner_id ? name(task.owner_id) : "Unassigned"}
           {task.due_on && <span className={overdue ? "font-semibold text-bad" : undefined}> · {task.kind === "upload" ? "goes up" : "due"} {formatDate(task.due_on)}{task.due_time && ` ${formatTaskTime(task.due_time)}`}{overdue && " (overdue)"}</span>}

@@ -66,7 +66,7 @@ export default async function EventAccountsPage({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href={`/finance/budgets?year=${year}`} className="text-xs text-muted underline">← Accounts {yearLabel(year)}</Link>
-          <h1 className="mt-1 font-display text-3xl">{general ? "General" : event!.title}</h1>
+          <h1 className="mt-1 ops-heading text-3xl">{general ? "General" : event!.title}</h1>
           <p className="text-sm text-muted">{general ? `Money not tied to one event, ${yearLabel(year)}` : formatDate(event!.starts_at)}</p>
         </div>
         <div className="flex flex-wrap gap-2">

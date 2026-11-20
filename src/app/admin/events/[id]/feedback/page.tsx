@@ -27,7 +27,7 @@ export default async function FeedbackPage({ params }: { params: Promise<{ id: s
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <Link href={`/admin/events/${id}`} className="text-xs text-muted underline">← {event.title}</Link>
-        <h1 className="mt-1 font-display text-3xl">Feedback</h1>
+        <h1 className="mt-1 ops-heading text-3xl">Feedback</h1>
         <p className="text-sm text-muted">
           {rows.length} of {attended ?? 0} people who came rated it. Rating stays open for {FEEDBACK_DAYS} days after the event; people can choose to be anonymous.
         </p>

@@ -50,7 +50,7 @@ export default async function InventoryPage({
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-normal">Inventory</h1>
+          <h1 className="text-3xl ops-heading font-normal">Inventory</h1>
           <p className="text-sm text-muted">
             {allItems.filter((i) => !i.retired_at).length} items · {loans.length} checked out
             {overdue.length > 0 && <span className="text-bad"> · {overdue.length} overdue</span>}

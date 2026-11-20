@@ -69,7 +69,7 @@ export default async function ClaimPage({
     return (
       <div className="mx-auto max-w-xl space-y-4">
         <Link href={`/claims/${id}`} className="text-xs text-muted underline">← Back to {claim.reference}</Link>
-        <h1 className="text-3xl font-display font-normal">Change {claim.reference}</h1>
+        <h1 className="text-3xl ops-heading font-normal">Change {claim.reference}</h1>
         <p className="text-sm text-muted">This saves a new version. Finance can still see the old one.</p>
         <ClaimForm
           userId={session.userId}
@@ -95,7 +95,7 @@ export default async function ClaimPage({
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-normal">{formatPrice(current.amount_cents)}</h1>
+          <h1 className="text-3xl ops-heading font-normal">{formatPrice(current.amount_cents)}</h1>
           <p className="text-sm text-muted">
             {claim.reference} · by {nameOf(claim.claimant_id)}{claim.current_revision > 1 && ` · version ${claim.current_revision}`}
           </p>

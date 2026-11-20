@@ -26,7 +26,7 @@ export default async function ScanEventPage({ params }: { params: Promise<{ even
     return (
       <div className="mx-auto max-w-md space-y-3">
         <Link href="/scan" className="text-xs text-muted underline">← Events</Link>
-        <h1 className="font-display text-2xl font-normal">{event.title}</h1>
+        <h1 className="ops-heading text-2xl font-normal">{event.title}</h1>
         <p className="card text-sm">
           {win.upcoming
             ? <>Scanning opens <strong>{formatDateTime(win.opensAt)}</strong> (24 hours before the event).</>

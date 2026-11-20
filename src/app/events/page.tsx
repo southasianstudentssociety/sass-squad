@@ -50,7 +50,7 @@ export default async function EventsPage() {
       {past.length > 0 && (
         <section className="space-y-6 border-t border-ink/10 pt-10">
           <div>
-            <h2 className="font-display text-2xl">Previous events</h2>
+            <h2 className="font-display text-2xl sm:text-3xl">Previous events</h2>
             <p className="mt-1 text-sm text-muted">What we&apos;ve been up to.</p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -68,7 +68,7 @@ export default async function Home() {
         <section className="pb-10 sm:pb-12">
           <div className="mb-6 flex items-end justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl text-ink">Gallery</h2>
+              <h2 className="font-display text-2xl text-ink sm:text-3xl">Gallery</h2>
               <p className="mt-1 text-sm text-muted">Moments from past SASS nights.</p>
             </div>
             <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="btn-ghost shrink-0">

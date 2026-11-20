@@ -52,7 +52,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl">Accounts</h1>
+          <h1 className="ops-heading text-3xl">Accounts</h1>
           <p className="text-sm text-muted">Income statement for academic year {yearLabel(year)} (1 Sep to 31 Aug). Ticket sales, memberships and reimbursements come in automatically.</p>
         </div>
         <div className="flex flex-wrap gap-2">

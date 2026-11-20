@@ -33,7 +33,7 @@ export default async function AdminHome() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-3xl">Events</h1>
+        <h1 className="ops-heading text-3xl">Events</h1>
         <Link href="/admin/events/new" className="btn-primary"><Plus className="size-4" aria-hidden />New event</Link>
       </div>
 

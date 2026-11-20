@@ -78,7 +78,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-display font-normal">Team</h1>
+        <h1 className="text-2xl ops-heading font-normal">Team</h1>
         <p className="text-sm text-muted">
           <strong>ExCo</strong> can manage events, members and payments. <strong>Hub owners</strong> also control this page.{" "}
           <strong>Subcommittee</strong> can use the scanner from 24 hours before an event.

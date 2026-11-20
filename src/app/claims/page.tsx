@@ -26,7 +26,7 @@ export default async function ClaimsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-normal">My claims</h1>
+          <h1 className="text-3xl ops-heading font-normal">My claims</h1>
           <p className="text-sm text-muted">Reimbursements for things you paid for on behalf of SASS.</p>
         </div>
         {session.access.isTeam && <Link href="/claims/new" className="btn-primary">New claim</Link>}
