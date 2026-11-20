@@ -50,7 +50,7 @@ To set up a fresh project instead, run the files in `supabase/migrations/` in or
 Remaining dashboard steps:
 
 3. **Authentication → Sign In / Providers → Email:** enabled. "Confirm email" can stay on.
-4. **Authentication → URL Configuration:** set Site URL to your deployed URL, and add `http://localhost:3000/**` and `https://YOUR-DOMAIN/**` to Redirect URLs.
+4. **Authentication → URL Configuration:** Site URL `https://sasshkust.com`. Redirect URLs: `https://sasshkust.com/**`, `https://sass-hub.vercel.app/**` (old address, kept for old links) and `http://localhost:3000/**`.
 5. **Authentication → Email Templates:** paste the designs from [`supabase/email-templates/`](supabase/email-templates/README.md): `login-code.html` into **both** "Confirm signup" (first login) and "Magic Link" (every login after), and `change-email-code.html` into "Change Email Address", with the subjects listed there. Every email carries a code (no fixed length: Supabase sets it) and **no link**: HKUST's Microsoft 365 filter sent emails containing a `*.vercel.app` link to Junk, and a code works on any device. Under **Sign In / Providers → Email**, turn **Secure email change off** so only the new address gets a code.
 6. **Custom SMTP (required).** Supabase's built-in sender only emails members of the Supabase organisation, and email templates can't be edited until custom SMTP is on. Without a domain, send through the society Gmail:
    - On the Gmail account: turn on 2-Step Verification, then create an App Password (Google Account → Security → App passwords).
@@ -86,7 +86,9 @@ After that, add everyone else from **Admin → Team**. The same SQL is how you g
 Google Sheet: **File → Download → CSV**, then **Admin → Members → Import**. You need `Name` and `Email` columns. Optional columns: `Alt email`, `Student ID`, `Purchased`, `Valid until` (DD/MM/YYYY). Re-importing updates existing rows by email. From now on, **manage members in the app**, not the Sheet.
 
 ### 5. Deploy
-Import the repo in Vercel and set the three env vars from `.env.example` (`NEXT_PUBLIC_SITE_URL` = your production URL). The camera scanner needs **HTTPS**, which Vercel provides.
+Import the repo in Vercel and set the three env vars from `.env.example` (`NEXT_PUBLIC_SITE_URL` = `https://sasshkust.com`, no trailing slash). The camera scanner needs **HTTPS**, which Vercel provides.
+
+**Domain:** `sasshkust.com`, registered on Cloudflare (society Gmail, auto-renew on). Cloudflare DNS: A `@` and CNAME `www` to Vercel, both **DNS only (grey cloud)**, never proxied; SSL/TLS Full (strict); TXT `v=spf1 -all` and `_dmarc` `v=DMARC1; p=reject;` because the domain sends no email (login codes still come from the society Gmail). In Vercel, `sasshkust.com` is the main address and `www` redirects to it. The old `sass-hub.vercel.app` redirects to `NEXT_PUBLIC_SITE_URL` (see `src/proxy.ts`). The domain is also listed under Authorised domains in Google Auth Platform → Branding.
 
 ## Running an event
 
