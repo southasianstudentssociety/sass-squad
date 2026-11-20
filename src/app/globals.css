@@ -154,6 +154,13 @@ h2.font-display {
   letter-spacing: 0;
   font-weight: 400;
 }
+/* Internal tool pages (admin, finance, claims, inventory, tasks, scan) keep plain Geist
+   headings so figures and labels stay easy to scan. */
+@utility ops-heading {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  font-weight: 450;
+}
 
 /* Respect "reduce motion": keep state changes, drop the movement. */
 @media (prefers-reduced-motion: reduce) {

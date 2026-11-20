@@ -50,7 +50,7 @@ export default async function ItemPage({
       <Link href="/inventory" className="text-xs text-muted underline">← Inventory</Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-normal">{item.name}</h1>
+          <h1 className="text-3xl ops-heading font-normal">{item.name}</h1>
           <p className="text-sm text-muted">{[item.category, item.location].filter(Boolean).join(" · ") || "No category or location yet"}</p>
         </div>
         <div className="text-right">

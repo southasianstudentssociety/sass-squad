@@ -30,7 +30,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-normal">Finance: claims</h1>
+          <h1 className="text-3xl ops-heading font-normal">Finance: claims</h1>
           <p className="text-sm text-muted">
             {formatPrice(total("submitted"))} waiting for review · {formatPrice(total("approved"))} approved, not paid yet
           </p>

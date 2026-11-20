@@ -85,7 +85,7 @@ export default async function LivePage({ params, searchParams }: { params: Promi
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <Link href={`/admin/events/${id}`} className="text-xs text-muted underline">← {event.title}</Link>
-          <h1 className="mt-1 flex items-center gap-2 font-display text-3xl">
+          <h1 className="mt-1 flex items-center gap-2 ops-heading text-3xl">
             Door live
             <span className="relative flex size-2.5" aria-hidden><span className="absolute inline-flex size-full animate-ping rounded-full bg-ok opacity-60" /><span className="relative inline-flex size-2.5 rounded-full bg-ok" /></span>
           </h1>

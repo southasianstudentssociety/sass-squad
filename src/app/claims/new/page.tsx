@@ -10,7 +10,7 @@ export default async function NewClaimPage() {
   if (!session.access.isTeam) {
     return (
       <div className="mx-auto max-w-xl space-y-3">
-        <h1 className="text-3xl font-display font-normal">New claim</h1>
+        <h1 className="text-3xl ops-heading font-normal">New claim</h1>
         <p className="card text-sm text-muted">Only current team members can submit claims. Ask an ExCo to add you on the Team page.</p>
       </div>
     );
@@ -20,7 +20,7 @@ export default async function NewClaimPage() {
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <Link href="/claims" className="text-xs text-muted underline">← My claims</Link>
-      <h1 className="text-3xl font-display font-normal">New claim</h1>
+      <h1 className="text-3xl ops-heading font-normal">New claim</h1>
       <ClaimForm userId={session.userId} events={events} />
     </div>
   );

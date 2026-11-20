@@ -55,7 +55,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl">Attendance</h1>
+        <h1 className="ops-heading text-3xl">Attendance</h1>
         <p className="text-sm text-muted">Who actually comes, worked out from check-ins at the door.</p>
       </div>
 

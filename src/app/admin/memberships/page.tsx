@@ -42,7 +42,7 @@ export default async function MembershipsAdmin({ searchParams }: { searchParams:
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl">Memberships</h1>
+        <h1 className="ops-heading text-3xl">Memberships</h1>
         <p className="text-sm text-muted">People join at <strong>/membership</strong>. Confirming a payment adds or renews them on the member list straight away.</p>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />

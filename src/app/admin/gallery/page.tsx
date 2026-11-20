@@ -30,7 +30,7 @@ export default async function AdminGalleryPage({ searchParams }: { searchParams:
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Gallery</h1>
+        <h1 className="ops-heading text-3xl">Gallery</h1>
         <p className="text-sm text-muted">
           Photos here scroll across the home page, newest first (the latest 24). The &ldquo;View all photos&rdquo; button there opens{" "}
           <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="underline">the Google Drive folder</a>.

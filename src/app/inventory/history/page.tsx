@@ -37,7 +37,7 @@ export default async function InventoryHistoryPage({ searchParams }: { searchPar
     <div className="space-y-6">
       <div>
         <Link href="/inventory" className="text-xs text-muted underline">← Inventory</Link>
-        <h1 className="mt-1 font-display text-3xl">Inventory history</h1>
+        <h1 className="mt-1 ops-heading text-3xl">Inventory history</h1>
         <p className="text-sm text-muted">Everything that happened to every item: added, edited, moved, counted, checked out, returned, lost, handed on, retired. Newest first{log.length === LIMIT && ` (latest ${LIMIT})`}.</p>
       </div>
 

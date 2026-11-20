@@ -72,7 +72,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-display font-normal">Tasks</h1>
+          <h1 className="text-3xl ops-heading font-normal">Tasks</h1>
           <p className="text-sm text-muted">
             {myOpen.length} open for you{overdueMine > 0 && <span className="text-bad"> · {overdueMine} overdue</span>}
             {unassigned > 0 && ` · ${unassigned} unassigned`}
