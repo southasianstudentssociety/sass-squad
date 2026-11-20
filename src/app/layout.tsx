@@ -8,11 +8,11 @@ import { SiteHeader } from "@/components/site-header";
 import { MotionProvider } from "@/components/motion";
 import { SITE } from "@/lib/site";
 
-// Amoresa Aged: textured script for section headings (Gallery, Upcoming events…).
-// Subset to Latin from the source OTF to keep it ~290 KB instead of ~950 KB.
-const amoresa = localFont({
-  src: "./fonts/amoresa-aged.woff2",
-  variable: "--font-amoresa",
+// Maragsa Display: serif display face for section headings and the header wordmark.
+// Latin subset of the source OTF (~29 KB).
+const maragsa = localFont({
+  src: "./fonts/maragsa-display.woff2",
+  variable: "--font-maragsa",
   display: "swap",
 });
 
@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-HK" className={`${GeistSans.variable} ${GeistMono.variable} ${amoresa.variable}`}>
+    <html lang="en-HK" className={`${GeistSans.variable} ${GeistMono.variable} ${maragsa.variable}`}>
       <body className="flex min-h-dvh flex-col antialiased">
         <MotionProvider>
           <SiteHeader />

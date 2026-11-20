@@ -58,8 +58,8 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-brand: "Berkshire Swash", Georgia, serif;
-  /* Textured script for page/section headings on the public pages. */
-  --font-script: var(--font-amoresa), "Berkshire Swash", Georgia, serif;
+  /* Serif display face for public page/section headings and the header wordmark. */
+  --font-heading: var(--font-maragsa), Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   --ease-soft: var(--ease-out-soft);
   --animate-fade-up: fade-up 420ms var(--ease-out-soft) both;
@@ -155,9 +155,9 @@ h2.font-display {
   letter-spacing: -0.025em;
   font-weight: 450;
 }
-/* Amoresa has a single weight and its own spacing: undo the Geist heading tweaks. */
-h1.font-script,
-h2.font-script {
+/* Maragsa has a single weight and its own spacing: undo the Geist heading tweaks. */
+h1.font-heading,
+h2.font-heading {
   letter-spacing: 0;
   font-weight: 400;
 }

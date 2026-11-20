@@ -34,7 +34,7 @@ export default async function EventsPage() {
       <section className="space-y-8">
         <div>
           <p className="eyebrow">What&apos;s on</p>
-          <h1 className="mt-2 font-script text-5xl sm:text-6xl">Upcoming events</h1>
+          <h1 className="mt-2 font-heading text-3xl sm:text-4xl">Upcoming events</h1>
         </div>
         {events.length === 0 ? (
           <div className="card">
@@ -50,7 +50,7 @@ export default async function EventsPage() {
       {past.length > 0 && (
         <section className="space-y-6 border-t border-ink/10 pt-10">
           <div>
-            <h2 className="font-script text-4xl sm:text-5xl">Previous events</h2>
+            <h2 className="font-heading text-2xl sm:text-3xl">Previous events</h2>
             <p className="mt-1 text-sm text-muted">What we&apos;ve been up to.</p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
