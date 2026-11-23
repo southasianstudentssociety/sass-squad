@@ -12,23 +12,35 @@ export type GalleryPhoto = {
 
 export type GalleryItem = { id: string; src: string; alt: string };
 
-/** Visible gallery photos, newest first, with their public URLs. Optionally only one event's. */
+/**
+ * Visible gallery photos with their public URLs, most recent EVENT first, and
+ * within an event in the order they were uploaded (the order ExCo picked).
+ * Upload dates don't matter, so adding photos from an old event later doesn't
+ * push them to the front. Photos with no event sort by their upload date.
+ * Optionally only one event's.
+ */
 export async function galleryItems(limit = 24, eventId?: string): Promise<GalleryItem[]> {
   const supabase = await createClient();
   let query = supabase
     .from("gallery_photos")
-    .select("id, path, caption, event_id, created_at, hidden_at, event:events(title)")
+    .select("id, path, caption, event_id, created_at, hidden_at, event:events(title, starts_at)")
     .is("hidden_at", null);
   if (eventId) query = query.eq("event_id", eventId);
+  // Ordered here rather than in SQL, by the event's date. A few hundred rows at most.
   const { data } = await query
-    .order("created_at", { ascending: false })
-    .limit(limit)
-    .returns<(GalleryPhoto & { event: { title: string } | null })[]>();
-  return (data ?? []).map((p) => ({
-    id: p.id,
-    src: supabase.storage.from("gallery").getPublicUrl(p.path).data.publicUrl,
-    alt: p.caption ?? (p.event ? `${p.event.title}, SASS` : "A SASS event"),
-  }));
+    .order("created_at", { ascending: true })
+    .limit(1000)
+    .returns<(GalleryPhoto & { event: { title: string; starts_at: string } | null })[]>();
+  const when = (p: { created_at: string; event: { starts_at: string } | null }) => p.event?.starts_at ?? p.created_at;
+  return (data ?? [])
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => when(b.p).localeCompare(when(a.p)) || a.i - b.i)
+    .slice(0, limit)
+    .map(({ p }) => ({
+      id: p.id,
+      src: supabase.storage.from("gallery").getPublicUrl(p.path).data.publicUrl,
+      alt: p.caption ?? (p.event ? `${p.event.title}, SASS` : "A SASS event"),
+    }));
 }
 
 export type Album = {
