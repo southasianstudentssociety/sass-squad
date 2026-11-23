@@ -59,9 +59,9 @@ export function PhotoBanner({ slug, eyebrow, headline, cta, covers }: { slug: st
           key="banner"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+          exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.6, ease: EASE }}
-          className="!mb-10 -mx-4 sm:mx-0 sm:!mb-14"
+          className="-mx-4 sm:mx-0"
           aria-label={`${eyebrow}: ${headline}`}
         >
           <div className="relative isolate overflow-hidden bg-[#1a0f1f] p-[2px] shadow-[0_30px_80px_-30px_rgb(90_31_58/0.7)] sm:rounded-[2rem]">

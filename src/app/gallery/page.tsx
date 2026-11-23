@@ -49,7 +49,7 @@ export default async function GalleryPage() {
                 <div className="flex items-center justify-between gap-3 p-5">
                   <div>
                     <h2 className="font-display text-2xl text-ink">{withYear(a.title, a.startsAt)}</h2>
-                    <p className="mt-0.5 text-xs text-muted">{formatDate(a.startsAt)} · {a.count} photos</p>
+                    <p className="mt-0.5 text-xs text-muted">{formatDate(a.startsAt)}</p>
                   </div>
                   <ArrowRight className="size-5 text-muted transition-transform group-hover:translate-x-1 group-hover:text-ink" aria-hidden />
                 </div>
