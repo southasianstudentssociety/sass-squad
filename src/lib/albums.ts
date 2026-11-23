@@ -8,6 +8,7 @@
 const DRIVE_FOLDERS: Record<string, string> = {
   "diwali-2026": "https://drive.google.com/drive/folders/1X62OBkn2z5t6vV_hUSPS1Fab8HZjlLF4",
   "diwali-2025": "https://drive.google.com/drive/folders/1PWjAm1IU9Aw27V0O7yCZM0vxTOLL_dYG",
+  "welcome-back-mixer-2026": "https://drive.google.com/drive/folders/1IdW7Yv0TIQNEcwDdvO0XTYEUe5ifrYxx",
 };
 
 export function driveUrlFor(eventSlug: string): string | null {
