@@ -10,7 +10,7 @@ import { Reveal } from "@/components/motion";
 import { NowShowing, type HomeEvent } from "@/components/home-marquee";
 import { formatPrice, TIME_ZONE, todayInHongKong } from "@/lib/format";
 import { GalleryStrip } from "@/components/gallery-strip";
-import { galleryAlbums, galleryItems } from "@/lib/gallery";
+import { galleryAlbums, homeStripItems } from "@/lib/gallery";
 import { activePhotoBanner } from "@/lib/albums";
 import { PhotoBanner } from "@/components/photo-banner";
 import { RateEventCard } from "@/components/rate-event-card";
@@ -30,7 +30,7 @@ export default async function Home() {
       .order("starts_at")
       .limit(3)
       .returns<SassEvent[]>(),
-    galleryItems(),
+    homeStripItems(),
     banner ? galleryAlbums() : Promise.resolve([]),
   ]);
   const bannerAlbum = banner ? albums.find((a) => a.slug === banner.eventSlug) : undefined;

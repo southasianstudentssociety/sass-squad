@@ -60,6 +60,20 @@ select pg_temp.fails($$select public.hide_gallery_photo((select id from public.g
 select pg_temp.check((select count(*) = 2 from public.gallery_photos), 'exco still sees hidden');
 select pg_temp.as_user(null);
 select pg_temp.check((select count(*) = 1 from public.gallery_photos), 'anon sees 1 after hide');
+-- home page picks: ExCo only, visible photos only
+reset role;
+select pg_temp.check((select not on_home from public.gallery_photos where path like '%/two.webp'), 'not picked by default');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.fails($$select public.set_gallery_photo_on_home((select id from public.gallery_photos where path like '%/two.webp'), true)$$, 'ExCo only');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.set_gallery_photo_on_home((select id from public.gallery_photos where path like '%/two.webp'), true);
+select pg_temp.check((select on_home from public.gallery_photos where path like '%/two.webp'), 'picked');
+select public.set_gallery_photo_on_home((select id from public.gallery_photos where path like '%/two.webp'), false);
+select pg_temp.check((select not on_home from public.gallery_photos where path like '%/two.webp'), 'unpicked');
+select pg_temp.fails($$select public.set_gallery_photo_on_home((select id from public.gallery_photos where caption = 'Diwali 2025'), true)$$, 'already removed');
+select pg_temp.as_user(null);
+select pg_temp.fails($$update public.gallery_photos set on_home = true$$, 'permission denied');
+select pg_temp.fails($$select public.set_gallery_photo_on_home(gen_random_uuid(), true)$$, 'permission denied');
 -- nobody writes directly
 select pg_temp.fails($$insert into public.gallery_photos (path) values ('x')$$, 'permission denied');
 reset role;
