@@ -29,3 +29,13 @@ export async function hideGalleryPhoto(formData: FormData) {
   revalidatePath(PAGE);
   redirect(`${PAGE}?${error ? `error=${encodeURIComponent(rpcError(error, "Couldn't remove it."))}` : `ok=${encodeURIComponent("Removed from the gallery.")}`}`);
 }
+
+export async function setGalleryPhotoOnHome(formData: FormData) {
+  await requireAdmin(PAGE);
+  const supabase = await createClient();
+  const on = formData.get("on") === "1";
+  const { error } = await supabase.rpc("set_gallery_photo_on_home", { p_id: String(formData.get("id") ?? ""), p_on: on });
+  revalidatePath("/");
+  revalidatePath(PAGE);
+  if (error) redirect(`${PAGE}?error=${encodeURIComponent(rpcError(error, "Couldn't change that."))}`);
+}
