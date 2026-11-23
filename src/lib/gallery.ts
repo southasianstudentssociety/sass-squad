@@ -36,7 +36,7 @@ export type Album = {
   title: string;
   startsAt: string;
   count: number;
-  /** Up to 4 photos for the album card and the home banner. */
+  /** Up to 6 photos for the album card and the home banner. */
   covers: GalleryItem[];
 };
 
@@ -55,7 +55,7 @@ export async function galleryAlbums(): Promise<Album[]> {
   for (const p of data ?? []) {
     const album = albums.get(p.event.slug) ?? { slug: p.event.slug, title: p.event.title, startsAt: p.event.starts_at, count: 0, covers: [] };
     album.count++;
-    if (album.covers.length < 4) {
+    if (album.covers.length < 6) {
       album.covers.push({
         id: p.id,
         src: supabase.storage.from("gallery").getPublicUrl(p.path).data.publicUrl,

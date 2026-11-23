@@ -363,3 +363,7 @@ select.input {
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50% { opacity: 0.9; transform: scale(1.08); }
 }
+@keyframes banner-sheen {
+  0% { transform: translateX(-100%); }
+  40%, 100% { transform: translateX(100%); }
+}

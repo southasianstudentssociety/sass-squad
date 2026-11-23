@@ -41,7 +41,7 @@ export default async function Home() {
     <div className="space-y-14 sm:space-y-20">
       <GradientBackdrop />
       {banner && bannerAlbum && (
-        <PhotoBanner slug={bannerAlbum.slug} headline={banner.headline} cta={banner.cta} count={bannerAlbum.count} covers={bannerAlbum.covers} />
+        <PhotoBanner slug={bannerAlbum.slug} eyebrow={banner.eyebrow} headline={banner.headline} cta={banner.cta} covers={bannerAlbum.covers} />
       )}
       <section className="grid grid-cols-1 items-center gap-10 pt-2 sm:pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
         <Reveal>
@@ -80,7 +80,7 @@ export default async function Home() {
               <p className="mt-1 text-sm text-muted">Moments from past SASS nights.</p>
             </div>
             <Link href="/gallery" className="btn-ghost shrink-0">
-              <Images className="size-4" aria-hidden />View all photos
+              <Images className="size-4" aria-hidden />See the gallery
             </Link>
           </div>
           <GalleryStrip items={photos} />

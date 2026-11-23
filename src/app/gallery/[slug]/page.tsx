@@ -57,10 +57,12 @@ export default async function AlbumPage({ params }: Props) {
                 ? `Relive the night: ${photos.length} of our favourite moments. Tap any photo to see it big.`
                 : "The photos are on their way. Check back soon."}
             </p>
-            <a href={drive} target="_blank" rel="noreferrer" className="mt-7 inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium backdrop-blur transition hover:border-white/40 hover:bg-white/10">
-              <FolderOpen className="size-4" aria-hidden />Every photo on Google Drive
-              <ExternalLink className="size-3.5 opacity-60" aria-hidden />
-            </a>
+            {drive && (
+              <a href={drive} target="_blank" rel="noreferrer" className="mt-7 inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium backdrop-blur transition hover:border-white/40 hover:bg-white/10">
+                <FolderOpen className="size-4" aria-hidden />Every photo from the night
+                <ExternalLink className="size-3.5 opacity-60" aria-hidden />
+              </a>
+            )}
           </Reveal>
           {photos.length >= 3 && <AlbumHeroStack photos={photos.slice(0, 3)} />}
         </div>
@@ -69,12 +71,15 @@ export default async function AlbumPage({ params }: Props) {
       {photos.length > 0 && <PhotoCollage items={photos} label={`Photos from ${event.title}`} />}
 
       <Reveal className="mx-auto max-w-md pt-6 text-center">
-        <p className="font-display text-2xl text-ink">Looking for yourself?</p>
-        <p className="mt-2 text-sm text-muted">These are our picks. The full set from the night is on Google Drive.</p>
+        <p className="font-display text-2xl text-ink">{drive ? "Looking for yourself?" : "See you at the next one"}</p>
+        <p className="mt-2 text-sm text-muted">{drive ? `These are our picks. Every photo from ${event.title} is in its Google Drive folder.` : "More albums are in the gallery."}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <a href={drive} target="_blank" rel="noreferrer" className="btn-primary px-5">
-            <FolderOpen className="size-4" aria-hidden />Open the full album
-          </a>
+          {drive && (
+            <a href={drive} target="_blank" rel="noreferrer" className="btn-primary px-5">
+              <FolderOpen className="size-4" aria-hidden />Open the full album
+            </a>
+          )}
+          <Link href="/gallery" className="btn-ghost px-5">All albums</Link>
           <Link href="/events" className="btn-ghost px-5">Next events</Link>
         </div>
       </Reveal>

@@ -1,12 +1,17 @@
 import Link from "next/link";
-import { ArrowRight, FolderOpen } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { galleryAlbums } from "@/lib/gallery";
 import { formatDate } from "@/lib/format";
-import { SITE } from "@/lib/site";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { GradientBackdrop } from "@/components/gradient-backdrop";
 
 export const metadata = { title: "Gallery", description: "Photos from South Asian Student Society events." };
+
+/** "Diwali" -> "Diwali 2026", so albums from different years can be told apart. */
+const withYear = (title: string, iso: string) => {
+  const year = String(new Date(iso).getFullYear());
+  return title.includes(year) ? title : `${title} ${year}`;
+};
 
 const FAN = ["-rotate-8 -translate-x-12", "rotate-6 translate-x-12", "-rotate-1"];
 
@@ -23,7 +28,7 @@ export default async function GalleryPage() {
       </Reveal>
 
       {albums.length === 0 ? (
-        <p className="text-sm text-muted">No albums yet. In the meantime, every photo is on Google Drive.</p>
+        <p className="text-sm text-muted">No albums yet. Photos from our next event will land here.</p>
       ) : (
         <Stagger className="grid gap-5 sm:grid-cols-2">
           {albums.map((a) => (
@@ -43,7 +48,7 @@ export default async function GalleryPage() {
                 </div>
                 <div className="flex items-center justify-between gap-3 p-5">
                   <div>
-                    <h2 className="font-display text-2xl text-ink">{a.title}</h2>
+                    <h2 className="font-display text-2xl text-ink">{withYear(a.title, a.startsAt)}</h2>
                     <p className="mt-0.5 text-xs text-muted">{formatDate(a.startsAt)} · {a.count} photos</p>
                   </div>
                   <ArrowRight className="size-5 text-muted transition-transform group-hover:translate-x-1 group-hover:text-ink" aria-hidden />
@@ -53,10 +58,6 @@ export default async function GalleryPage() {
           ))}
         </Stagger>
       )}
-
-      <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="btn-ghost">
-        <FolderOpen className="size-4" aria-hidden />Every photo, every event, on Google Drive
-      </a>
     </div>
   );
 }
