@@ -68,8 +68,10 @@ export default async function EventPage({
   const photos = over ? await galleryItems(24, event.id) : [];
 
   return (
-    <article className="grid gap-8 lg:grid-cols-[1fr_360px] lg:gap-12">
-      <div className="order-2 lg:order-1">
+    <article className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+      {/* minmax(0,1fr) + min-w-0: let the main column shrink, or the sideways photo
+          strip below stretches it to the strip's full width (cover blown up, price box off-screen). */}
+      <div className="order-2 min-w-0 lg:order-1">
         {!event.is_published && (
           <p className="mb-5 rounded-xl border border-warn/20 bg-warn/[0.06] px-3.5 py-2.5 text-sm font-medium text-warn">Draft: only the team can see this page. Tickets go on sale when it&apos;s published.</p>
         )}
