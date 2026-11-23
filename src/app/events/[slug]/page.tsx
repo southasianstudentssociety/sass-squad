@@ -11,7 +11,6 @@ import { claimTeamTicket, claimTicket } from "./actions";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { GalleryStrip } from "@/components/gallery-strip";
 import { galleryItems } from "@/lib/gallery";
-import { SITE } from "@/lib/site";
 import { SoldOutStamp } from "@/components/sold-out-stamp";
 import { MealPicker } from "@/components/meal-picker";
 import { ReferralPicker, type Referrer } from "@/components/referral-picker";
@@ -89,7 +88,7 @@ export default async function EventPage({
           <section className="mt-12 pb-12">
             <div className="mb-4 flex items-end justify-between gap-3">
               <h2 className="font-display text-2xl">Photos</h2>
-              <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">View all photos</a>
+              <Link href={`/gallery/${event.slug}`} className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">Open the album</Link>
             </div>
             <GalleryStrip items={photos} />
           </section>

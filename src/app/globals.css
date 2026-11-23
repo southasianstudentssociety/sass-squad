@@ -352,3 +352,14 @@ select.input {
   background: rgb(0 0 0 / 0.55);
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.06);
 }
+
+/* Gallery: diya embers drifting up and fading, and a slow glow behind album titles. */
+@keyframes ember-rise {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.6); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--ember-drift, 12px), -180px, 0) scale(1); }
+}
+@keyframes diya-glow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+}

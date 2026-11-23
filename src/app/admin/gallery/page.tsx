@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
@@ -32,9 +33,10 @@ export default async function AdminGalleryPage({ searchParams }: { searchParams:
       <div>
         <h1 className="ops-heading text-3xl">Gallery</h1>
         <p className="text-sm text-muted">
-          Photos here scroll across the home page, newest first (the latest 24). The &ldquo;View all photos&rdquo; button there opens{" "}
-          <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="underline">the Google Drive folder</a>.
-          Pick your best 10 to 20 shots; landscape and portrait both work.
+          Photos here scroll across the home page, newest first (the latest 24). Pick an event when you upload and the photos
+          also make that event&rsquo;s album on the <Link href="/gallery" className="underline">Gallery</Link> page, in the order you upload them.
+          The full set lives in <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="underline">the Google Drive folder</a>.
+          Landscape and portrait both work.
         </p>
       </div>
       <FormMessage error={sp.error} success={sp.ok} />
