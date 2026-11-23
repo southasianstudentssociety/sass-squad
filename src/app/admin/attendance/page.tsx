@@ -6,7 +6,7 @@ import { hoursAgoIso } from "@/lib/events";
 
 export const metadata = { title: "Attendance" };
 
-type T = { user_id: string | null; holder_name: string; holder_email: string | null; event_id: string; status: string; checked_in_at: string | null };
+type T = { user_id: string | null; holder_name: string; holder_email: string | null; event_id: string; status: string; checked_in_at: string | null; account: { email: string } | null };
 type E = { id: string; title: string; starts_at: string };
 type M = { full_name: string; email: string; alt_email: string | null; valid_until: string };
 
@@ -14,7 +14,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
   const sp = await searchParams;
   const supabase = await createClient();
   const [{ data: tData }, { data: eData }, { data: mData }] = await Promise.all([
-    supabase.from("tickets").select("user_id, holder_name, holder_email, event_id, status, checked_in_at").neq("status", "cancelled").returns<T[]>(),
+    supabase.from("tickets").select("user_id, holder_name, holder_email, event_id, status, checked_in_at, account:profiles!tickets_user_id_fkey(email)").neq("status", "cancelled").returns<T[]>(),
     supabase.from("events").select("id, title, starts_at").lt("starts_at", hoursAgoIso(0)).order("starts_at", { ascending: false }).returns<E[]>(),
     supabase.from("members").select("full_name, email, alt_email, valid_until").gte("valid_until", todayInHongKong()).returns<M[]>(),
   ]);
@@ -28,7 +28,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
   const people = new Map<string, P>();
   for (const t of tickets) {
     const key = t.user_id ?? t.holder_email?.toLowerCase() ?? `name:${t.holder_name.toLowerCase()}`;
-    const p = people.get(key) ?? { name: t.holder_name, email: t.holder_email, attended: 0, booked: 0, last: null };
+    const p = people.get(key) ?? { name: t.holder_name, email: t.account?.email ?? t.holder_email, attended: 0, booked: 0, last: null };
     p.booked++;
     if (t.checked_in_at) {
       p.attended++;
@@ -37,7 +37,15 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
     }
     people.set(key, p);
   }
-  const attendedEmails = new Set(tickets.filter((t) => t.checked_in_at && t.holder_email).map((t) => t.holder_email!.toLowerCase()));
+  // A member came if a checked-in ticket matches their email by the account it's on
+  // OR the email typed on the ticket (imported form tickets often use another email).
+  const attendedEmails = new Set(
+    tickets
+      .filter((t) => t.checked_in_at)
+      .flatMap((t) => [t.account?.email, t.holder_email])
+      .filter((e): e is string => !!e)
+      .map((e) => e.toLowerCase()),
+  );
   const neverCame = members.filter((m) => !attendedEmails.has(m.email.toLowerCase()) && !(m.alt_email && attendedEmails.has(m.alt_email.toLowerCase())));
   const q = (sp.q ?? "").trim().toLowerCase();
   const regulars = [...people.values()]
