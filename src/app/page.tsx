@@ -10,12 +10,15 @@ import { Reveal } from "@/components/motion";
 import { NowShowing, type HomeEvent } from "@/components/home-marquee";
 import { formatPrice, TIME_ZONE, todayInHongKong } from "@/lib/format";
 import { GalleryStrip } from "@/components/gallery-strip";
-import { galleryItems } from "@/lib/gallery";
+import { galleryAlbums, galleryItems } from "@/lib/gallery";
+import { activePhotoBanner } from "@/lib/albums";
+import { PhotoBanner } from "@/components/photo-banner";
 import { GradientBackdrop } from "@/components/gradient-backdrop";
 
 export default async function Home() {
   const supabase = await createClient();
-  const [session, { data }, photos] = await Promise.all([
+  const banner = activePhotoBanner();
+  const [session, { data }, photos, albums] = await Promise.all([
     getSession(),
     supabase
       .from("events")
@@ -26,7 +29,9 @@ export default async function Home() {
       .limit(3)
       .returns<SassEvent[]>(),
     galleryItems(),
+    banner ? galleryAlbums() : Promise.resolve([]),
   ]);
+  const bannerAlbum = banner ? albums.find((a) => a.slug === banner.eventSlug) : undefined;
   const events = data ?? [];
   const firstName = session?.profile.full_name?.split(" ")[0];
   const today = todayInHongKong();
@@ -35,6 +40,9 @@ export default async function Home() {
   return (
     <div className="space-y-14 sm:space-y-20">
       <GradientBackdrop />
+      {banner && bannerAlbum && (
+        <PhotoBanner slug={bannerAlbum.slug} eyebrow={banner.eyebrow} headline={banner.headline} cta={banner.cta} covers={bannerAlbum.covers} />
+      )}
       <section className="grid grid-cols-1 items-center gap-10 pt-2 sm:pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
         <Reveal>
           <p className="eyebrow">{firstName ? `Welcome back, ${firstName}` : SITE.fullName}</p>
@@ -71,9 +79,9 @@ export default async function Home() {
               <h2 className="font-display text-2xl text-ink sm:text-3xl">Gallery</h2>
               <p className="mt-1 text-sm text-muted">Moments from past SASS nights.</p>
             </div>
-            <a href={SITE.photosUrl} target="_blank" rel="noreferrer" className="btn-ghost shrink-0">
-              <Images className="size-4" aria-hidden />View all photos
-            </a>
+            <Link href="/gallery" className="btn-ghost shrink-0">
+              <Images className="size-4" aria-hidden />See the gallery
+            </Link>
           </div>
           <GalleryStrip items={photos} />
         </section>

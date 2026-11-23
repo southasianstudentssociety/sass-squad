@@ -26,6 +26,7 @@ export function NavBar({ user }: { user: User | null }) {
     { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
     { href: "/membership", label: "Membership" },
+    { href: "/gallery", label: "Gallery" },
     ...(user ? [{ href: "/tickets", label: "Tickets" }] : []),
     // Door staff need Scan one tap away, not inside a menu.
     ...(user?.isStaff ? [{ href: "/scan", label: "Scan" }] : []),
