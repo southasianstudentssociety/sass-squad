@@ -54,7 +54,7 @@ export default async function AlbumPage({ params }: Props) {
             </h1>
             <p className="mt-5 max-w-md text-base leading-relaxed text-white/70">
               {photos.length > 0
-                ? `Relive the night: ${photos.length} of our favourite moments. Tap any photo to see it big.`
+                ? "Relive the night. Tap any photo to see it big."
                 : "The photos are on their way. Check back soon."}
             </p>
             {drive && (
@@ -72,7 +72,7 @@ export default async function AlbumPage({ params }: Props) {
 
       <Reveal className="mx-auto max-w-md pt-6 text-center">
         <p className="font-display text-2xl text-ink">{drive ? "Looking for yourself?" : "See you at the next one"}</p>
-        <p className="mt-2 text-sm text-muted">{drive ? `These are our picks. Every photo from ${event.title} is in its Google Drive folder.` : "More albums are in the gallery."}</p>
+        <p className="mt-2 text-sm text-muted">{drive ? `Every photo from the night is in its Google Drive folder.` : "More albums are in the gallery."}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           {drive && (
             <a href={drive} target="_blank" rel="noreferrer" className="btn-primary px-5">

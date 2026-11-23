@@ -24,7 +24,7 @@ export default async function GalleryPage() {
       <Reveal>
         <p className="eyebrow">Gallery</p>
         <h1 className="mt-3 font-display text-4xl text-ink sm:text-5xl">Relive the nights</h1>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">Our favourite shots from each event. Open an album for the full collage.</p>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">Photos from every SASS night. Open an album for the full collage.</p>
       </Reveal>
 
       {albums.length === 0 ? (
