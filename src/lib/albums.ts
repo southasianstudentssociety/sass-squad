@@ -8,7 +8,7 @@ import { SITE } from "@/lib/site";
 
 /** Each event's own Google Drive folder. Events not listed fall back to the shared folder. */
 const DRIVE_FOLDERS: Record<string, string> = {
-  // "diwali-2026": "https://drive.google.com/drive/folders/...",
+  "diwali-2026": "https://drive.google.com/drive/folders/1X62OBkn2z5t6vV_hUSPS1Fab8HZjlLF4",
 };
 
 export function driveUrlFor(eventSlug: string): string {
