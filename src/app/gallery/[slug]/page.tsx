@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, FolderOpen } from "lucide-react";
-import { galleryAlbum } from "@/lib/gallery";
+import { galleryAlbum, topLast } from "@/lib/gallery";
 import { driveUrlFor } from "@/lib/albums";
 import { formatDate } from "@/lib/format";
 import { Reveal } from "@/components/motion";
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${album.event.title} photos`,
     description: `Photos from ${album.event.title} with the South Asian Student Society.`,
-    openGraph: album.photos[0] ? { images: [album.photos[0].src] } : undefined,
+    openGraph: album.covers[0] ? { images: [album.covers[0].src] } : undefined,
   };
 }
 
@@ -26,7 +26,7 @@ export default async function AlbumPage({ params }: Props) {
   const { slug } = await params;
   const album = await galleryAlbum(slug);
   if (!album) notFound();
-  const { event, photos } = album;
+  const { event, photos, covers } = album;
   const drive = driveUrlFor(event.slug);
   const year = new Date(event.starts_at).getFullYear();
   const showYear = !event.title.includes(String(year));
@@ -64,7 +64,7 @@ export default async function AlbumPage({ params }: Props) {
               </a>
             )}
           </Reveal>
-          {photos.length >= 3 && <AlbumHeroStack photos={photos.slice(0, 3)} />}
+          {covers.length >= 3 && <AlbumHeroStack photos={topLast(covers.slice(0, 3))} />}
         </div>
       </section>
 
