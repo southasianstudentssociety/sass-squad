@@ -9,6 +9,8 @@ export type GalleryPhoto = {
   created_at: string;
   hidden_at: string | null;
   on_home: boolean;
+  /** 1-6 when ExCo picked it as one of its album's covers, in pick order. */
+  cover_rank: number | null;
 };
 
 export type GalleryItem = { id: string; src: string; alt: string };
@@ -90,9 +92,31 @@ export type Album = {
   title: string;
   startsAt: string;
   count: number;
-  /** Up to 6 photos for the album card and the home banner. */
+  /** Up to 6 photos, most important first: the first 3 make the album card, all 6 the home banner. */
   covers: GalleryItem[];
 };
+
+/** How many covers an album has: 3 on its card and page, 6 on the home banner. */
+export const COVER_COUNT = 6;
+
+/**
+ * An album's covers, most important first: the photos ExCo picked (in the
+ * order they picked them), then its first uploads to fill the rest.
+ * `rows` must be in upload order.
+ */
+export function pickCovers<T extends { id: string; cover_rank: number | null }>(rows: T[], count = COVER_COUNT): T[] {
+  const picked = rows.filter((r) => r.cover_rank != null).sort((a, b) => a.cover_rank! - b.cover_rank!);
+  const rest = rows.filter((r) => r.cover_rank == null);
+  return [...picked, ...rest].slice(0, count);
+}
+
+/**
+ * Lays covers out for a pile where the last one drawn sits on top: the most
+ * important cover goes last, the rest keep their order underneath.
+ */
+export function topLast<T>(covers: T[]): T[] {
+  return covers.length < 2 ? covers : [...covers.slice(1), covers[0]];
+}
 
 type AlbumRow = GalleryPhoto & { event: { slug: string; title: string; starts_at: string } };
 
@@ -101,27 +125,31 @@ export async function galleryAlbums(): Promise<Album[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("gallery_photos")
-    .select("id, path, caption, event_id, created_at, hidden_at, event:events!inner(slug, title, starts_at)")
+    .select("id, path, caption, event_id, created_at, hidden_at, cover_rank, event:events!inner(slug, title, starts_at)")
     .is("hidden_at", null)
     .order("created_at", { ascending: true })
     .returns<AlbumRow[]>();
-  const albums = new Map<string, Album>();
-  for (const p of data ?? []) {
-    const album = albums.get(p.event.slug) ?? { slug: p.event.slug, title: p.event.title, startsAt: p.event.starts_at, count: 0, covers: [] };
-    album.count++;
-    if (album.covers.length < 6) {
-      album.covers.push({
-        id: p.id,
-        src: supabase.storage.from("gallery").getPublicUrl(p.path).data.publicUrl,
-        alt: p.caption ?? `${p.event.title}, SASS`,
-      });
-    }
-    albums.set(p.event.slug, album);
-  }
-  return [...albums.values()].sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+  const groups = new Map<string, AlbumRow[]>();
+  for (const p of data ?? []) groups.set(p.event.slug, [...(groups.get(p.event.slug) ?? []), p]);
+  return [...groups.values()]
+    .map((rows) => {
+      const { event } = rows[0];
+      return {
+        slug: event.slug,
+        title: event.title,
+        startsAt: event.starts_at,
+        count: rows.length,
+        covers: pickCovers(rows).map((p) => ({
+          id: p.id,
+          src: supabase.storage.from("gallery").getPublicUrl(p.path).data.publicUrl,
+          alt: p.caption ?? `${event.title}, SASS`,
+        })),
+      };
+    })
+    .sort((a, b) => b.startsAt.localeCompare(a.startsAt));
 }
 
-/** One event's album: its details and every visible photo in upload order (the order you picked them in). */
+/** One event's album: its details, every visible photo in upload order, and its covers (see pickCovers). */
 export async function galleryAlbum(slug: string) {
   const supabase = await createClient();
   const { data: event } = await supabase
@@ -132,15 +160,16 @@ export async function galleryAlbum(slug: string) {
   if (!event) return null;
   const { data } = await supabase
     .from("gallery_photos")
-    .select("id, path, caption")
+    .select("id, path, caption, cover_rank")
     .eq("event_id", event.id)
     .is("hidden_at", null)
     .order("created_at", { ascending: true })
-    .returns<Pick<GalleryPhoto, "id" | "path" | "caption">[]>();
-  const photos: GalleryItem[] = (data ?? []).map((p) => ({
+    .returns<Pick<GalleryPhoto, "id" | "path" | "caption" | "cover_rank">[]>();
+  const photos: (GalleryItem & { cover_rank: number | null })[] = (data ?? []).map((p) => ({
     id: p.id,
     src: supabase.storage.from("gallery").getPublicUrl(p.path).data.publicUrl,
     alt: p.caption ?? `${event.title}, SASS`,
+    cover_rank: p.cover_rank,
   }));
-  return { event, photos };
+  return { event, photos, covers: pickCovers(photos) };
 }

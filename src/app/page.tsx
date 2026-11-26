@@ -11,7 +11,7 @@ import { NowShowing, type HomeEvent } from "@/components/home-marquee";
 import { formatPrice, TIME_ZONE, todayInHongKong } from "@/lib/format";
 import { GalleryStrip } from "@/components/gallery-strip";
 import { galleryAlbums, homeStripItems } from "@/lib/gallery";
-import { activePhotoBanner } from "@/lib/albums";
+import { activeHomeBanner } from "@/lib/home-banner";
 import { PhotoBanner } from "@/components/photo-banner";
 import { RateEventCard } from "@/components/rate-event-card";
 import { feedbackOpen } from "@/lib/feedback";
@@ -19,7 +19,7 @@ import { GradientBackdrop } from "@/components/gradient-backdrop";
 
 export default async function Home() {
   const supabase = await createClient();
-  const banner = activePhotoBanner();
+  const banner = await activeHomeBanner();
   const [session, { data }, photos, albums] = await Promise.all([
     getSession(),
     supabase
@@ -33,8 +33,8 @@ export default async function Home() {
     homeStripItems(),
     banner ? galleryAlbums() : Promise.resolve([]),
   ]);
-  const bannerAlbum = banner ? albums.find((a) => a.slug === banner.eventSlug) : undefined;
-  const rate = banner && session ? await rateCardFor(banner.eventSlug, session.userId) : null;
+  const bannerAlbum = banner ? albums.find((a) => a.slug === banner.event.slug) : undefined;
+  const rate = banner && session ? await rateCardFor(banner.event_id, banner.event.starts_at, session.userId) : null;
   const events = data ?? [];
   const firstName = session?.profile.full_name?.split(" ")[0];
   const today = todayInHongKong();
@@ -46,7 +46,15 @@ export default async function Home() {
       {banner && (bannerAlbum || rate) && (
         <div className="flex flex-col gap-3 empty:hidden sm:gap-4">
           {bannerAlbum && (
-            <PhotoBanner slug={bannerAlbum.slug} eyebrow={banner.eyebrow} headline={banner.headline} cta={banner.cta} covers={bannerAlbum.covers} />
+            <PhotoBanner
+              slug={bannerAlbum.slug}
+              theme={banner.theme}
+              eyebrow={banner.eyebrow}
+              headline={banner.headline}
+              blurb={banner.blurb}
+              cta={banner.cta}
+              covers={bannerAlbum.covers}
+            />
           )}
           {rate && <RateEventCard eventId={rate.eventId} eventName={banner.eyebrow} firstName={firstName} />}
         </div>
@@ -103,15 +111,14 @@ export default async function Home() {
  * banner's event, while feedback is open (30 days), who hasn't rated it yet.
  * The same rules are enforced again by submit_feedback.
  */
-async function rateCardFor(eventSlug: string, userId: string): Promise<{ eventId: string } | null> {
+async function rateCardFor(eventId: string, startsAt: string, userId: string): Promise<{ eventId: string } | null> {
+  if (!feedbackOpen(startsAt)) return null;
   const supabase = await createClient();
-  const { data: event } = await supabase.from("events").select("id, starts_at").eq("slug", eventSlug).maybeSingle<{ id: string; starts_at: string }>();
-  if (!event || !feedbackOpen(event.starts_at)) return null;
   const [{ data: ticket }, { data: rated }] = await Promise.all([
-    supabase.from("tickets").select("id").eq("event_id", event.id).eq("user_id", userId).not("checked_in_at", "is", null).limit(1).maybeSingle(),
-    supabase.from("event_feedback").select("id").eq("event_id", event.id).maybeSingle(),
+    supabase.from("tickets").select("id").eq("event_id", eventId).eq("user_id", userId).not("checked_in_at", "is", null).limit(1).maybeSingle(),
+    supabase.from("event_feedback").select("id").eq("event_id", eventId).maybeSingle(),
   ]);
-  return ticket && !rated ? { eventId: event.id } : null;
+  return ticket && !rated ? { eventId } : null;
 }
 
 const part = (iso: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-HK", { timeZone: TIME_ZONE, ...o }).format(new Date(iso));

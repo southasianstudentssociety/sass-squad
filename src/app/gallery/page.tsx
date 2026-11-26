@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { galleryAlbums } from "@/lib/gallery";
+import { galleryAlbums, topLast } from "@/lib/gallery";
 import { formatDate } from "@/lib/format";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { GradientBackdrop } from "@/components/gradient-backdrop";
@@ -13,6 +13,7 @@ const withYear = (title: string, iso: string) => {
   return title.includes(year) ? title : `${title} ${year}`;
 };
 
+// Left, right, then the first cover in the middle on top.
 const FAN = ["-rotate-8 -translate-x-12", "rotate-6 translate-x-12", "-rotate-1"];
 
 export default async function GalleryPage() {
@@ -35,7 +36,7 @@ export default async function GalleryPage() {
             <StaggerItem key={a.slug}>
               <Link href={`/gallery/${a.slug}`} className="group card-link block overflow-hidden p-0">
                 <div className="relative flex h-56 items-center justify-center overflow-hidden bg-[radial-gradient(120%_120%_at_20%_100%,#6b2340_0%,#2a1330_50%,#140b18_100%)] sm:h-64">
-                  {a.covers.slice(0, 3).map((c, i) => (
+                  {topLast(a.covers.slice(0, 3)).map((c, i) => (
                     <span
                       key={c.id}
                       className={`absolute h-40 w-32 overflow-hidden rounded-xl border-4 border-white shadow-xl transition-transform duration-500 ease-[var(--ease-out-soft)] sm:h-44 sm:w-36 ${FAN[i]} ${i === 0 ? "group-hover:-translate-x-20 group-hover:-rotate-12" : i === 1 ? "group-hover:translate-x-20 group-hover:rotate-12" : "group-hover:-translate-y-2"}`}

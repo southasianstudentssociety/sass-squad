@@ -16,15 +16,20 @@ const EMBERS = [
   { l: 95, d: 1.5, t: 7, s: 3, x: -14 },
 ];
 
-/** Little glowing sparks drifting up from the bottom of their (relative, overflow-hidden) parent. Still for reduced motion. */
-export function Embers({ className, count = EMBERS.length }: { className?: string; count?: number }) {
+/**
+ * Little glowing sparks drifting up from the bottom of their (relative,
+ * overflow-hidden) parent. Still for reduced motion. `colors` (hex) cycles
+ * through the sparks; by default they're SASS yellow.
+ */
+export function Embers({ className, count = EMBERS.length, colors }: { className?: string; count?: number; colors?: string[] }) {
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden", className)} aria-hidden>
       {EMBERS.slice(0, count).map((e, i) => (
         <span
           key={i}
-          className="absolute bottom-0 rounded-full bg-sass-yellow shadow-[0_0_8px_2px_rgb(255_200_80/0.7)]"
+          className={cn("absolute bottom-0 rounded-full", !colors?.length && "bg-sass-yellow shadow-[0_0_8px_2px_rgb(255_200_80/0.7)]")}
           style={{
+            ...(colors?.length && { background: colors[i % colors.length], boxShadow: `0 0 8px 2px ${colors[i % colors.length]}b3` }),
             left: `${e.l}%`,
             width: e.s,
             height: e.s,

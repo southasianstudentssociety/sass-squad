@@ -1,7 +1,7 @@
 /**
  * Hand-set details for gallery albums. An album page exists for any event
- * that has photos (Admin -> Gallery, with the event picked); these only add
- * a Google Drive link and the home page banner.
+ * that has photos (Admin -> Gallery, with the event picked); this only adds
+ * a Google Drive link. The home page banner is set in Admin -> Gallery.
  */
 
 /** Each event's own Google Drive folder. Events not listed get no Drive link. */
@@ -13,22 +13,4 @@ const DRIVE_FOLDERS: Record<string, string> = {
 
 export function driveUrlFor(eventSlug: string): string | null {
   return DRIVE_FOLDERS[eventSlug] ?? null;
-}
-
-/**
- * The "photos are out" banner at the top of the home page. It shows only
- * while the album has photos and until `until`, then disappears by itself.
- * Set to null to switch it off.
- */
-export const PHOTO_BANNER: { eventSlug: string; eyebrow: string; headline: string; cta: string; until: string } | null = {
-  eventSlug: "diwali-2026",
-  eyebrow: "Diwali 2026",
-  headline: "It's a Wrap!!",
-  cta: "Relive the night",
-  until: "2026-12-07T23:59:59+08:00",
-};
-
-/** The banner config while it's still running, otherwise null. */
-export function activePhotoBanner() {
-  return PHOTO_BANNER && Date.now() < Date.parse(PHOTO_BANNER.until) ? PHOTO_BANNER : null;
 }
