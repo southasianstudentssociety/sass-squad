@@ -35,7 +35,7 @@ begin
    where g.id = u.id;
 end;
 $$;
-revoke execute on function private.renumber_gallery_covers(uuid) from public;
+revoke execute on function private.renumber_gallery_covers(uuid) from public, anon, authenticated;
 
 create or replace function public.set_gallery_photo_cover(p_id uuid, p_on boolean)
 returns void
